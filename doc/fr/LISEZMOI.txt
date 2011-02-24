@@ -16,7 +16,7 @@ A PROPOS
   Le projet est supporté financièrement par la région Champagne-Ardenne 
   (FRANCE). <http://www.cr-champagne-ardenne.fr/>.
 
-  Le projet WiiChem a pour but d'aider l'apprentissage de la chimie, et 
+  Le projet WiiChem a pour but d'aider à l'apprentissage de la chimie, et 
   faciliter la modélisation modéculaire par l'intégration de la Wiimote au 
   sein d'un logiciel de chimie. Avogadro est le premier logiciel utilisé
   pour construire le coeur du projet (l'architecture, phases de test ...).
