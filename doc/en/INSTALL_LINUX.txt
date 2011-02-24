@@ -1,0 +1,135 @@
+
+REQUIREMENTS
+
+These library are required to success at the compilation of the wmavo
+plugin for Avogadro. If you have Synaptic (or equivalent), you just need 
+to open it and "search and install package":
+
+  - gcc 4.4.4 or later
+  - g++ 4.4.4 or later
+  - cmake (2.8 at least)
+  - zlib (1.2.3 at least)
+      AND zlib1g-dev (1.2.3 at least)
+  - python with :
+      python2.6-dev
+      AND libboost-python1.42-dev (1.40 at least)
+      (some abstract class of Avogadro ask them to generate plugins)
+  - Avogadro 1.0.1 or later (1.0.0 at least)
+      AND libavogadro-dev 1.0.1 (1.0.0 at least)
+      (it will install Qt4, OpenBabel, Eigen 2.0.3 ...)
+  - BlueZ 4.69 (4.60 at least)
+      AND libbluetooth-dev 4.69 (4.60 at least)
+
+Then, in a terminal, go in the wmavo root directory :
+  cd [...]/wmavo/
+  
+
+BASIC INSTALL MODE :
+
+In this mode, you need to install other libraries before. If you 
+have Synaptic (or equivalent), search :
+
+  - freeglut3 2.6
+      AND freeglut3-dev 2.6
+  - libglew1.5 1.52
+      AND libglew1.5-dev 1.52
+
+Then launch the script compile_install.sh in the script directory.
+  cd ./script/
+  bash compile_install.sh
+
+  CAUTION :
+    If you use Avogadro with the 1.0.0 or 1.0.1 version, be careful where the 
+    plugins are copied : 
+      - in /usr/lib/avogadro/1_0/[engines,extensions,tools] .
+    Else, they will be :
+      - in /usr/local/lib/avogadro/1_0/[engines,extensions,tools] .
+    Verify the version of Avogadro with the command : 
+      avogadro --version
+
+
+ADVANCED INSTALL MODE :
+
+  INSTALLATION (part1/2)
+
+To use the Wiimote, it is necessary to have a library dedicated to
+the Wiimote. The used library is, in fact are, wiiuse and wiiusecpp.
+The wiiuse library is the heart (can manage the Wiimote under *nix and 
+Windows environment). The wiiusecpp library add the cpp support.
+
+This library are present in the extra directory. This version (0.12.2) 
+is improved compared with the version (0.12) get on Internet.
+
+To compile them :
+
+  - wiiuse
+      cd ./extra/wiiuse
+      make wiiuse
+      sudo make install
+      cd ../../
+
+  - wiiusecpp
+      cd ./extra/wiiusecpp
+      (sudo) make wiiusecpp
+      sudo make install
+      cd ../../
+
+
+  INSTALLATION (part2/2)
+
+There are 3 plugins for Avogadro :
+  - wmengine : to get the anaglyph (red/cyan) render with ball and stick 
+      visualisation ;
+  - wmextension and wmtool : to include the Wiimote in Avogadro.
+
+For the Wiimote (the wmextension and wmtool plugins are required)
+
+  a) The wmextension plugin
+
+    cd ./src/ex/
+    mkdir build
+    cd build
+    cmake ../
+    (sudo) make
+    (with Avogadro 1.0.0 or 1.0.1 version)
+      sudo cp libwmextension.so /usr/lib/avogadro/1_0/extensions/
+    (with a higher Avogadro version to 1.0.1)
+      sudo cp libwmextension.so /usr/local/lib/avogadro/1_0/extensions/
+
+  b) The wmtool plugin
+
+    cd ./src/tool/
+    mkdir build
+    cd build
+    cmake ../
+    make
+    (with Avogadro 1.0.0 or 1.0.1 version)
+      sudo cp libwmtool.so /usr/lib/avogadro/1_0/tools/
+    (with a higher Avogadro version to 1.0.1)
+      sudo cp libwmtool.so /usr/local/lib/avogadro/1_0/tools/
+      
+For the anaglyph (red/cyan), the wmengine plugin :
+
+  a) Requirements :
+
+  These library are required to compile the wmengine plugin. If you
+  have Synaptic (or equivalent), you just need to open it and 
+  "search and install package":
+
+    - freeglut3 2.6
+        and freeglut3-dev 2.6
+    - libglew1.5 1.52
+        and libglew1.5-dev 1.52
+
+  b) Compilation :
+
+    cd ./src/en
+    mkdir build
+    cd build
+    cmake ../
+    make
+    (with Avogadro 1.0.0 or 1.0.1 version)
+      sudo cp libwmEngine.so /usr/lib/avogadro/1_0/engines/
+    (with a higher Avogadro version to 1.0.1)
+      sudo cp libwmEngine.so /usr/local/lib/avogadro/1_0/engines/
+      
