@@ -19,12 +19,13 @@ besoin de :
 Ensuite, vous devez vérifier/avoir les paquets suivants d'installer :
   - gcc (4.4.3 au moins)
   - g++ (4.4.3 au moins)
+  - make (3.8 au moins)
   - cmake (2.8 au moins)
+  - libavogadro-dev (1.0.0 au moins)
   - zlib (1.2.3 au moins, peut être écrit 1:1.2.3)
       ET zlib1g-dev (1.2.3 au moins)
   - python2.6-dev
       ET libboost-python1.42-dev (1.40 au moins)
-  - libavogadro-dev (1.0.0 au moins)
   - BlueZ 4.69 (4.60 au moins)
       ET libbluetooth-dev 4.69 (4.60 au moins)
 

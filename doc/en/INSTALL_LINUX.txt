@@ -17,12 +17,13 @@ At first, Avogadro must be installed. If it isn't do, you'll need :
 Then, you must verify/have this packages :
   - gcc (4.4.4 at least)
   - g++ (4.4.4 at least)
+  - make (3.8 at least)
   - cmake (2.8 at least)
+  - libavogadro-dev (1.0.0 at least)
   - zlib (1.2.3 at least)
       AND zlib1g-dev (1.2.3 at least)
   - python2.6-dev
       AND libboost-python1.42-dev (1.40 at least)
-  - libavogadro-dev (1.0.0 at least)
   - BlueZ 4.69 (4.60 at least)
       AND libbluetooth-dev 4.69 (4.60 at least)
 
