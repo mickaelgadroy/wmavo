@@ -1,5 +1,6 @@
 
 LISEZ MOI
+=========
 
   http://www.univ-reims.fr/wiichem (en français)
   https://github.com/mickaelgadroy/wmavo (en anglais)
@@ -8,7 +9,15 @@ LISEZ MOI
   le moment).
   (Tests realizés sur Ubuntu 10.04 et 10.10.)
 
+
+INSTALLATION
+============
+
+  Voir le fichier INSTALL_*.txt inclus dans le répertoire doc/.
+
+
 A PROPOS
+========
 
   Les plugins WmAvo sont les premiers éléments du projet WiiChem. Ce projet
   est né au sein de l'URCA (Université de Reims Champagne-Ardenne, FRANCE) 
@@ -55,6 +64,7 @@ A PROPOS
       
 
 LICENCE
+=======
 
   WmAvo is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as published by
@@ -71,8 +81,9 @@ LICENCE
 
 
 DEGAGEMENT DE RESPONSABILITE
+============================
 
-	Nous ne sommes en aucun cas responsable pour n'importe quels dommages ou 
-	effets non désirables causés par le logiciel.
-	Le logiciel est fourni tel quel.
+  Nous ne sommes en aucun cas responsable pour n'importe quels dommages ou 
+  effets non désirables causés par le logiciel.
+  Le logiciel est fourni tel quel.
 

@@ -47,7 +47,7 @@ Then launch the script compile_install.sh in the script directory.
   cd ./script/
   bash compile_install.sh
 
-  CAUTION :
+  CAUTION !
     If you use Avogadro with the 1.0.0 or 1.0.1 version, be careful where the 
     plugins are copied : 
       - in /usr/lib/avogadro/1_0/[engines,extensions,tools] .
