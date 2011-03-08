@@ -24,6 +24,7 @@ Ensuite, vous devez vérifier/avoir les paquets suivants d'installer :
       ET zlib1g-dev (1.2.3 au moins)
   - python2.6-dev
       ET libboost-python1.42-dev (1.40 au moins)
+  - libavogadro-dev (1.0.0 au moins)
   - BlueZ 4.69 (4.60 au moins)
       ET libbluetooth-dev 4.69 (4.60 au moins)
 
@@ -48,6 +49,8 @@ Si vous avez Synaptic, recherchez :
 Ensuite lancer le script compile_install.sh contenu dans le répertoire script.
   cd ./script/
   bash compile_install.sh
+
+Si vous devez relancer le script, appyuez sur Entrée si le script ne fait rien.
 
   ATTENTION :
     Si vous utilisez Avogadro avec la version 1.0.0 ou 1.0.1, soyez prudent où

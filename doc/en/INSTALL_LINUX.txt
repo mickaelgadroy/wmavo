@@ -22,6 +22,7 @@ Then, you must verify/have this packages :
       AND zlib1g-dev (1.2.3 at least)
   - python2.6-dev
       AND libboost-python1.42-dev (1.40 at least)
+  - libavogadro-dev (1.0.0 at least)
   - BlueZ 4.69 (4.60 at least)
       AND libbluetooth-dev 4.69 (4.60 at least)
 
@@ -46,6 +47,8 @@ have Synaptic (or equivalent), search :
 Then launch the script compile_install.sh in the script directory.
   cd ./script/
   bash compile_install.sh
+
+If you must launch again the script, press Enter if the script do nothing.
 
   CAUTION !
     If you use Avogadro with the 1.0.0 or 1.0.1 version, be careful where the 

@@ -6,9 +6,9 @@ WmAvo - The WiiChem project
 INSTALLATION
 ------------
 
-  <en>Voir le fichier INSTALL_*.txt inclus dans le répertoire doc/.</en>
+  <en>See the INSTALL*.txt file included in doc/ directory.</en>
 
-  <fr>See the INSTALL*.txt file included in doc/ directory.</fr>
+  <fr>Voir le fichier INSTALL_*.txt inclus dans le répertoire doc/.</fr>
 
 
 ABOUT - A PROPOS
