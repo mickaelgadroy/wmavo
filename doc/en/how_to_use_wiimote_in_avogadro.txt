@@ -1,5 +1,5 @@
 
-Before use, it is necessary to compile/install the plugins. See the INSTALL.txt file.
+Before use, it is necessary to compile/install the plugins. See the INSTALL*.txt file.
 
 Once the compilation/install realized :
 

@@ -787,7 +787,7 @@ namespace Avogadro
     }
 
 
-    if( WMEX_ADJUST_HYDROGEN )
+    if( WMEX_ADJUST_HYDROGEN ) // Just to initiate the value at begin.
       m_changeAddHAct = new QAction( tr("No Adjust Hydrogen ..."), this ) ;
     else
       m_changeAddHAct = new QAction( tr("Adjust Hydrogen ..."), this ) ;
@@ -1504,6 +1504,17 @@ namespace Avogadro
                 if( pl != NULL )
                   delete pl ;
               }
+
+
+              // Substitute atom by atom.
+              if( !m_hasAddedBeginAtom && !m_hasAddedCurAtom && !m_hasAddedBond && !m_canDrawOther )
+              {
+                if( m_addHydrogens )
+                  changeAtomicNumberOfAtomWithHydrogen( molecule, m_beginAtomDraw, m_atomicNumberCurrent ) ;
+                else
+                  changeAtomicNumberOfAtom(  molecule, m_beginAtomDraw, m_atomicNumberCurrent ) ;
+              }
+
             }
 
             molecule->lock()->unlock() ;
@@ -2313,6 +2324,47 @@ namespace Avogadro
         adjustPartialCharge_p( molecule, &obmol ) ;
       }
     }
+  }
+
+
+  /**
+    * Change the atomic number of an atom in a molecule without adjustment of hydrogen.
+    * @param molecule The molecule where the change is realized
+    * @param atom The atom to modify
+    * @param atomicNumber The atomic number of the new atom
+    */
+  void WmExtension::changeAtomicNumberOfAtom( Molecule *molecule, Atom *atom, int atomicNumber )
+  {
+    if( molecule!=NULL && atom!=NULL )
+      atom->setAtomicNumber( atomicNumber ) ;
+    else
+      qDebug() << "Bug in WmExtension::changeAtomicNumberOfAtom() : NULL-object non expected." ;
+  }
+
+
+  /**
+    * Change the atomic number of an atom in a molecule with adjustment of hydrogen.
+    * @param molecule The molecule where the change is realized
+    * @param atom The atom to modify
+    * @param atomicNumber The atomic number of the new atom
+    */
+  void WmExtension::changeAtomicNumberOfAtomWithHydrogen( Molecule *molecule, Atom *atom, int atomicNumber )
+  {
+    if( molecule!=NULL && atom!=NULL )
+    {
+      // Remove current atom and its Hydrogens.
+      if( !atom->isHydrogen() )
+        removeHydrogen_p( molecule, atom ) ;
+
+      atom->setAtomicNumber( atomicNumber ) ;
+
+      // Adjust the hydrogen.
+      OpenBabel::OBMol obmol=molecule->OBMol() ;
+      addHydrogen_p( molecule, &obmol, atom ) ;
+      adjustPartialCharge_p( molecule, &obmol ) ;
+    }
+    else
+      qDebug() << "Bug in WmExtension::changeAtomicNumberOfAtomWithHydrogen() : NULL-object non expected." ;
   }
 
 
@@ -3580,7 +3632,7 @@ namespace Avogadro
 
       // Firstly, remove hydrogen which can be remove by removeHydrogen_p() in the 2nd part.
       // If a selected H-atom is not erased here, the removeH_p() method can erase it after.
-      // So when the foreach reaches this selected atom, there is a pointer to nothing.
+      // So when the foreach reaches this selected atom, there is a pointer to nothing (to avoid crash)
       while( i < j )
       {
         if( atoms->at(i)->isHydrogen() && int(atoms->at(i)->valence())>0 )

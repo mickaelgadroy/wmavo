@@ -1,3 +1,6 @@
+
+# Destined to test, not to use ...
+
 version_avo=`avogadro --version | head -1 | cut -d " " -f 2 | sed -re 's/\t//g'`
 echo ""
 echo "Test:$version_avo:"

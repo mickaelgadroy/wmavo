@@ -315,6 +315,9 @@ namespace Avogadro
       void changeOrderBondBy1( Molecule *molecule, Bond *bond ) ;
       void changeOrderBondBy1WithHydrogen( Molecule *molecule, Bond *bond ) ;
 
+      void changeAtomicNumberOfAtom( Molecule *molecule, Atom *atom, int atomicNumber ) ;
+      void changeAtomicNumberOfAtomWithHydrogen( Molecule *molecule, Atom *atom, int atomicNumber ) ;
+
       Atom* addAtom( Molecule *molecule, Vector3d *pos, int atomicNumber ) ;
       Atom* addAtom( Molecule *molecule, Vector3d *pos, int atomicNumber, Atom* bondedAtom, int order ) ;
       Atom* addAtom( Molecule *molecule, OpenBabel::OBAtom *atom ) ;
