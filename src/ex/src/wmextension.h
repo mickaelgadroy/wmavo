@@ -80,7 +80,8 @@
 
 
 #include <Eigen/Core>
-//#include <GL/glut.h> // To recognize GLUT_WINDOW_X and Y ...
+#include <GL/glut.h> // To recognize GLUT_WINDOW_X and Y ...
+                  // And to realize some tests on the projection matrix.
 
 // For connect().
 //qRegisterMetaType<...>("...") ; // In PerformAction(), before the connect method()
@@ -386,7 +387,7 @@ namespace Avogadro
         * @name Calculate the move of the atoms
         * Calculate the transformation matrix to apply its in the modelview matrix to move atoms.
         * @{ */
-      void calculateTransformationMatrix( int wmavoAction, Vector3d curPos, Vector3d lastPos, Vector3d refPoint, double rotAtomdegX, double rotAtomdegY ) ;
+      bool calculateTransformationMatrix( int wmavoAction, Vector3d curPos, Vector3d lastPos, Vector3d refPoint, double rotAtomdegX, double rotAtomdegY ) ;
       // @}
 
       /**

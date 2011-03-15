@@ -933,18 +933,21 @@ namespace Avogadro
 
         //cout << "wmExtension::transformWrapperActionToMoveAtom" << endl ;
 
-        calculateTransformationMatrix( wmavoAction, pos3dCurrent, pos3dLast, m_pointRefBarycenter, rotAtomDegX, rotAtomDegY ) ;
+        bool isMoved=calculateTransformationMatrix( wmavoAction, pos3dCurrent, pos3dLast, m_pointRefBarycenter, rotAtomDegX, rotAtomDegY ) ;
 
-        QList<Primitive*> pList=m_widget->selectedPrimitives().subList(Primitive::AtomType) ;
-        moveAtomBegin( wmavoAction, pList, m_vectAtomTranslate, m_transfAtomRotate ) ;
-
-        // Active rumble in the Wiimote only if one atom is selected.
-        if( pList.size() == 1 )
+        if( isMoved )
         {
-          Atom *a=static_cast<Atom*>(pList.at(0)) ;
+          QList<Primitive*> pList=m_widget->selectedPrimitives().subList(Primitive::AtomType) ;
+          moveAtomBegin( wmavoAction, pList, m_vectAtomTranslate, m_transfAtomRotate ) ;
 
-          if( a != NULL )
-            adjustRumble( true, a->pos(), a ) ;
+          // Active rumble in the Wiimote only if one atom is selected.
+          if( pList.size() == 1 )
+          {
+            Atom *a=static_cast<Atom*>(pList.at(0)) ;
+
+            if( a != NULL )
+              adjustRumble( true, a->pos(), a ) ;
+          }
         }
       }
     }
@@ -1134,6 +1137,7 @@ namespace Avogadro
 
           // Toggle the selection.
           m_widget->toggleSelected( pList ) ; // or setSelected()
+          cout << "toggle primitive" << endl ;
         }
 
         //
@@ -1196,6 +1200,8 @@ namespace Avogadro
             m_drawCurrentAtom = false ;
             m_drawBond = false ;
 
+            cout << "cursor position:" << p.x() << "," << p.y() << endl ;
+            cout << "ref position:" << pointRef[0] << "," << pointRef[1] << "," << pointRef[2] << endl ;
             m_beginPosDraw = m_widget->camera()->unProject( p, pointRef ) ;
             m_curPosDraw = m_beginPosDraw ;
           }
@@ -1515,6 +1521,17 @@ namespace Avogadro
                   changeAtomicNumberOfAtom(  molecule, m_beginAtomDraw, m_atomicNumberCurrent ) ;
               }
 
+
+              GLfloat projectionMatrix[16] ;
+              glGetFloatv( GL_PROJECTION_MATRIX, projectionMatrix ) ;
+
+              cout << "Projection Matrix:" << endl ;
+              cout<<" "<<projectionMatrix[0]<<" "<<projectionMatrix[4]<<" "<<projectionMatrix[8]<<" "<<projectionMatrix[12]<<endl;
+              cout<<" "<<projectionMatrix[1]<<" "<<projectionMatrix[5]<<" "<<projectionMatrix[9]<<" "<<projectionMatrix[13]<<endl;
+              cout<<" "<<projectionMatrix[2]<<" "<<projectionMatrix[6]<<" "<<projectionMatrix[10]<<" "<<projectionMatrix[14]<<endl;
+              cout<<" "<<projectionMatrix[3]<<" "<<projectionMatrix[7]<<" "<<projectionMatrix[11]<<" "<<projectionMatrix[15]<<endl;
+
+
             }
 
             molecule->lock()->unlock() ;
@@ -1552,7 +1569,10 @@ namespace Avogadro
   void WmExtension::transformWrapperActionToDeleteAllAtomBond( int wmavoAction )
   {
     if( WMAVO_IS2(wmavoAction,WMAVO_DELETEALL) )
+    {
+      //qDebug() << "WmExtension::transformWrapperActionToDeleteAllAtomBond" ;
       deleteAllElement( m_widget->molecule() ) ;
+    }
   }
 
 
@@ -2353,7 +2373,7 @@ namespace Avogadro
     if( molecule!=NULL && atom!=NULL )
     {
       // Remove current atom and its Hydrogens.
-      if( !atom->isHydrogen() )
+      //if( !atom->isHydrogen() )
         removeHydrogen_p( molecule, atom ) ;
 
       atom->setAtomicNumber( atomicNumber ) ;
@@ -3919,6 +3939,8 @@ namespace Avogadro
       {
         molecule->clear() ;
         molecule->lock()->unlock() ;
+
+        resetBarycenter_p() ;
       }
     }
   }
@@ -4020,7 +4042,6 @@ namespace Avogadro
           if( hasAddedH )
           {
             nba = molecule->numAtoms() ;
-
             for( i=nba+1 ; i<=obmol->NumAtoms() ; ++i )
             {
               if( obmol->GetAtom(i)->IsHydrogen() )
@@ -4435,21 +4456,47 @@ namespace Avogadro
     */
   void WmExtension::updateBarycenter( Vector3d atomPos, bool addOrDel )
   {
-    if( m_widget->molecule()->numAtoms() != (unsigned int)m_sumOfWeights )
+    bool recalculateB=false ;
+    int numAtoms=m_widget->molecule()->numAtoms() ;
+
+    if( (addOrDel &&  numAtoms!=(unsigned int)(m_sumOfWeights+1)) // UdateBarycenter after the adding.
+        || (!addOrDel && numAtoms!=(unsigned int)(m_sumOfWeights)) ) // UdateBarycenter before the removing.
+    {
+      cout << "recalculate barycenter" << endl ;
       recalculateBarycenter( m_widget->molecule() ) ;
-
-    if( addOrDel )
-    {
-      m_sumOfWeights ++ ;
-      m_atomsBarycenter += atomPos ;
-    }
-    else
-    {
-      m_sumOfWeights -- ;
-      m_atomsBarycenter -= atomPos ;
+      recalculateB = true ;
     }
 
-    m_pointRefBarycenter = m_atomsBarycenter / m_sumOfWeights ;
+    if( (addOrDel && !recalculateB) || !addOrDel )
+    { // The new atom has been added just before if a calculation has been realized.
+
+      if( addOrDel )
+      {
+        m_sumOfWeights ++ ;
+        m_atomsBarycenter += atomPos ;
+      }
+      else
+      {
+        if( m_sumOfWeights > 0 )
+        {
+          m_sumOfWeights -- ;
+          m_atomsBarycenter -= atomPos ;
+        }
+      }
+
+      //cout << "3 m_sumOfWeights:" << m_sumOfWeights << endl ;
+      //cout << "3 m_atomsBarycenter:" << m_atomsBarycenter[0] << "," << m_atomsBarycenter[1] << "," << m_atomsBarycenter[2] << endl ;
+      //cout << "3 m_pointRefBarycenter:" << m_pointRefBarycenter[0] << "," << m_pointRefBarycenter[1] << "," << m_pointRefBarycenter[2] << "," << endl ;
+      if( m_sumOfWeights > 0 )
+        m_pointRefBarycenter = m_atomsBarycenter / m_sumOfWeights ;
+      else
+      {
+        m_sumOfWeights = 0 ;
+        m_atomsBarycenter = Vector3d(0,0,0) ;
+        m_pointRefBarycenter = Vector3d(0,0,0) ;
+      }
+    }
+    //cout << "4 m_pointRefBarycenter:" << m_pointRefBarycenter[0] << "," << m_pointRefBarycenter[1] << "," << m_pointRefBarycenter[2] << "," << endl ;
   }
 
   /**
@@ -4473,6 +4520,7 @@ namespace Avogadro
 
   /**
     * Calculate the transformation vector and/or matrix according to the need.
+    * @return TRUE if the transformation matrix is different to null ; FALSE else.
     * @param wmactions All actions ask by the wrapper
     * @param curPos The current position calculate by the Wiimote
     * @param lastPos The last position calculate by the Wiimote
@@ -4480,8 +4528,10 @@ namespace Avogadro
     * @param rotAtomdegX The desired X-axis angle
     * @param rotAtomdegY The desired Y-axis angle
     */
-  void WmExtension::calculateTransformationMatrix( int wmactions, Vector3d curPos, Vector3d lastPos, Vector3d refPoint, double rotAtomdegX, double rotAtomdegY )
+  bool WmExtension::calculateTransformationMatrix( int wmactions, Vector3d curPos, Vector3d lastPos, Vector3d refPoint, double rotAtomdegX, double rotAtomdegY )
   {
+    bool isMoved=false ;
+
     if( WMAVO_IS2(wmactions,WMAVO_ATOM_TRANSLATE) || WMAVO_IS2(wmactions,WMAVO_ATOM_ROTATE) )
     {
       QPoint currentPoint(curPos[0],curPos[1]) ;
@@ -4513,6 +4563,7 @@ namespace Avogadro
             m_vectAtomTranslate -= (camBackTransformedZAxis*WMAVO_ATOM_MAX_MOVE_Z) ;
         }
 
+        isMoved = true ;
         //cout << "      m_vectAtomTranslate:" << m_vectAtomTranslate[0] << " " << m_vectAtomTranslate[1] << " " << m_vectAtomTranslate[2] << endl ;
       }
       else if( WMAVO_IS2(wmactions,WMAVO_ATOM_ROTATE) )
@@ -4564,6 +4615,7 @@ namespace Avogadro
 
         // Return to the object.
         m_transfAtomRotate.translate( -m_tmpBarycenter ) ;
+        isMoved = true ;
       }
       else
       { // Put all transformation "at zero".
@@ -4574,8 +4626,12 @@ namespace Avogadro
         m_vectAtomTranslate[0] = 0.0 ;
         m_vectAtomTranslate[1] = 0.0 ;
         m_vectAtomTranslate[2] = 0.0 ;
+
+        isMoved = false ;
       }
     }
+
+    return isMoved ;
   }
 
 
