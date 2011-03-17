@@ -2186,7 +2186,7 @@ namespace Avogadro
           { // Calcul the new barycenter foreach atom.
             // It must bo done once for all atoms.
             //m_wmavoThread->setWmAtomPos( *atom->pos(), false, true ) ;
-            updateBarycenter( *(atom->pos()), false ) ;
+            updateBarycenter( *(atom->pos()), false, true ) ;
           }
 
           if( WMAVO_IS2(wmavoAction,WMAVO_ATOM_TRANSLATE) )
@@ -2229,7 +2229,7 @@ namespace Avogadro
           { // Calcul the new barycenter foreach atom.
             // It must bo done once for all atoms.
             //m_wmavoThread->setWmAtomPos( *(a->pos()), false, true ) ;
-            updateBarycenter( *(a->pos()), false ) ;
+            updateBarycenter( *(a->pos()), false, true ) ;
           }
 
           if( WMAVO_IS2(wmavoAction,WMAVO_ATOM_TRANSLATE) )
@@ -2263,7 +2263,7 @@ namespace Avogadro
       foreach( Atom *a, atomList )
       {
         if( a!=NULL && a->type()==Primitive::AtomType )
-          updateBarycenter( *(a->pos()), true ) ;
+          updateBarycenter( *(a->pos()), true, true ) ;
       }
     }
   }
@@ -2288,7 +2288,7 @@ namespace Avogadro
         {
           a = static_cast<Atom*>(p) ;
           //m_wmavoThread->setWmAtomPos( *(a->pos()), true, false ) ;
-          updateBarycenter( *(a->pos()), true ) ;
+          updateBarycenter( *(a->pos()), true, true ) ;
         }
       }
     }
@@ -4453,14 +4453,17 @@ namespace Avogadro
     * Update the current barycenter value.
     * @param atomPos The position to add/del in the barycenter
     * @param addOrDel Add or del the position according the need
+    * @param forceNoTestToRecalculateBarycenter Force not to test if a recalculation must be realized.
     */
-  void WmExtension::updateBarycenter( Vector3d atomPos, bool addOrDel )
+  void WmExtension::updateBarycenter( Vector3d atomPos, bool addOrDel, bool forceNoTestToRecalculateBarycenter )
   {
     bool recalculateB=false ;
-    int numAtoms=m_widget->molecule()->numAtoms() ;
+    unsigned int numAtoms=m_widget->molecule()->numAtoms() ;
 
-    if( (addOrDel &&  numAtoms!=(unsigned int)(m_sumOfWeights+1)) // UdateBarycenter after the adding.
-        || (!addOrDel && numAtoms!=(unsigned int)(m_sumOfWeights)) ) // UdateBarycenter before the removing.
+    if( !forceNoTestToRecalculateBarycenter
+        && ( (addOrDel &&  numAtoms!=(unsigned int)(m_sumOfWeights+1)) // UdateBarycenter after the adding.
+             || (!addOrDel && numAtoms!=(unsigned int)(m_sumOfWeights)) // UdateBarycenter before the removing.
+            ))
     {
       cout << "recalculate barycenter" << endl ;
       recalculateBarycenter( m_widget->molecule() ) ;

@@ -135,9 +135,9 @@ Pour l'anaglyphe (rouge/cyan), le plugin wmengine :
   recherchez :
   
     - freeglut3 2.6
-        and freeglut3-dev 2.6
+        et freeglut3-dev 2.6
     - libglew1.5 1.52
-        and libglew1.5-dev 1.52
+        et libglew1.5-dev 1.52
 
   b) Compilation :
 

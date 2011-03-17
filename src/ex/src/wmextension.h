@@ -394,7 +394,7 @@ namespace Avogadro
         * @name For the barycenter
         * @{ */
       void resetBarycenter_p() ;
-      void updateBarycenter( Vector3d atomPos, bool addOrDel ) ;
+      void updateBarycenter( Vector3d atomPos, bool addOrDel, bool forceNoTestToRecalculateBarycenter=false ) ;
       void recalculateBarycenter( Molecule *molecule ) ;
       // @}
 
