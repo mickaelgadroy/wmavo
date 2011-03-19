@@ -795,7 +795,10 @@ namespace Avogadro
       {
         msg = tr("Nb detected LEDs : ") + QString::number(m_wmNbDots) ;
         glColor3f( 1.0, 1.0, 1.0 ) ;
-        m_wPainter->drawText( QPoint(10,40), msg ) ;
+        //m_wPainter->drawText( QPoint(10,40), msg ) ;
+
+        //QFont f() ;
+        //m_wPainter->drawText( QPoint(10,40), msg ) ;
 
         msg = tr("Nb detected sources : ") + QString::number(m_wmNbSources) ;
         if( m_wmNbSources == 1 )

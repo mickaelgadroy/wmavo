@@ -2296,8 +2296,8 @@ namespace Avogadro
 
 
   /**
-    * Change the order of a bond by +1 without adjustment of hydrogen. Only a (WMEX_MAXBONDNUMBER_BETWEENATOM)
-    * is accepted.
+    * Change the order of a bond by +1 without adjustment of hydrogen.
+    * Only a (WMEX_MAXBONDNUMBER_BETWEENATOM) is accepted.
     * @param molecule The molecule where the change is realized
     * @param bond The bond where the change is realized
     */
