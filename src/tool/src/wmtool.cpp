@@ -253,8 +253,9 @@ namespace Avogadro
       //m_widget->installEventFilter( cm ) ;
     }
 
-    displayMsg() ;
     displayWmInfo() ;
+    displayMsg() ;
+
     displayAtomicNumberCurrent() ;
 
     if( !widget->hasFocus() )
@@ -785,19 +786,23 @@ namespace Avogadro
     if( m_wPainter!=NULL )
     {
       QString msg="Wiimote connected : " ;
+      //GLPainter *wGLPainter=dynamic_cast<GLPainter*>(m_wPainter) ;
 
       if( m_wmIsConnected ) msg += "YES" ;
       else msg += tr("NO") ; //, Press 1+2") ;
       glColor3f( 1.0, 1.0, 1.0 ) ;
       m_wPainter->drawText( QPoint(10,20), msg ) ;
 
+      //QFont myFont( "Times", 32, QFont::Bold ) ;
+      //wGLPainter->begin() ;
+      //wGLPainter->drawText( Vector3d(10,40,25), msg, myFont ) ;
+      //m_wPainter->drawText( Vector3d(10,40,15), msg, myFont ) ;
+      //wGLPainter->end() ;
+
       if( m_wmIsConnected )
       {
         msg = tr("Nb detected LEDs : ") + QString::number(m_wmNbDots) ;
         glColor3f( 1.0, 1.0, 1.0 ) ;
-        //m_wPainter->drawText( QPoint(10,40), msg ) ;
-
-        //QFont f() ;
         //m_wPainter->drawText( QPoint(10,40), msg ) ;
 
         msg = tr("Nb detected sources : ") + QString::number(m_wmNbSources) ;
