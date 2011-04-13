@@ -30,7 +30,6 @@
 namespace Avogadro
 {
 
-
   const GLfloat WmEngine::m_mat_ambient[]={ 0.2, 0.2, 0.2, 1.0 } ;
   const GLfloat WmEngine::m_mat_diffuse[]={ 0.7, 0.7, 0.7, 1.0 } ;
   const GLfloat WmEngine::m_mat_specular[]={ 0.1, 0.1, 0.1, 1.0 } ;
@@ -45,6 +44,19 @@ namespace Avogadro
   const GLfloat WmEngine::m_light_ambient1[]={ 0.0, 1.0, 1.0, 1.0 } ;
   const GLfloat WmEngine::m_light_diffuse1[]={ 0.0, 1.0, 1.0, 1.0 } ;
   const GLfloat WmEngine::m_light_specular1[]={ 0.0, 1.0, 1.0, 1.0 } ;
+
+  const double WmEngine::frustumValue::wScreenPx=1440 ;
+  const double WmEngine::frustumValue::hScreenPx=900 ;
+  const double WmEngine::frustumValue::wScreenCm=36.4 ;
+  const double WmEngine::frustumValue::hScreenCm=22.7 ;
+  const double WmEngine::frustumValue::gapEyeCamGL=0.08 ; // 1.3  ;//0.8 ; // == 2 * gapEyeCm
+  const double WmEngine::frustumValue::gapEyeCm=8.0 ;
+  const double WmEngine::frustumValue::xFactor=1.0 ;
+  const double WmEngine::frustumValue::yFactor=1.0 ;
+
+  const double WmEngine::radiusAtom=0.5 ;
+  const int WmEngine::slicesAtom=10 ;
+  const int WmEngine::stacksAtom=10 ;
 
 
   // ???

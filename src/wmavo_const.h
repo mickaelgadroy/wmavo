@@ -114,7 +114,7 @@
 #define WMAVO_CREATE 0x00004
 #define WMAVO_DELETE 0x00008
 #define WMAVO_DELETEALL 0x00010
-#define WMAVO_ATOM_MOVE 0x00020 // Translate or rotate
+#define WMAVO_ATOM_MOVE 0x00020 // Translate or rotate, the mode is "activate", but it can be "not working" to limit the calling of wmextension.
 #define WMAVO_ATOM_ROTATE 0x00040
 #define WMAVO_ATOM_TRANSLATE 0x00080
 #define WMAVO_CAM_ROTATE 0x00100
@@ -152,5 +152,29 @@
 #define WMRUMBLE_MAX_DURATION_POSE 1000 // 2000 // ((fr) "prendre un pose")
 #define WMRUMBLE_MIN_DURATION_POSE WMRUMBLE_MIN_TIME // 150 //
 
+
+///**********************************************************
+/// To disable warning.
+///**********************************************************
+
+
+//#define DISABLE_WARNING #ifdef _WIN32 \
+//  #pragma warning( disable : 4365 ) /* conversion from 'x' to 'y', signed/unsigned mismatch */ \
+//  #pragma warning( disable : 4820 ) /* 'x' bytes padding added after data member '...' */ \
+//  #pragma warning( disable : 4668 ) /* '...' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif' */ \
+//  #pragma warning( disable : 4514 ) /* '...' : unreferenced inline function has been removed */ \
+//  #pragma warning( disable : 4738 ) /* storing 32-bit float result in memory, possible loss of performance */ \
+//  #pragma warning( disable : 4710 ) /* function not inlined */ \
+//  #pragma warning( disable : 4626 ) /* '...' : assignment operator could not be generated because a base class assignment operator is inaccessible */ \
+//  #pragma warning( disable : 4625 ) /* '...' : copy constructor could not be generated because a base class copy constructor is inaccessible */ \
+//  #pragma warning( disable : 4711 ) /* The compiler performed inlining on the given function, although it was not marked for inlining. Inlining is performed at the compiler's discretion. This warning is informational. */ \
+//  #pragma warning( disable : 4628 ) /* Digraphs not supported with -Ze. Character sequence 'digraph' not interpreted as alternate token for 'char'. Digraphs are not supported under /Ze. This warning will be followed by an error. */ \
+//  #pragma warning( push, 0 ) \
+//  #endif
+
+//#define ENABLE_WARNING \
+//  #ifdef _WIN32 \
+//  #pragma warning( pop ) \
+//  #endif 
 
 #endif

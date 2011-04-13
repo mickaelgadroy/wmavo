@@ -144,7 +144,7 @@ void WmRumble::setDurationTremor( unsigned long durationTremor )
 
 void WmRumble::setBetweenSequence( unsigned long betweenSequence )
 {
-  if( betweenSequence>=0 && betweenSequence<=WMRUMBLE_MAX_TIME )
+  if( /*betweenSequence>=0 &&*/ betweenSequence<=WMRUMBLE_MAX_TIME )
     m_betweenSequence.fetchAndStoreRelaxed((int)betweenSequence) ;
 }
 /*
@@ -161,7 +161,7 @@ void WmRumble::setBetweenSequence( unsigned long betweenSequence )
 
 void WmRumble::setNbTremorBySequence( unsigned int nbTremorBySequence )
 {
-  if( m_nbTremorBySequence>=0 && m_nbTremorBySequence<=WMRUMBLE_MAX_TIME ) // ~
+  if( /*m_nbTremorBySequence>=0 &&*/ m_nbTremorBySequence<=WMRUMBLE_MAX_TIME ) // ~
     m_nbTremorBySequence.fetchAndStoreRelaxed((int)nbTremorBySequence) ;
 }
 /*
@@ -177,7 +177,7 @@ void WmRumble::setNbTremorBySequence( unsigned int nbTremorBySequence )
 
 void WmRumble::setBetweenTremor( unsigned long betweenTremor )
 {
-  if( betweenTremor>=0 && betweenTremor<=WMRUMBLE_MAX_TIME )
+  if( /*betweenTremor>=0 &&*/ betweenTremor<=WMRUMBLE_MAX_TIME )
     m_betweenTremor.fetchAndStoreRelaxed((int)betweenTremor) ;
 }
 /*
@@ -193,7 +193,7 @@ void WmRumble::setBetweenTremor( unsigned long betweenTremor )
 
 void WmRumble::setNbSequence( unsigned int nbSequence )
 {
-  if( nbSequence>=0 && nbSequence<=WMRUMBLE_MAX_TIME ) // ~
+  if( /*nbSequence>=0 &&*/ nbSequence<=WMRUMBLE_MAX_TIME ) // ~
     m_nbSequence.fetchAndStoreRelaxed((int)nbSequence) ;
 }
 /*
@@ -267,18 +267,18 @@ void WmRumble::setGradual( int gradual )
       // Method 2
       if( gradual>0 && gradual<=30 )
         //m_durationTremor = 80 ;
-        m_durationTremor.fetchAndStoreRelaxed(80) ; // 150 // 80
+        m_durationTremor.fetchAndStoreRelaxed(WMRUMBLE_MIN_TIME) ; // 150 // 80
 
       if( gradual>30 && gradual<=60 )
         //m_durationTremor = 120 ;
-        m_durationTremor.fetchAndStoreRelaxed(80) ; // 200 // 120
+        m_durationTremor.fetchAndStoreRelaxed(WMRUMBLE_MIN_TIME) ; // 200 // 120
 
       if( gradual>60 && gradual<100 )
         //m_durationTremor = 150 ;
-        m_durationTremor.fetchAndStoreRelaxed(80) ; // 250 // 150
+        m_durationTremor.fetchAndStoreRelaxed(WMRUMBLE_MIN_TIME) ; // 250 // 150
 
       //m_betweenTremor = WMRUMBLE_MIN_TIME + (WMRUMBLE_MAX_DURATION_POSE + m_gapBetweenStepPose * gradual) ;
-      m_betweenTremor.fetchAndStoreRelaxed( WMRUMBLE_MIN_TIME + (WMRUMBLE_MAX_DURATION_POSE + m_gapBetweenStepPose * (float(gradual)/1.3))) ; // /1.3 : to reduce the rumble : TODO : code better that ...
+      m_betweenTremor.fetchAndStoreRelaxed( WMRUMBLE_MIN_TIME + (WMRUMBLE_MAX_DURATION_POSE + m_gapBetweenStepPose * int(float(gradual)/1.3))) ; // /1.3 : to reduce the rumble : TODO : code better that ...
 
       //this->m_mutexSet.unlock() ;
     }
@@ -506,5 +506,5 @@ void WmRumble::quit()
 
 bool WmRumble::isQuit()
 {
-  return m_quit ;
+  return m_quit==1 ;
 }

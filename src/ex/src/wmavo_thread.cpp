@@ -311,5 +311,5 @@ void WmAvoThread::updateDataTransfert()
   m_wmDataTransfert.distCamZoom = m_wmavo->getDistCamZoom() ;
   m_wmDataTransfert.nbDotsDetected = m_wmavo->getWiimote()->IR.GetNumDots() ;
   m_wmDataTransfert.nbSourcesDetected = m_wmavo->getWiimote()->IR.GetNumSources() ;
-  m_wmDataTransfert.distBetweenSources = m_wmavo->getWiimote()->IR.GetDistance() ;
+  m_wmDataTransfert.distBetweenSources = (int)m_wmavo->getWiimote()->IR.GetDistance() ;
 }

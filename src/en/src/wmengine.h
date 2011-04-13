@@ -24,11 +24,22 @@
   along with WmAvo. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-
 #ifndef WMENGINE_H
 #define WMENGINE_H
 
 //#include "ui_wmenginesettingswidget.h"
+
+
+#ifdef _WIN32
+#pragma warning( disable : 4365 ) // conversion from 'x' to 'y', signed/unsigned mismatch
+#pragma warning( disable : 4820 ) // 'x' bytes padding added after data member '...'
+#pragma warning( disable : 4668 ) // '...' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
+#pragma warning( disable : 4514 ) // '...' : unreferenced inline function has been removed
+#pragma warning( disable : 4738 ) // storing 32-bit float result in memory, possible loss of performance
+#pragma warning( disable : 4710 ) // 'T qvariant_cast<QSet<QAccessible::Method>>(const QVariant &)' : function not inlined
+
+#pragma warning( push, 0 )
+#endif
 
 #include <avogadro/global.h>
 #include <avogadro/engine.h>
@@ -47,6 +58,10 @@
 
 #include <GL/glut.h>
 #include <openbabel/mol.h>
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif
 
 using namespace std;
 using namespace Eigen;
@@ -89,7 +104,6 @@ namespace Avogadro {
         * @{ */
       void solveDoxygenBug(){} ;
         //@}
-
 
     //
     // Public methods.
@@ -164,8 +178,8 @@ namespace Avogadro {
         * @name Objects & dimensions of the rendered object
         * @{ */
       GLUquadric *quadricAtom ;
-      static const double radiusAtom=0.5 ;
-      static const int slicesAtom=10, stacksAtom=10 ;
+      static const double radiusAtom ;
+      static const int slicesAtom, stacksAtom ;
 
       double m_atomRadiusPercentage ;
       double m_bondRadius ;
@@ -190,8 +204,8 @@ namespace Avogadro {
       struct frustumValue
       {
         // Size screen & widget.
-        static const double wScreenPx=1440, hScreenPx=900 ;
-        static const double wScreenCm=36.4, hScreenCm=22.7 ;
+        static const double wScreenPx, hScreenPx ;
+        static const double wScreenCm, hScreenCm ;
         double wWidgetPx, hWidgetPx ;
         double wWidgetCm, hWidgetCm ;
         double aspectRatioWidget ;
@@ -216,11 +230,14 @@ namespace Avogadro {
 
         // Distance between eye and camera in openGL (openGL unit),
         // between 0.6 and 0.8 (constant in openGL world gets by ... defaut).
-        static const double gapEyeCamGL=0.08 ; // 1.3  ;//0.8 ; // == 2 * gapEyeCm
+		// Values deprecated !!! This management must be change ! Test and fix default values.
+		// And let the user to change this values.
+		// And stop the cm/px conversion ... It is stupid ...
+        static const double gapEyeCamGL ;
 
         // Distance between eye in real world (cm unit),
         // between 6 cm and 8 cm.
-        static const double gapEyeCm=8.0 ;
+        static const double gapEyeCm ;
 
         double convertPxToGL( double px )
         {
@@ -240,7 +257,7 @@ namespace Avogadro {
         double zNear, zFar ; ///< openGL unit (clip plane)
         double fov ; ///< field of view
 
-        static const double xFactor=1.0, yFactor=1.0 ;
+        static const double xFactor, yFactor ;
             ///< To compensate a bad ratio (pixels non-square, or the resolution of the scene which not respect the ratio of the screen.
       } ;
       struct frustumValue m_frust ;
@@ -294,5 +311,7 @@ namespace Avogadro {
   };
 
 } // end namespace Avogadro
+
+
 
 #endif

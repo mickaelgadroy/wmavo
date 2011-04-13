@@ -580,7 +580,7 @@ static void interpret_ir_data2(struct wiimote_t* wm)
 
   // For intermediate needs.
   double dist=0.0 ;
-  double a,b,c ;
+  double a,b/*,c*/ ;
   int x, y/*, z*/ ;
   int i=0, j=0 ;
   bool newDot=true, needAdd=false ;
@@ -924,7 +924,7 @@ static void interpret_ir_data2(struct wiimote_t* wm)
 	    b = realRealDot[0][1] - realRealDot[1][1] ;
 	    
       wm->ir.distance = sqrt(a*a + b*b) ;
-      wm->ir.z = 1023 - wm->ir.distance ;
+      wm->ir.z = 1023.0f - wm->ir.distance ;
 
     }
     /*

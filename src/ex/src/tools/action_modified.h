@@ -60,4 +60,9 @@ public :
     connect( this, SIGNAL(triggered()), this, SLOT(triggerInfo()) ) ;
   };
 
+  ActionModified( const ActionModified& am ) : QAction(am.parent())
+  {
+    connect( this, SIGNAL(triggered()), this, SLOT(triggerInfo()) ) ;
+  };
+
 } ;

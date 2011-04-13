@@ -29,19 +29,36 @@
 #ifndef WIIUSECPP_H_
 #define WIIUSECPP_H_
 
-#include <vector>
+#define WIIUSECPP_DEFAULT_NUM_WM 1 /**< Number of Wiimote used by default */
+#define WIIUSECPP_MAX_NUM_WM 4 /**< Max number of Wiimote usable */
+#define WIIUSECPP_NUM_IRDOTS 4 /**< Number ir dots seen by the Wiimote (4 is the max) */
 
+
+
+#ifdef _WIN32
+#include "wiiuse.h"
+#else
 #include <wiiuse.h>
+#endif
+
+#include <vector>
+#include <iostream>
+using namespace std;
 
 class CButtonBase
 {
 public:
     CButtonBase(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr);
+    ~CButtonBase() ;
 
     int isPressed(int Button);
     int isHeld(int Button);
     int isReleased(int Button);
     int isJustPressed(int Button);
+
+protected:
+    CButtonBase() ;
+    CButtonBase( const CButtonBase& bb ) ;
 
 private:
     virtual short Cast(void *Ptr) {return *((short *)(Ptr));} // Inlined.
@@ -53,6 +70,8 @@ private:
 
 class CButtons : public CButtonBase
 {
+  friend class CWiimote ;
+
 public:
     enum ButtonDefs
     {
@@ -72,10 +91,17 @@ public:
     };
 
     CButtons(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr);
+    ~CButtons() ;
+
+private :
+    CButtons() ;
+    CButtons( const CButtons& cb ) ;
 };
 
 class CNunchukButtons : public CButtonBase
 {
+  friend class CNunchuk ;
+
 public:
     enum ButtonDefs
     {
@@ -85,6 +111,11 @@ public:
     };
 
     CNunchukButtons(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr);
+    ~CNunchukButtons() ;
+
+protected :
+    CNunchukButtons() ;
+    CNunchukButtons( const CNunchukButtons& cnb ) ;
 
 private:
     short Cast(void *Ptr) {return (short)(*((byte *)(Ptr)));} // Inlined using the different type.
@@ -92,6 +123,8 @@ private:
 
 class CClassicButtons : public CButtonBase
 {
+  friend class CClassic ;
+
 public:
     enum ButtonDefs
     {
@@ -114,10 +147,17 @@ public:
     };
 
     CClassicButtons(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr);
+    ~CClassicButtons() ;
+
+private :
+    CClassicButtons() ;
+    CClassicButtons( const CClassicButtons& ccb ) ;
 };
 
 class CGH3Buttons : public CButtonBase
 {
+  friend class CGuitarHero3 ;
+
 public:
     enum ButtonDefs
     {
@@ -134,12 +174,22 @@ public:
     };
 
     CGH3Buttons(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr);
+    ~CGH3Buttons() ;
+
+private :
+    CGH3Buttons() ;
+    CGH3Buttons( const CGH3Buttons& cgb ) ;
 };
 
 class CJoystick
 {
+  friend class CNunchuk ;
+  friend class CClassic ;
+  friend class CGuitarHero3 ;
+
 public:
     CJoystick(struct joystick_t *JSPtr);
+    ~CJoystick() ;
 
     void GetMaxCal(int &X, int &Y);
     void SetMaxCal(int X, int Y);
@@ -153,21 +203,28 @@ public:
     void GetPosition(float &Angle, float &Magnitude);
 
 private:
+    CJoystick() ;
+    CJoystick( const CJoystick& cj ) ;
+
     struct joystick_t *mpJoystickPtr;
 };
 
 class CAccelerometer
 {
+  friend class CWiimote ;
+  friend class CNunchuk ;
+
 public:
     CAccelerometer( struct accel_t *AccelCalPtr, struct vec3b_t *AccelerationPtr,
                     int *AccelThresholdPtr, struct orient_t *OrientationPtr, 
                     float *OrientationThresholdPtr, struct gforce_t *GForcePtr );
-    
     /* Initiate like that :
       Accelerometer( (accel_t*) &(wmPtr->accel_calib), (vec3b_t*) &(wmPtr->accel),
                      (int*) &(wmPtr->accel_threshold), (orient_t*) &(wmPtr->orient),
                      (float*) &(wmPtr->orient_threshold), (gforce_t*) &(wmPtr->gforce) )
     */
+
+    ~CAccelerometer() ;
 
     /**
       * wiiuse.accel_t.st_alĥa
@@ -235,6 +292,9 @@ public:
     //float GetAccGlobal() ;
 
 private:
+    CAccelerometer() ;
+    CAccelerometer( const CAccelerometer& ca ) ;
+
     struct accel_t *mpAccelCalibPtr;
     struct vec3b_t *mpAccelPtr;
     struct orient_t *mpOrientPtr;
@@ -245,10 +305,11 @@ private:
 
 class CIRDot
 {
+  friend class CIR ; // For default/copy constructor.
+
 public:
-    CIRDot();
-    CIRDot(struct ir_dot_t *DotPtr);
-    CIRDot(const CIRDot & copyin);
+    CIRDot(struct ir_dot_t *DotPtr) ;
+    ~CIRDot() ;
 
     int isVisible();
     int GetSize();
@@ -257,11 +318,16 @@ public:
     void GetRawCoordinate(int &X, int &Y);
 
 private:
-    struct ir_dot_t *mpDotPtr;
+    CIRDot() ;
+    CIRDot(const CIRDot & copyin) ;
+
+    struct ir_dot_t *mpDotPtr ;
 };
 
 class CIR
 {
+  friend class CWiimote ;
+
 public:
     enum BarPositions
     {
@@ -282,6 +348,7 @@ public:
     };
 
     CIR(struct wiimote_t *wmPtr);
+    ~CIR() ;
 
     void SetMode(OnOffSelection State);
     void SetVres(unsigned int x, unsigned int y);
@@ -297,7 +364,7 @@ public:
 
     int GetNumDots();
     int GetNumSources() ;
-    std::vector<CIRDot>& GetDots();
+    std::vector<CIRDot*>& GetDots();
 
     void GetOffset(int &X, int &Y);
     int GetState();
@@ -306,21 +373,34 @@ public:
     float GetPixelDistance();
     float GetDistance();
 
+//private:
+public :
+    CIR() ;
+    CIR( const CIR& ci ) ;
 private:
+    void init( struct wiimote_t *wmPtr ) ;
+
     struct wiimote_t *mpWiimotePtr;
-    std::vector<CIRDot> mpIRDotsVector;
+    std::vector<CIRDot*> mpIRDotsVector;
 };
 
 class CNunchuk
 {
+  friend class CExpansionDevice ; // For default/copy constructor.
+
 public:
-    CNunchuk(struct expansion_t *ExpPtr);
+    CNunchuk( struct expansion_t *ExpPtr ) ;
+    ~CNunchuk() ;
 
     CNunchukButtons Buttons;
     CJoystick Joystick;
     CAccelerometer Accelerometer;
 
 private:
+    CNunchuk() ;
+    CNunchuk( const CNunchuk& cn ) ;
+
+    void init( struct nunchuk_t *ExpPtr ) ;
     struct nunchuk_t *mpNunchukPtr;
 };
 
@@ -328,6 +408,7 @@ class CClassic
 {
 public:
     CClassic(struct expansion_t *ExpPtr);
+    ~CClassic() ;
 
     float GetLShoulderButton();
     float GetRShoulderButton();
@@ -337,13 +418,18 @@ public:
     CJoystick RightJoystick;
 
 private:
+    CClassic() ;
+    CClassic( const CClassic& cc ) ;
+
+    void init( struct classic_ctrl_t *ExpPtr ) ;
+
     struct classic_ctrl_t *mpClassicPtr;
 };
 
 class CGuitarHero3
 {
 public:
-    CGuitarHero3(struct expansion_t *ExpPtr);
+    CGuitarHero3( struct expansion_t *ExpPtr ) ;
 
     float GetWhammyBar();
 
@@ -351,11 +437,18 @@ public:
     CJoystick Joystick;
 
 private:
+    CGuitarHero3() ;
+    CGuitarHero3( const CGuitarHero3& cgh ) ;
+
+    void init( struct guitar_hero_3_t *g ) ;
+
     struct guitar_hero_3_t *mpGH3Ptr;
 };
 
 class CExpansionDevice
 {
+  friend class CWiimote ;
+
 public:
     enum ExpTypes
     {
@@ -366,6 +459,7 @@ public:
     };
 
     CExpansionDevice(struct expansion_t *ExpPtr);
+    ~CExpansionDevice() ;
 
     ExpTypes GetType();
 
@@ -374,6 +468,9 @@ public:
     CGuitarHero3 GuitarHero3;
 
 private:
+    CExpansionDevice() ;
+    CExpansionDevice( const CExpansionDevice& ced ) ;
+
     struct expansion_t *mpExpansionPtr;
 };
 
@@ -422,12 +519,11 @@ public:
         ON = 1
     };
 
-    static const int EVENT_BUFFER_LENGTH = MAX_PAYLOAD;
-    static const float ORIENT_PRECISION = WIIUSE_ORIENT_PRECISION;
+    //static const int EVENT_BUFFER_LENGTH = MAX_PAYLOAD;
+    //static const float ORIENT_PRECISION = WIIUSE_ORIENT_PRECISION;
 
-    CWiimote();
-    CWiimote(struct wiimote_t *wmPtr);
-    CWiimote(const CWiimote & copyin);
+    CWiimote(struct wiimote_t *wmPtr) ;
+    ~CWiimote() ;
 
     void Disconnected();
 
@@ -474,10 +570,14 @@ public:
     CExpansionDevice ExpansionDevice;
 
 private:
-    /* The pointer to the wm structure */
-    struct wiimote_t *mpWiimotePtr;
-    int mpTempInt;
-    float mpTempFloat;
+    CWiimote() ;
+    CWiimote(const CWiimote & copyin) ;
+
+    void init( struct wiimote_t *wmPtr ) ;
+
+    struct wiimote_t *mpWiimotePtr; /* The pointer to the wm structure */
+    int mpTempInt ; // Ref in the default constructor.
+    float mpTempFloat ; // Ref in the default constructor.
 };
 
 class CWii
@@ -490,33 +590,34 @@ public:
         STACK_BLUESOLEIL = WIIUSE_STACK_BLUESOLEIL
     };
 
-    CWii();
-    CWii(int MaxNumCWiimotes);
-    virtual ~CWii();
+    CWii() ;
+    CWii( int MaxNumCWiimotes ) ;
+    /*virtual*/ ~CWii() ;
 
     int GetNumConnectedWiimotes();
 
     void RefreshWiimotes();
 
-    CWiimote& GetByID(int ID, int Refresh=1);
+    CWiimote* GetByID(int ID, int Refresh=1);
 		//CWiimote& GetByID(int ID); // Without pass by mpWiimoteVector.
-    std::vector<CWiimote>& GetWiimotes(int Refresh=1);
+    std::vector<CWiimote*>& GetWiimotes(int Refresh=1);
 
     void SetBluetoothStack(BTStacks Type);
     void SetTimeout(int NormalTimeout, int ExpTimeout);
 
-    int Find(int timeout);
-    std::vector<CWiimote>& Connect();
+    int Find(int timeout) ;
+    std::vector<CWiimote*>& Connect() ;
 
-    int Poll();
-
-//protected:
-
+    int Poll() ;
 
 private:
-    struct wiimote_t **mpWiimoteArray;
-    int mpWiimoteArraySize;
-    std::vector<CWiimote> mpWiimotesVector;
+    CWii( const CWii& cw ) ;
+
+    void init( int MaxNumCWiimotes ) ;
+
+    struct wiimote_t **mpWiimoteArray ;
+    int mpWiimoteArraySize ;
+    std::vector<CWiimote*> mpWiimotesVector ;
 };
 
 #endif /* WIIUSECPP_H_ */

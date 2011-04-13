@@ -142,7 +142,7 @@ namespace Avogadro
   {
     // If bigger value (to have our render in first) : NO, nothing appear ...
     // Leave it like that (fr:laisser comme ça).
-    return 2500000 ;
+    return 100000 ; // 2500000
   }
 
   /**

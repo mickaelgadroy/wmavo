@@ -32,6 +32,16 @@
 #ifndef WMTOOL_H
 #define WMTOOL_H
 
+#ifdef _WIN32
+#pragma warning( disable : 4365 ) // conversion from 'x' to 'y', signed/unsigned mismatch
+#pragma warning( disable : 4820 ) // 'x' bytes padding added after data member '...'
+#pragma warning( disable : 4668 ) // '...' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
+#pragma warning( disable : 4514 ) // '...' : unreferenced inline function has been removed
+#pragma warning( disable : 4738 ) // storing 32-bit float result in memory, possible loss of performance
+#pragma warning( disable : 4710 ) // 'T qvariant_cast<QSet<QAccessible::Method>>(const QVariant &)' : function not inlined
+#pragma warning( push, 0 )
+#endif
+
 #include "wmavo_const.h"
 
 #include <iostream>
@@ -68,6 +78,11 @@ QT_BEGIN_NAMESPACE
 class QAction;
 QT_END_NAMESPACE
 //! [0]
+
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif
 
 using namespace std ;
 using namespace Eigen ;

@@ -130,7 +130,7 @@ namespace Avogadro
     */
   void WmExtension::mouseMoveEvent( QMouseEvent *event )
   {
-    cout << "WmExtension::mouseMoveEvent !?" << endl ;
+    cout << "WmExtension::mouseMoveEvent : [" << event->globalX() << ";" << event->globalY() << "]" << endl ;
     //m_widget->update() ;
   }
 
@@ -872,7 +872,7 @@ namespace Avogadro
     QDir::Filters filterFile( QDir::Files ) ;
     QStringList dirs=dirCur.entryList( filterDir, QDir::Name ) ; // Get directories entries.
     QStringList files=dirCur.entryList( filterFile, QDir::Name ) ; // Get files entries.
-    QString absPath=dirCur.absolutePath()+"/" ;
+    QString absPath=dirCur.toNativeSeparators( dirCur.absolutePath() ) + dirCur.separator() ;
 
     // Create & append current menu.
     m_famillyFragAct.append( new ContextMenu(dirCur.dirName(), parent, parent) ) ;
@@ -1818,7 +1818,7 @@ namespace Avogadro
 
 
       Vector3d barycenterScreen=m_widget->camera()->project( pointRef ) ;
-      QPoint barycenterScreen2(barycenterScreen[0], barycenterScreen[1]) ;
+      QPoint barycenterScreen2((int)barycenterScreen[0], (int)barycenterScreen[1]) ;
 
       GLint params[4] ;
 
@@ -1846,7 +1846,7 @@ namespace Avogadro
 
       //m_wmavoThread->setWmSizeWidget( x, y, width, height ) ;
 
-      QPoint widgetCenter( (x+width)/2, (y+height)/2 ) ;
+      QPoint widgetCenter( (int)((x+width)/2.0), (int)((y+height)/2.0) ) ;
 
       Navigate::translate( m_widget, pointRef, barycenterScreen2, widgetCenter ) ;
 
@@ -2438,7 +2438,7 @@ namespace Avogadro
       if( a!=NULL && bondedAtom!=NULL )
       {
         if( !bondedAtom->isHydrogen() || (bondedAtom->isHydrogen() && bondedAtom->valence()<1) )
-          addBond( molecule, a, bondedAtom, order ) ;
+          addBond( molecule, a, bondedAtom, (short)order ) ;
       }
       else
         qDebug() << "Bug in WmExtension::addAtom() : NULL-object non expected." ;
@@ -2611,7 +2611,7 @@ namespace Avogadro
 
       if( a1!=NULL && a2!=NULL && order>0 )
       {
-        b = addBond( molecule, a1, a2, order ) ;
+        b = addBond( molecule, a1, a2, (short)order ) ;
 
         if( b != NULL )
           addedPrim->append( static_cast<Primitive*>(b) ) ;
@@ -3320,7 +3320,7 @@ namespace Avogadro
     {
       bool emptyMol=(molecule->numAtoms() == 0) ;
       Atom *startAtom=NULL, *endAtom=NULL ;
-      unsigned long startAtomIndex=-1, endAtomIndex=-1 ;
+      unsigned long startAtomIndex=0, endAtomIndex=0 ;
       int nbAtomInFrag=fragment->numAtoms() ;
 
       // Add fragment in the molecule.
@@ -3832,7 +3832,7 @@ namespace Avogadro
       if( bond->order() > 1 )
       {
         int tmp=bond->order() ;
-        bond->setOrder( tmp-1 ) ;
+        bond->setOrder( (short)(tmp-1) ) ;
       }
       else
         molecule->removeBond( bond ) ;
@@ -3883,7 +3883,7 @@ namespace Avogadro
         if( bond->order() > 1 )
         {
           int tmp=bond->order() ;
-          bond->setOrder( tmp-1 ) ;
+          bond->setOrder( (short)(tmp-1) ) ;
 
          ChangeBondOrderDrawCommand *undo = new ChangeBondOrderDrawCommand( m_widget->molecule(), bond, tmp, m_addHydrogens ) ;
           m_widget->undoStack()->push( undo ) ;
@@ -4192,7 +4192,10 @@ namespace Avogadro
       if( a ==NULL ) // "It is possible", because a dynamic_cast is realized.
       {
         strList << "Erreur lors de l'ajout d'un fragment :" << "The selected atom is NULL ... ?" ;
-        emit displayedMsg( strList, QPoint(300,20) ) ;
+        emit displayedMsg( strList, QPoint(300,20) ) ;        
+        ostringstream ossWm ;
+        ossWm << "Erreur lors de l'ajout d'un fragment :" << "The selected atom is NULL ... ?" ;
+        emit message( ossWm.str().c_str() ) ;
       }
       else if( !m_addHydrogens || (m_addHydrogens && a->atomicNumber()==1) )
       {
@@ -4205,6 +4208,9 @@ namespace Avogadro
       {
         strList << "Erreur lors de l'ajout d'un fragment :" << "Substitution possible seulement pour un atome d'Hydrogene." ;
         emit displayedMsg( strList, QPoint(300,20) ) ;
+        ostringstream ossWm ;
+        ossWm << "Erreur lors de l'ajout d'un fragment :" << "Substitution possible seulement pour un atome d'Hydrogene." ;
+        emit message( ossWm.str().c_str() ) ;
       }
     }
     else if( selectedAtoms.size() == 0 )
@@ -4215,6 +4221,9 @@ namespace Avogadro
     {
       strList << "Erreur lors de l'ajout d'un fragment :" << "Un SEUL atome ou aucun atome doit etre selectionne." ;
       emit displayedMsg( strList, QPoint(300,20) ) ;
+      ostringstream ossWm ;
+      ossWm << "Erreur lors de l'ajout d'un fragment :" << "Un SEUL atome ou aucun atome doit etre selectionne." ;
+      emit message( ossWm.str().c_str() ) ;
     }
 
 
@@ -4231,7 +4240,16 @@ namespace Avogadro
 
       if( !inFormat || !conv.SetInFormat(inFormat) )
       {
-        qDebug() << "Cannot read file format of file " << file ;
+        
+        #ifdef _WIN32
+        strList << "Cannot read file format of file" << file ;
+        emit displayedMsg( strList, QPoint(300,20) ) ;
+        ostringstream ossWm ;
+        ossWm << "Erreur lors de l'ajout d'un fragment :" << "Cannot read file format of file" << file.toStdString() ;
+        emit message( ossWm.str().c_str() ) ;
+        #else
+        qDebug() << "Cannot read file format of file" << file ;
+        #endif
         return ;
       }
 
@@ -4240,7 +4258,16 @@ namespace Avogadro
 
       if( !ifs )
       {
-        qDebug() << "Cannot read file " << file ;
+        
+        #ifdef _WIN32
+        strList << "Cannot read file" << file ;
+        emit displayedMsg( strList, QPoint(300,20) ) ;
+        ostringstream ossWm ;
+        ossWm << "Erreur lors de l'ajout d'un fragment :" << "Cannot read file" << file.toStdString() ;
+        emit message( ossWm.str().c_str() ) ;
+        #else
+        qDebug() << "Cannot read file" << file ;
+        #endif
         return ;
       }
 
@@ -4537,8 +4564,8 @@ namespace Avogadro
 
     if( WMAVO_IS2(wmactions,WMAVO_ATOM_TRANSLATE) || WMAVO_IS2(wmactions,WMAVO_ATOM_ROTATE) )
     {
-      QPoint currentPoint(curPos[0],curPos[1]) ;
-      QPoint lastPoint(lastPos[0],lastPos[1]) ;
+      QPoint currentPoint((int)curPos[0], (int)curPos[1]) ;
+      QPoint lastPoint((int)lastPos[0], (int)lastPos[1]) ;
 
       Vector3d fromPos=m_widget->camera()->unProject( lastPoint, refPoint ) ;
       Vector3d toPos=m_widget->camera()->unProject( currentPoint, refPoint ) ;
@@ -4674,7 +4701,7 @@ namespace Avogadro
     GLdouble width=params[2] ;
     GLdouble height=params[3] ;
 
-    m_wmavoThread->setWmSizeWidget( x, y, width, height ) ;
+    m_wmavoThread->setWmSizeWidget( (int)x, (int)y, (int)width, (int)height ) ;
   }
 } // end namespace Avogadro
 

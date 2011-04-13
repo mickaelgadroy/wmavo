@@ -138,6 +138,7 @@ WmAvo::~WmAvo()
 int WmAvo::wmConnect()
 {
   int nbFound=0, nbConnect=0 ;
+  CWiimote *wm=NULL ;
 
   if( !m_wmGetWiimote )
   {
@@ -146,14 +147,18 @@ int WmAvo::wmConnect()
     nbFound = m_wii->Find( WMAVO_CONNECTION_TIMEOUT ) ;
     //cout << "Found " << nbFound << " wiimotes" << endl ;
 
-    //cout << "Connecting to wiimotes..." << endl ;
-    vector<CWiimote>& wms=m_wii->Connect() ;
-    nbConnect = wms.size() ;
+    if( nbFound > 0 ) // !!!
+    {
+      //cout << "Connecting to wiimotes..." << endl ;
+      vector<CWiimote*>& wms=m_wii->Connect() ;
+      nbConnect = wms.size() ;
+      wm = wms.at(0) ;
+    }
 
     if( nbConnect > 0 )
     {
       m_wmGetWiimote = true ;
-      m_wm = &(wms.at(0)) ;
+      m_wm = wm ;
 
       m_wm->SetLEDs( CWiimote::LED_1 ) ; // Light LED 1.
       m_wm->IR.SetMode( CIR::ON ) ; // Activate IR.

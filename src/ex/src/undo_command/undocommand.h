@@ -27,6 +27,20 @@
 #ifndef DRAWCOMMAND_H
 #define DRAWCOMMAND_H
 
+#ifdef _WIN32
+#pragma warning( disable : 4365 ) // conversion from 'x' to 'y', signed/unsigned mismatch
+#pragma warning( disable : 4820 ) // 'x' bytes padding added after data member '...'
+#pragma warning( disable : 4668 ) // '...' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
+#pragma warning( disable : 4514 ) // '...' : unreferenced inline function has been removed
+#pragma warning( disable : 4738 ) // storing 32-bit float result in memory, possible loss of performance
+#pragma warning( disable : 4710 ) // function not inlined
+#pragma warning( disable : 4626 ) // '...' : assignment operator could not be generated because a base class assignment operator is inaccessible
+#pragma warning( disable : 4625 ) // '...' : copy constructor could not be generated because a base class copy constructor is inaccessible
+
+#pragma warning( push, 0 )
+#endif
+
+
 #include <Eigen/Core>
 
 #include <avogadro/primitivelist.h>
@@ -46,6 +60,9 @@
 #include <QUndoCommand>
 #include <QDebug>
 
+#ifdef _WIN32
+#pragma warning( pop )
+#endif
 
 namespace Avogadro {
 

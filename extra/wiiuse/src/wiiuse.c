@@ -75,9 +75,11 @@ void wiiuse_cleanup(struct wiimote_t** wm, int wiimotes) {
 	for (; i < wiimotes; ++i) {
 		wiiuse_disconnect(wm[i]);
 		free(wm[i]);
+		wm[i] = NULL ;
 	}
 
 	free(wm);
+	wm = NULL ;
 
 	return;
 }
@@ -114,12 +116,13 @@ struct wiimote_t** wiiuse_init(int wiimotes) {
 		g_banner = 1;
 	}
 
-	if (!wiimotes)
+	if( wiimotes < 1 )
 		return NULL;
 
 	wm = malloc(sizeof(struct wiimote_t*) * wiimotes);
 
-	for (i = 0; i < wiimotes; ++i) {
+	for (i = 0; i < wiimotes; ++i) 
+	{
 		wm[i] = malloc(sizeof(struct wiimote_t));
 		memset(wm[i], 0, sizeof(struct wiimote_t));
 

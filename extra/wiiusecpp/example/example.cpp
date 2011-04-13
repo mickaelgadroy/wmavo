@@ -31,17 +31,21 @@
  *        to build this package.  A SWIG based Python wrapper for this C++ library
  *        is available from http://www.missioncognition.net.
  */
+#define _CRT_SECURE_NO_WARNINGS 1
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
 
-#ifndef WIN32
+#ifndef _WIN32 // WIN32
 #include <unistd.h>
+#include <wiiusecpp.h>
+#else
+#include "wiiusecpp.h"
 #endif
 
-#include <wiiusecpp.h>
+using namespace std ;
 
-int LED_MAP[4] = {CWiimote::LED_1, CWiimote::LED_2, CWiimote::LED_3, CWiimote::LED_4};
+
+const int LED_MAP[4] = {CWiimote::LED_1, CWiimote::LED_2, CWiimote::LED_3, CWiimote::LED_4};
 
 void HandleEvent(CWiimote &wm)
 {
@@ -143,21 +147,20 @@ void HandleEvent(CWiimote &wm)
     // if(IR tracking is on then print the coordinates
     if(wm.isUsingIR())
     {
-        std::vector<CIRDot>::iterator i;
         int x, y;
-        int index;
 
         printf("%s Num IR Dots: %i\n", prefixString, wm.IR.GetNumDots());
         printf("%s IR State: %u\n", prefixString, wm.IR.GetState());
 
-        std::vector<CIRDot>& dots = wm.IR.GetDots();
+        std::vector<CIRDot*>& dots = wm.IR.GetDots();
 
-        for(index = 0, i = dots.begin(); i != dots.end(); ++index, ++i)
+        int index=0 ;
+        for( std::vector<CIRDot*>::iterator i=dots.begin() ; i != dots.end() ; ++i )
         {
-            if((*i).isVisible())
+            if( (*i)->isVisible() )
             {
-                (*i).GetCoordinate(x, y);
-                printf("%s IR source %i: (%i, %i)\n", prefixString, index, x, y);
+                (*i)->GetCoordinate(x, y);
+                printf("%s IR source %i: (%i, %i)\n", prefixString, ++index, x, y);
 
                 wm.IR.GetCursorPosition(x, y);
                 printf("%s IR cursor: (%i, %i)\n", prefixString, x, y);
@@ -390,39 +393,48 @@ void HandleGH3Inserted(CWiimote &wm)
 
 int main(int argc, char** argv)
 {
+
+  //std::vector<CIRDot*> a ;
+
+  //a.clear() ;
+
+	CIR *ir=new CIR(NULL) ;
+
     CWii wii; // Defaults to 4 remotes
-    std::vector<CWiimote>::iterator i;
-    int reloadWiimotes = 0;
-    int numFound;
-    int index;
+    
+    int reloadWiimotes=0 ;
+    int numFound=0 ;
 
+    //Find the wiimote & search for up to five seconds.
     printf("Searching for wiimotes... Turn them on!\n");
-
-    //Find the wiimote
     numFound = wii.Find(5);
-
-    // Search for up to five seconds;
-
     printf("Found %d wiimotes\n", numFound);
 
-    printf("Connecting to wiimotes...\n");
+    //if( numFound <= 0 )
+      //return 0 ;
+
 
     // Connect to the wiimote
-    std::vector<CWiimote>& wiimotes = wii.Connect();
+    printf( "Connecting to wiimotes...\n" ) ;
+    std::vector<CWiimote*>& wiimotes = wii.Connect() ;
+    printf( "Connected to %d wiimotes\n", (int)wiimotes.size() ) ;
 
-    printf("Connected to %d wiimotes\n", (int) wiimotes.size());
+    if( (int) wiimotes.size() <= 0 )
+      return 0 ;
+
 
     // Setup the wiimotes
-    for(index = 0, i = wiimotes.begin(); i != wiimotes.end(); ++i, ++index)
+    int index=0 ;
+    for( size_t i = 0; i < wiimotes.size() ; ++i )
     {
         // Use a reference to make working with the iterator handy.
-        CWiimote & wiimote = *i;
+        CWiimote *wiimote = wiimotes[i];
 
         //Set Leds
-        wiimote.SetLEDs(LED_MAP[index]);
+        wiimote->SetLEDs(LED_MAP[++index]);
 
         //Rumble for 0.2 seconds as a connection ack
-        wiimote.SetRumbleMode(CWiimote::ON);
+        wiimote->SetRumbleMode(CWiimote::ON);
 
 #ifndef WIN32
         usleep(200000);
@@ -430,12 +442,12 @@ int main(int argc, char** argv)
         Sleep(200);
 #endif
 
-        wiimote.SetRumbleMode(CWiimote::OFF);
+        wiimote->SetRumbleMode(CWiimote::OFF);
     }
 
-    do
+    while( wiimotes.size() ) // Go so long as there are wiimotes left to poll
     {
-        if(reloadWiimotes)
+        if( reloadWiimotes )
         {
             // Regenerate the list of wiimotes
             wiimotes = wii.GetWiimotes();
@@ -443,48 +455,48 @@ int main(int argc, char** argv)
         }
 
         //Poll the wiimotes to get the status like pitch or roll
-        if(wii.Poll())
+        if( wii.Poll() )
         {
-            for(i = wiimotes.begin(); i != wiimotes.end(); ++i)
+            for( size_t i = 0; i < wiimotes.size() ; ++i )
             {
                 // Use a reference to make working with the iterator handy.
-                CWiimote & wiimote = *i;
-                switch(wiimote.GetEvent())
+				CWiimote *wiimote = wiimotes[i];
+                switch(wiimote->GetEvent())
                 {
 
                     case CWiimote::EVENT_EVENT:
-                        HandleEvent(wiimote);
+                        HandleEvent(*wiimote);
                         break;
 
                     case CWiimote::EVENT_STATUS:
-                        HandleStatus(wiimote);
+                        HandleStatus(*wiimote);
                         break;
                     case CWiimote::EVENT_DISCONNECT:
                     case CWiimote::EVENT_UNEXPECTED_DISCONNECT:
-                        HandleDisconnect(wiimote);
+                        HandleDisconnect(*wiimote);
                         reloadWiimotes = 1;
                         break;
 
                     case CWiimote::EVENT_READ_DATA:
-                        HandleReadData(wiimote);
+                        HandleReadData(*wiimote);
                         break;
                     case CWiimote::EVENT_NUNCHUK_INSERTED:
-                        HandleNunchukInserted(wiimote);
+                        HandleNunchukInserted(*wiimote);
                         reloadWiimotes = 1;
                         break;
                     case CWiimote::EVENT_CLASSIC_CTRL_INSERTED:
-                        HandleClassicInserted(wiimote);
+                        HandleClassicInserted(*wiimote);
                         reloadWiimotes = 1;
                         break;
                     case CWiimote::EVENT_GUITAR_HERO_3_CTRL_INSERTED:
-                        HandleGH3Inserted(wiimote);
+                        HandleGH3Inserted(*wiimote);
                         reloadWiimotes = 1;
                         break;
                     case CWiimote::EVENT_NUNCHUK_REMOVED:
                     case CWiimote::EVENT_CLASSIC_CTRL_REMOVED:
                     case CWiimote::EVENT_GUITAR_HERO_3_CTRL_REMOVED:
                         printf("An expansion was removed.\n");
-                        HandleStatus(wiimote);
+                        HandleStatus(*wiimote);
                         reloadWiimotes = 1;
                         break;
                     default:
@@ -492,7 +504,7 @@ int main(int argc, char** argv)
                 }
             }
         }
-    } while(wiimotes.size()); // Go so long as there are wiimotes left to poll
+    }
 
     return 0;
 }

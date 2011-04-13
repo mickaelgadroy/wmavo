@@ -21,9 +21,26 @@
   along with WmAvo. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-
 #ifndef __WMAVO_H__
 #define __WMAVO_H__
+
+#ifdef _WIN32
+#pragma warning( disable : 4365 ) // conversion from 'x' to 'y', signed/unsigned mismatch
+#pragma warning( disable : 4820 ) // 'x' bytes padding added after data member '...'
+#pragma warning( disable : 4668 ) // '...' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
+#pragma warning( disable : 4514 ) // '...' : unreferenced inline function has been removed
+#pragma warning( disable : 4738 ) // storing 32-bit float result in memory, possible loss of performance
+#pragma warning( disable : 4710 ) // function not inlined
+#pragma warning( disable : 4626 ) // '...' : assignment operator could not be generated because a base class assignment operator is inaccessible
+#pragma warning( disable : 4625 ) // '...' : copy constructor could not be generated because a base class copy constructor is inaccessible
+
+#pragma warning( push, 0 )
+#endif
+
+#define NOMINMAX
+// To avoid a conflit with a macro definition in Eigen/Core.
+// If you are compiling on Windows, to prevent windows.h from defining these symbols.
+
 
 #include "wmavo_const.h"
 #include "wmavo_rumble.h"
@@ -43,11 +60,17 @@
 #include <QTime>
 
 #include <time.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 #include <math.h>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif
 
 using Eigen::AngleAxisd ;
 using namespace std ;

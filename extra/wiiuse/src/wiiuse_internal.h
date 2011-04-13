@@ -52,7 +52,7 @@
 #include "definitions.h"
 
 /* wiiuse version */
-#define WIIUSE_VERSION					"0.12"
+#define WIIUSE_VERSION					"0.12.3"
 
 /********************
  *
