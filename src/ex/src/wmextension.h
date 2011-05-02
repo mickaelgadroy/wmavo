@@ -96,7 +96,7 @@
 #include <openbabel/builder.h>
 
 #include <Eigen/Core>
-#include <GL/glut.h> // To recognize GLUT_WINDOW_X and Y ...
+//#include <GL/glut.h> // To recognize GLUT_WINDOW_X and Y ...
                   // And to realize some tests on the projection matrix.
 
 #ifdef _WIN32

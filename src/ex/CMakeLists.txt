@@ -1,49 +1,26 @@
 
-project(WmExtension)
-cmake_minimum_required(VERSION 2.6)
+set( PLUGIN_NAME wmextension )
 
-# Define the "identity" of the project.
-set( plugin_type extension )
-set( plugin_name wmextension )
-
-# Let to use .h directly : 
-# ex. : #include <wmavo_const.h> instead of <../../wmavo_const.h>
+# wmextension plugin source files.
 set( wmavoconst_include_dir ../ ) # .h (constants & revision)
-set( wmtool_include_dir ../tool/src ) # .h
+set( wmtool_include_dir ../tool/src ) # .h (wmtool plugin)
+set( undocommand_include_dir src/undo_command ) # .h (undocommand)
+set( tools_include_dir src/tools ) # .h (wiwo, contextmenu, action_modified ...)
 
-set( undocommand_include_dir src/undo_command ) # .h
-set( wiwo_include_dir src/tools ) # .h
-set( contextmenu_include_dir src/tools ) # .h
-set( action_modified_include_dir src/tools ) # .h
+# wiiuse/wiiusecpp libraries and source files.
+set( wiiuse_include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/wiiuse/src" ) # .h
+set( wiiuse_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/lib" ) # ".lib"
+set( wiiuse_lib_name wiiuse )
+set( wiiusecpp_include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/wiiusecpp/src" ) # .h
+set( wiiusecpp_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/lib" ) # ".lib"
+set( wiiusecpp_lib_name wiiusecpp )
 
-# The Meta-Object Compiler, moc, is the program that handles Qt's C++ extensions.
-set( in_MOC_H src/wmextension.h src/wmavo_thread.h src/wmavo_rumble.h src/undo_command/undocommand.h src/tools/context_menu.h src/tools/action_modified.h)
-set( in_UIS_H "" )
-set( in_RC_SCRS "" )
-
-if( WIN32 ) # Windows.
+if( WIN32 ) 
+# Windows.
 # Need Windows path for a lot of elements.
-  set( Avogadro_DIR "C:/src/avogadro-1.1.0/build" ) # .h
-  set( EIGEN2_INCLUDE_DIR "C:/src/eigen-2.0.15" ) # .h
-  
-  set( OpenBabel2_include_DIR "C:/src/openbabel-2.3.0/include" ) # .h
-  set( OpenBabel22_include_DIR "C:/src/openbabel-2.3.0/windows-vc2008/build/include" ) # .h
-  
-  set( glut_INCLUDE_DIR "C:/src/freeglut-2.6.0/include" ) # .h
-  set( glut_LIB_DIR "C:/src/freeglut-2.6.0/Release" ) # .lib
-  set( glut_lib_name freeglut ) # Name of the library to link.
-  
-  set( wiiuse_include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/wiiuse/src" ) # .h
-  set( wiiuse_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/lib" ) # ".lib"
-  set( wiiuse_lib_name wiiuse )
-  set( wiiusecpp_include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/wiiusecpp/src" ) # .h
-  set( wiiusecpp_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/lib" ) # ".lib"
-  set( wiiusecpp_lib_name wiiusecpp )
-  
-  # Add a flag in CMake attribut.
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
- 
-else( WIN32 ) # Unix.
+    
+else() 
+# Unix ...
 # Need a little element for Unix.
   set( wiiusecpp_include_dir /home/myck/install/linux/wiiusecpp/src ) # .h
   set( wiiusecpp_lib_dir /usr/lib ) # ".lib"
@@ -51,67 +28,158 @@ else( WIN32 ) # Unix.
   
   set( OpenBabel2_include_DIR "/usr/include/openbabel-2.0/" )
   
-  # Add a flag in CMake attribut.
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -lglut")
+endif()
+
+
+if( "${LINK_LIBS}" STREQUAL "avogadro" )
+# In the Avogadro compilation process.
+# A lot of attribut are initiated for openGL, openBabel ... 
+
+  # The Meta-Object Compiler, moc, is the program that handles Qt's C++ extensions.
+  set( in_MOC_SRC src/wmextension.cpp src/wmavo_thread.cpp src/wmavo_rumble.cpp src/undo_command/undocommand.cpp src/tools/context_menu.cpp src/tools/action_modified.cpp)
+  set( in_MOC_SRC ${in_MOC_SRC} src/wmavo.cpp ) # Add file to include in project, but it does not need moc file ...
+  set( in_UIS_H "" )
+  set( in_RC_SCRS "" )
   
-endif( WIN32 )
+  # Write the Avogadro revision in revision.h.
+  configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/revision.h.in ${CMAKE_CURRENT_SOURCE_DIR}/revision.h )
 
-find_package( Avogadro 1.0.0 REQUIRED )
-file( GLOB_RECURSE source_files	src/* ) # All source file (recursif search) (wmavo, fifo ...).
+  
+  ## Set up the build environment (to know where are .h, ".dll" and some files)
 
-# Write the Avogadro revision in revision.h.
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/revision.h.in ${CMAKE_CURRENT_SOURCE_DIR}/revision.h )
-
-
-## Set up the build environment (to know where are .h, ".dll" and some files)
-
-# .h
-include_directories( ${wmavoconst_include_dir} )
-include_directories( ${wmtool_include_dir} )
-include_directories( ${OpenBabel2_include_DIR} )
-include_directories( ${wiiusecpp_include_dir} )
-include_directories( ${undocommand_include_dir} )
-include_directories( ${wiwo_include_dir} )
-include_directories( ${contextmenu_include_dir} )
-include_directories( ${action_modified_include_dir} )
-
-# ".dll"
-link_directories( ${wiiuse_lib_dir} )
-link_directories( ${wiiusecpp_lib_dir} )
-
-# Other files.
-include(${Avogadro_USE_FILE})
-
-if( WIN32 ) # Windows
-
+  # Let to use .h directly : 
+  # ex. : #include <wmavo_const.h> instead of <../../wmavo_const.h>
+  include_directories( ${wmavoconst_include_dir} )
+  include_directories( ${wmtool_include_dir} )
   include_directories( ${wiiuse_include_dir} )
-  include_directories( ${OpenBabel22_include_DIR} )
+  include_directories( ${wiiusecpp_include_dir} )
+  include_directories( ${undocommand_include_dir} )
+  include_directories( ${tools_include_dir} )
 
-  include_directories( ${glut_INCLUDE_DIR} )
-  link_directories( ${glut_LIB_DIR} )
+  # ".dll"
+  link_directories( ${wiiuse_lib_dir} )
+  link_directories( ${wiiusecpp_lib_dir} )
+
+  # Generate moc, specify install directories ...
+  avogadro_plugin( ${PLUGIN_NAME} "${in_MOC_SRC}" )
+
+  # Link the LIBRARY ! Not *.h !
+  target_link_libraries( ${PLUGIN_NAME} ${wiiuse_lib_name} ) 
+  target_link_libraries( ${PLUGIN_NAME} ${wiiusecpp_lib_name} )
+
+  # To install wiiuse/wiiusecpp libraries in the Avogadro bin.
+  file( GLOB wiiuse_files ${wiiuse_lib_dir}/w* )
+  install(FILES ${wiiuse_files} DESTINATION ${BIN_INSTALL_DIR})
+
+else()
+# In a stand alone compilation process.
+# Nothing is initiated ...
+
+  project( ${PLUGIN_NAME} )
+  cmake_minimum_required(VERSION 2.6)
+
+  # Avogadro needs.
+  if( NOT EXISTS "${Avogadro_DIR}" )
+    set( Avogadro_DIR "C:/src/avogadro-1.1.0/build" ) # .h
+    message( STATUS "Avogadro_DIR is by default : " ${Avogadro_DIR} )
+  else()
+    message( STATUS "Avogadro_DIR is : " ${Avogadro_DIR} )
+  endif()
   
-  # Add macro for thr preprocessor.
-  add_definitions( -DUSING_OBDLL -DUSING_DYNAMIC_LIBS)
+  message( STATUS "Avogadro directories is searching ..." )
+  find_package( Avogadro 1.0.0 REQUIRED )
+  message( STATUS "Avogadro found." )
   
-endif( WIN32 )
+  # OpenGL needs (Useless, "included" in Avogadro)
+  #find_package(OpenGL REQUIRED) # find and setup OpenGL.
+  #message( STATUS "OpenGL found : " ${OPENGL_LIBRARIES})
 
+  # Eigen needs.
+  if( NOT EXISTS "${EIGEN2_INCLUDE_DIR}" )
+    set( EIGEN2_INCLUDE_DIR "C:/src/eigen-2.0.15" ) # .h
+    message( STATUS "EIGEN2_INCLUDE_DIR is by default : " ${EIGEN2_INCLUDE_DIR} )
+  else()
+    message( STATUS "EIGEN2_INCLUDE_DIR is : " ${EIGEN2_INCLUDE_DIR} )
+  endif()
+  
+  # OpenBabel needs.
+  #set( OpenBabel2_include_DIR "C:/src/openbabel-2.3.0/include" ) # .h
+  #set( OpenBabel22_include_DIR "C:/src/openbabel-2.3.0/windows-vc2008/build/include" ) # .h
+  if( NOT EXISTS "${OPENBABEL2_INCLUDE_DIR}" )
+    set( OPENBABEL2_INCLUDE_DIR "C:/src/openbabel-2.3.0/windows-vc2008/install/include/openbabel-2.0" ) # .h
+    message( STATUS "OPENBABEL2_INCLUDE_DIR is by default : " ${OPENBABEL2_INCLUDE_DIR} )
+  else()
+    message( STATUS "OPENBABEL2_INCLUDE_DIR is : " ${OPENBABEL2_INCLUDE_DIR} )
+  endif()
+  
+  # 
+  set( LINK_LIBS avogadro )
+  set( PLUGIN_LABEL extensions )
+  set( PLUGIN_TARGET extensions )
+  set( PLUGIN_TYPE extension )
+  
+  # glut libraries and source files (Replaced by OpenGL needs)
+  #set( glut_INCLUDE_DIR "C:/src/freeglut-2.6.0/include" ) # .h
+  #set( glut_LIB_DIR "C:/src/freeglut-2.6.0/Release" ) # .lib
+  #set( glut_lib_name freeglut ) # Name of the library to link.
+    
+  # The Meta-Object Compiler, moc, is the program that handles Qt's C++ extensions.
+  set( in_MOC_H src/wmextension.h src/wmavo_thread.h src/wmavo_rumble.h src/undo_command/undocommand.h src/tools/context_menu.h src/tools/action_modified.h )
+  set( in_UIS_H "" )
+  set( in_RC_SCRS "" )
+  
+  # All source file (recursif search) (wmavo, fifo ...).
+  # Add the forgotten files for the moc generation.
+  file( GLOB_RECURSE source_files	src/* )
+  
+  # Write the Avogadro revision in revision.h.
+  configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/revision.h.in ${CMAKE_CURRENT_SOURCE_DIR}/revision.h )
 
-### BELOW, NO CHANGE ! 
-# (Except to add a target_link_libraries.)
+  # Add flags for Windows.
+  if( WIN32 )
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall") # Add a flag in a CMake attribut.
+    
+    if( MSVC ) # For Visual Studio.
+      add_definitions( -DUSING_OBDLL -DUSING_DYNAMIC_LIBS )
+    endif()
+  endif()
 
-## GÃ©nÃ©ration des fichiers nÃ©cessaire pour la compilation 
-## et Ã©ditions de liens avec Qt, Avogadro & Co.
-QT4_WRAP_CPP(out_MOC_H ${in_MOC_H})
-qt4_wrap_ui(out_UIS_H ${in_UIS_H})
-qt4_add_resources(out_RC_SRCS ${in_RC_SCRS})
+  
+  ## Set up the build environment (to know where are .h, ".dll" and some files)
 
-add_library( ${plugin_name} MODULE ${source_files} ${out_UIS_H} ${out_MOC_H} ${out_RC_SRCS} )
-target_link_libraries( ${plugin_name} avogadro )
-target_link_libraries( ${plugin_name} ${wiiusecpp_lib_name} ) # Link the LIBRARY ! Not *.h !
-target_link_libraries( ${plugin_name} ${wiiuse_lib_name} )
-#target_link_libraries( ${plugin_name} GL GLU glut ) freeglut  ERROR:  Function <glutGet> called without first calling 'glutInit'.
+  # Let to use .h directly : 
+  # ex. : #include <wmavo_const.h> instead of <../../wmavo_const.h>
+  include_directories( ${wmavoconst_include_dir} )
+  include_directories( ${wmtool_include_dir} )
+  include_directories( ${wiiuse_include_dir} )
+  include_directories( ${wiiusecpp_include_dir} )
+  include_directories( ${undocommand_include_dir} )
+  include_directories( ${tools_include_dir} )
+  include_directories( ${OPENBABEL2_INCLUDE_DIR} )
 
-# ?
-#install(TARGETS ${plugin_name} DESTINATION "${Avogadro_PLUGIN_DIR}/${plugin_type}")
-#set_target_properties(${plugin_name} PROPERTIES OUTPUT_NAME ${plugin_name} PREFIX "")
+  # ".dll"
+  link_directories( ${wiiuse_lib_dir} )
+  link_directories( ${wiiusecpp_lib_dir} )
+
+  # Other files.
+  include(${Avogadro_USE_FILE})
+
+  ## BELOW, NO CHANGE ! 
+  # (Except to add a target_link_libraries.)
+
+  ## Génération des fichiers nécessaire pour la compilation 
+  ## et éditions de liens avec Qt, Avogadro & Co.
+  QT4_WRAP_CPP(out_MOC_H ${in_MOC_H})
+  qt4_wrap_ui(out_UIS_H ${in_UIS_H})
+  qt4_add_resources(out_RC_SRCS ${in_RC_SCRS})
+
+  add_library( ${PLUGIN_NAME} MODULE ${source_files} ${out_UIS_H} ${out_MOC_H} ${out_RC_SRCS} )
+  
+  # Link the LIBRARY ! Not *.h !
+  target_link_libraries( ${PLUGIN_NAME} ${wiiuse_lib_name} ) 
+  target_link_libraries( ${PLUGIN_NAME} ${wiiusecpp_lib_name} )
+  target_link_libraries( ${PLUGIN_NAME} avogadro )
+  target_link_libraries( ${PLUGIN_NAME} ${OPENGL_LIBRARIES} )
+
+endif()
 
