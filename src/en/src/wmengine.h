@@ -56,7 +56,7 @@
 #include <QGLWidget> // for OpenGL bits
 #include <QDebug>
 
-#include <GL/glut.h>
+//#include <GL/glut.h>
 #include <openbabel/mol.h>
 
 #ifdef _WIN32

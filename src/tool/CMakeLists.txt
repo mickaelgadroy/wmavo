@@ -1,37 +1,16 @@
 
-
 set( PLUGIN_NAME wmtool )
 
 # wmextension plugin source files.
 set( wmavoconst_include_dir ../ ) # .h (constants & revision)
 
-# wiiuse/wiiusecpp libraries and source files.
-set( wiiuse_include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/wiiuse/src" ) # .h
-set( wiiuse_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/lib" ) # ".lib"
-set( wiiuse_lib_name wiiuse )
-set( wiiusecpp_include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/wiiusecpp/src" ) # .h
-set( wiiusecpp_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/lib" ) # ".lib"
-set( wiiusecpp_lib_name wiiusecpp )
-
-if( WIN32 ) 
-# Windows.
-# Need Windows path for a lot of elements.
-    
-else() 
-# Unix ...
-# Need a little element for Unix.
-  set( wiiusecpp_include_dir /home/myck/install/linux/wiiusecpp/src ) # .h
-  set( wiiusecpp_lib_dir /usr/lib ) # ".lib"
-  set( wiiusecpp_lib_name wiiusecpp )
-  
-  set( OpenBabel2_include_DIR "/usr/include/openbabel-2.0/" )
-  
-endif()
-
 
 if( "${LINK_LIBS}" STREQUAL "avogadro" )
 # In the Avogadro compilation process.
 # A lot of attribut are initiated for openGL, openBabel ... 
+# It is necessary that you (if it is does't already) :
+# - add the project in : [avogadro_path]/libavogadro/src/extensions/[here_wmavo_directory]
+# - add "add_subdirectory( wmavo/src/tool )" in : [avogadro_path]/libavogadro/src/extensions/CMakeLists.txt
 
   #set( PLUGIN_LABEL tools )
   #set( PLUGIN_TARGET tools )
