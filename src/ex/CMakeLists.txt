@@ -34,6 +34,9 @@ endif()
 if( "${LINK_LIBS}" STREQUAL "avogadro" )
 # In the Avogadro compilation process.
 # A lot of attribut are initiated for openGL, openBabel ... 
+# It is necessary that you (if it is does't already) :
+# - add the project in : [avogadro_path]/libavogadro/src/extensions/[here_wmavo_directory]
+# - add "add_subdirectory( wmavo/src/ex )" in : [avogadro_path]/libavogadro/src/extensions/CMakeLists.txt
 
   # The Meta-Object Compiler, moc, is the program that handles Qt's C++ extensions.
   set( in_MOC_SRC src/wmextension.cpp src/wmavo_thread.cpp src/wmavo_rumble.cpp src/undo_command/undocommand.cpp src/tools/context_menu.cpp src/tools/action_modified.cpp)
