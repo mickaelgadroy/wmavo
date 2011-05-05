@@ -297,10 +297,12 @@ private:
 
     struct accel_t *mpAccelCalibPtr;
     struct vec3b_t *mpAccelPtr;
+    int *mpAccelThresholdPtr; 
+
     struct orient_t *mpOrientPtr;
-    struct gforce_t *mpGForcePtr;
-    int *mpAccelThresholdPtr;
     float *mpOrientThresholdPtr;
+
+    struct gforce_t *mpGForcePtr;
 };
 
 class CIRDot

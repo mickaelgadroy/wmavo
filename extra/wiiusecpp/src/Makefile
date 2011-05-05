@@ -33,6 +33,7 @@ OBJ_DIR = $(OBJ_PREFIX)-$(shell $(CC) -v 2>&1|grep ^Target:|cut -d' ' -f2)
 # Linking flags
 #
 LDFLAGS = -shared -lwiiuse
+#LDFLAGS = -shared -L../../wiiuse/src/$(OBJ_DIR)/ -lwiiuse
 
 #
 # Target binaries (always created as BIN)
@@ -43,6 +44,7 @@ BIN = ./$(OBJ_DIR)/libwiiusecpp.so
 # Inclusion paths.
 #
 INCLUDES = -I../src/
+#INCLUDES = -Isrc/ -I../../wiiuse/src/
 
 #
 # Generate a list of object files

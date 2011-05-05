@@ -2003,8 +2003,12 @@ namespace Avogadro
 
           if( m_contextMenuCurrent->activeAction() != NULL )
           {
+            #ifdef _WIN32
             ContextMenu *cm=dynamic_cast<ContextMenu*>(m_contextMenuCurrent->activeAction()->menu()) ;
-
+            #else
+            ContextMenu *cm=static_cast<ContextMenu*>(m_contextMenuCurrent->activeAction()->menu()) ;
+            #endif
+            
             if( cm!=NULL && cm!=m_contextMenuCurrent )
               m_contextMenuCurrent = cm ;
           }
@@ -4187,9 +4191,13 @@ namespace Avogadro
     // There is a connection only if one atom is selected.
     if( selectedAtoms.size() == 1 )
     {
+      #ifdef _WIN32
       a = dynamic_cast<Atom*>(selectedAtoms[0]) ;
-
-      if( a ==NULL ) // "It is possible", because a dynamic_cast is realized.
+      if( a == NULL ) // "It is possible", because a dynamic_cast is realized.
+      #else
+      a = static_cast<Atom*>(selectedAtoms[0]) ;
+      if( a->type() != Primitive::AtomType )
+      #endif
       {
         strList << "Erreur lors de l'ajout d'un fragment :" << "The selected atom is NULL ... ?" ;
         emit displayedMsg( strList, QPoint(300,20) ) ;        

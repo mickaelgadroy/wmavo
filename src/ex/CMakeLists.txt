@@ -7,27 +7,35 @@ set( wmtool_include_dir ../tool/src ) # .h (wmtool plugin)
 set( undocommand_include_dir src/undo_command ) # .h (undocommand)
 set( tools_include_dir src/tools ) # .h (wiwo, contextmenu, action_modified ...)
 
-# wiiuse/wiiusecpp libraries and source files.
-set( wiiuse_include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/wiiuse/src" ) # .h
-set( wiiuse_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/lib_win32" ) # ".lib"
-set( wiiuse_lib_name wiiuse )
-set( wiiusecpp_include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/wiiusecpp/src" ) # .h
-set( wiiusecpp_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/lib_win32" ) # ".lib"
-set( wiiusecpp_lib_name wiiusecpp )
 
 if( WIN32 ) 
 # Windows.
-# Need Windows path for a lot of elements.
-    
+
+  # wiiuse/wiiusecpp libraries and source files.
+  set( wiiuse_include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/wiiuse/src" ) # .h
+  set( wiiuse_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/lib_win32" ) # ".lib"
+  set( wiiuse_lib_name wiiuse )
+  set( wiiusecpp_include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/wiiusecpp/src" ) # .h
+  set( wiiusecpp_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/lib_win32" ) # ".lib"
+  set( wiiusecpp_lib_name wiiusecpp )
+
 else() 
 # Unix ...
 # Need a little element for Unix.
-  set( wiiusecpp_include_dir /home/myck/install/linux/wiiusecpp/src ) # .h
-  set( wiiusecpp_lib_dir /usr/lib ) # ".lib"
+  #set( wiiusecpp_include_dir /home/myck/install/linux/wiiusecpp/src ) # .h
+  #set( wiiusecpp_lib_dir /usr/lib ) # ".lib"
+  #set( wiiusecpp_lib_name wiiusecpp )
+  
+  # wiiuse/wiiusecpp libraries and source files.
+  set( wiiuse_include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/wiiuse/src" ) # .h
+  set( wiiuse_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/lib_nix64" ) # ".lib"
+  set( wiiuse_lib_name wiiuse )
+  set( wiiusecpp_include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/wiiusecpp/src" ) # .h
+  set( wiiusecpp_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/lib_nix64" ) # ".lib"
   set( wiiusecpp_lib_name wiiusecpp )
-  
+
   set( OpenBabel2_include_DIR "/usr/include/openbabel-2.0/" )
-  
+
 endif()
 
 
@@ -71,8 +79,12 @@ if( "${LINK_LIBS}" STREQUAL "avogadro" )
   target_link_libraries( ${PLUGIN_NAME} ${wiiusecpp_lib_name} )
 
   # To install wiiuse/wiiusecpp libraries in the Avogadro bin.
-  file( GLOB wiiuse_files ${wiiuse_lib_dir}/w* )
-  install(FILES ${wiiuse_files} DESTINATION ${BIN_INSTALL_DIR})
+  file( GLOB wiiuse_files ${wiiuse_lib_dir}/*wiiuse* )
+  if( WIN32 ) 
+    install( FILES ${wiiuse_files} DESTINATION ${BIN_INSTALL_DIR} )
+  else()
+    install( FILES ${wiiuse_files} DESTINATION "/usr/lib" )
+  endif()
 
 else()
 # In a stand alone compilation process.
@@ -82,6 +94,7 @@ else()
   cmake_minimum_required(VERSION 2.6)
 
   # Avogadro needs.
+ 
   if( NOT EXISTS "${Avogadro_DIR}" )
     set( Avogadro_DIR "C:/src/avogadro-1.1.0/build" ) # .h
     message( STATUS "Avogadro_DIR is by default : " ${Avogadro_DIR} )
@@ -96,6 +109,11 @@ else()
   # OpenGL needs (Useless, "included" in Avogadro)
   #find_package(OpenGL REQUIRED) # find and setup OpenGL.
   #message( STATUS "OpenGL found : " ${OPENGL_LIBRARIES})
+
+  # glut libraries and source files ("Replaced by" OpenGL needs)
+  #set( glut_INCLUDE_DIR "C:/src/freeglut-2.6.0/include" ) # .h
+  #set( glut_LIB_DIR "C:/src/freeglut-2.6.0/Release" ) # .lib
+  #set( glut_lib_name freeglut ) # Name of the library to link.
 
   # Eigen needs.
   if( NOT EXISTS "${EIGEN2_INCLUDE_DIR}" )
@@ -121,10 +139,6 @@ else()
   set( PLUGIN_TARGET extensions )
   set( PLUGIN_TYPE extension )
   
-  # glut libraries and source files (Replaced by OpenGL needs)
-  #set( glut_INCLUDE_DIR "C:/src/freeglut-2.6.0/include" ) # .h
-  #set( glut_LIB_DIR "C:/src/freeglut-2.6.0/Release" ) # .lib
-  #set( glut_lib_name freeglut ) # Name of the library to link.
     
   # The Meta-Object Compiler, moc, is the program that handles Qt's C++ extensions.
   set( in_MOC_H src/wmextension.h src/wmavo_thread.h src/wmavo_rumble.h src/undo_command/undocommand.h src/tools/context_menu.h src/tools/action_modified.h )
