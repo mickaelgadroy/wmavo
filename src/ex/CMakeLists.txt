@@ -9,10 +9,10 @@ set( tools_include_dir src/tools ) # .h (wiwo, contextmenu, action_modified ...)
 
 # wiiuse/wiiusecpp libraries and source files.
 set( wiiuse_include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/wiiuse/src" ) # .h
-set( wiiuse_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/lib" ) # ".lib"
+set( wiiuse_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/lib_win32" ) # ".lib"
 set( wiiuse_lib_name wiiuse )
 set( wiiusecpp_include_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/wiiusecpp/src" ) # .h
-set( wiiusecpp_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/lib" ) # ".lib"
+set( wiiusecpp_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/lib_win32" ) # ".lib"
 set( wiiusecpp_lib_name wiiusecpp )
 
 if( WIN32 ) 
