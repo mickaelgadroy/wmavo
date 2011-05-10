@@ -45,14 +45,15 @@ TESTED ON - TESTE SUR
 ---------------------
 
   <en>
-  The plugins are available only for a Linux environment (for the moment).
-  (Tests realized on Ubuntu 10.04 and 10.10.)
+  The plugins are available for a Linux and Windows environments.
+  A package is available for Windows (tested on Windows Seven).
+  For Linux, it need to compile (tested on Ubuntu 10.04 and 10.10).
   </en>
   
   <fr>
-  Les plugins ne sont disponibles que pour un environnement Linux (pour 
-  le moment).
-  (Tests realizés sur Ubuntu 10.04 et 10.10.)
+  Les plugins sont disponibles pour un environnement Linux et Windows.
+  Un package est disponible pour Windows (tests realisés sur Windows Seven).
+  Pour Linux, il faut compiler (tests realisés sur Ubuntu 10.04 et 10.10).
   </fr>
 
 

@@ -39,6 +39,14 @@ namespace Avogadro
   const double WmTool::m_PI180=m_PI/(double)180 ;
   const double WmTool::m_180PI=(double)180/m_PI ;
 
+  const QString WmTool::m_angstromStr=QString::fromUtf8( " Å" ) ;
+  const QString WmTool::m_degreeStr=QString::fromUtf8( "°" ) ;
+
+  const QFont WmTool::m_fontInfo( "Times", 32, QFont::Bold ) ;
+  const QFont WmTool::m_fontError( "Times", 32, QFont::Bold ) ;
+  const QFont WmTool::m_fontDistDiedre( "Times", 28, QFont::Bold ) ;
+
+
   WmTool::WmTool(QObject *parent) :
       Tool(parent),
       m_settingsWidget(NULL),/* m_addHydrogensCheck(NULL),*/
@@ -51,7 +59,9 @@ namespace Avogadro
 
       m_drawBeginAtom(false), m_drawEndAtom(false), m_drawBond(false),
       m_beginAtom(Vector3d(0,0,0)), m_endAtom(Vector3d(0,0,0)),
-      m_isCalculDistDiedre(false), m_nbAtomForDistDiedre(0)
+      m_isCalculDistDiedre(false), m_nbAtomForDistDiedre(0),
+
+      m_ratioFontSize(1)
   {
     m_gluQuadricParams = gluNewQuadric() ;
     gluQuadricDrawStyle( m_gluQuadricParams, GLU_LINE ) ;
@@ -101,7 +111,7 @@ namespace Avogadro
     return 0;
   }
 
-  QUndoCommand* WmTool::wheelEvent(GLWidget *widget, QWheelEvent *event )
+  QUndoCommand* WmTool::wheelEvent(GLWidget *, QWheelEvent *event )
   {
     event->accept();
     //widget->update();
@@ -109,7 +119,7 @@ namespace Avogadro
     return 0 ;
   }
 
-  QUndoCommand* WmTool::keyPressEvent(GLWidget *widget, QKeyEvent *event)
+  QUndoCommand* WmTool::keyPressEvent(GLWidget *, QKeyEvent *)
   {
     /* Deprecated :
     // If more than 2 keys are presses ?
@@ -253,6 +263,8 @@ namespace Avogadro
       //m_widget->installEventFilter( cm ) ;
     }
 
+    displayTextMethods() ;
+
     displayWmInfo() ;
     displayMsg() ;
 
@@ -288,7 +300,7 @@ namespace Avogadro
     */
   void WmTool::drawRect( QPoint p1, QPoint p2 )
   {
-    drawRect( p1.x(), p1.y(), p2.x(), p2.y() ) ;
+    drawRect( (float)p1.x(), (float)p1.y(), (float)p2.x(), (float)p2.y() ) ;
   }
 
 
@@ -324,12 +336,12 @@ namespace Avogadro
     glDisable(GL_LIGHTING);
     glDisable(GL_CULL_FACE);
 
-    glColor4f(1.0, 0.5, 0.5, 0.4);
+    glColor4f(1.0f, 0.5f, 0.5f, 0.4f);
     glBegin(GL_POLYGON);
-      glVertex3f(startPos[0],startPos[1],startPos[2]);
-      glVertex3f(startPos[0],endPos[1],startPos[2]);
-      glVertex3f(endPos[0],endPos[1],startPos[2]);
-      glVertex3f(endPos[0],startPos[1],startPos[2]);
+      glVertex3d(startPos[0],startPos[1],startPos[2]);
+      glVertex3d(startPos[0],endPos[1],startPos[2]);
+      glVertex3d(endPos[0],endPos[1],startPos[2]);
+      glVertex3d(endPos[0],startPos[1],startPos[2]);
     glEnd();
 
     startPos[2] += 0.0001;
@@ -337,10 +349,10 @@ namespace Avogadro
 
     glColor3f(0.0, 0.0, 0.0);
     glBegin(GL_LINE_LOOP);
-      glVertex3f(startPos[0],startPos[1],startPos[2]);
-      glVertex3f(startPos[0],endPos[1],startPos[2]);
-      glVertex3f(endPos[0],endPos[1],startPos[2]);
-      glVertex3f(endPos[0],startPos[1],startPos[2]);
+      glVertex3d(startPos[0],startPos[1],startPos[2]);
+      glVertex3d(startPos[0],endPos[1],startPos[2]);
+      glVertex3d(endPos[0],endPos[1],startPos[2]);
+      glVertex3d(endPos[0],startPos[1],startPos[2]);
     glEnd();
 
     glPopMatrix();
@@ -369,7 +381,7 @@ namespace Avogadro
     // Blue.
     glColor3f( 0.0, 0.0, 1.0 ) ;
 
-    glTranslatef( from[0], from[1], from[2] ) ;
+    glTranslated( from[0], from[1], from[2] ) ;
     glRotatef( 22, 1, 0 , 0 ) ; // Just not to see the sphere at the bottom ...
 
     //GLUquadric* params=gluNewQuadric() ;
@@ -427,7 +439,7 @@ namespace Avogadro
     glDisable(GL_LIGHTING) ;
 
     // Black.
-    glColor3f( 0.2, 1.0,  0.2 ) ;
+    glColor3f( 0.2f, 1.0f,  0.2f ) ;
 
     //glTranslatef( 0, 0 , 0 ) ;
     glRotatef( 22, 1, 0 , 0 ) ; // Just not to see the sphere at the bottom ...
@@ -458,7 +470,7 @@ namespace Avogadro
     // If no active, do not change color !!!
     glDisable(GL_LIGHTING) ;
 
-    glColor3f( 0.2, 1.0,  0.2 ) ;
+    glColor3f( 0.2f, 1.0f,  0.2f ) ;
 
     //Vector3d b=m_wmExt->getPointRef() ;
     //glTranslatef( b[0], b[1] , b[2] ) ;
@@ -489,10 +501,10 @@ namespace Avogadro
     glLineWidth( 8.0F ) ;
 
     glBegin( GL_LINES ) ;
-      glColor3f( 0.0, 0.0, 0.0 ) ;
-      glVertex3f( begin[0], begin[1], begin[2] ) ;
-      glColor3f( 0.0, 0.0, 0.5 ) ;
-      glVertex3f( end[0], end[1], end[2] ) ;
+      glColor3f( 0.0f, 0.0f, 0.0f ) ;
+      glVertex3d( begin[0], begin[1], begin[2] ) ;
+      glColor3f( 0.0f, 0.0f, 0.5f ) ;
+      glVertex3d( end[0], end[1], end[2] ) ;
     glEnd() ;
 
     glPopAttrib() ;
@@ -768,10 +780,10 @@ namespace Avogadro
     */
 
     if( m_drawBeginAtom )
-      drawAtom( 0.4, m_beginAtom ) ;
+      drawAtom( 0.4f, m_beginAtom ) ;
 
     if( m_drawEndAtom )
-      drawAtom( 0.4, m_endAtom ) ;
+      drawAtom( 0.4f, m_endAtom ) ;
 
     if( m_drawBond )
       drawBond2( m_beginAtom, m_endAtom ) ;
@@ -792,12 +804,6 @@ namespace Avogadro
       else msg += tr("NO") ; //, Press 1+2") ;
       glColor3f( 1.0, 1.0, 1.0 ) ;
       m_wPainter->drawText( QPoint(10,20), msg ) ;
-
-      //QFont myFont( "Times", 32, QFont::Bold ) ;
-      //wGLPainter->begin() ;
-      //wGLPainter->drawText( Vector3d(10,40,25), msg, myFont ) ;
-      //m_wPainter->drawText( Vector3d(10,40,15), msg, myFont ) ;
-      //wGLPainter->end() ;
 
       if( m_wmIsConnected )
       {
@@ -1223,18 +1229,16 @@ namespace Avogadro
   {
     if( m_atomForDistDiedre.size() > 0 )
     {
-
       calculateParameters() ;
 
       Vector3d btza=m_widget->camera()->backTransformedZAxis() ;
       int wh=m_widget->height() ;
 
-      QString angstrom=QString::fromUtf8( " Å" ) ;
-      QString degree=QString::fromUtf8( "°" ) ;
-
+      QString msg ;
       string tmp1, tmp2 ;
       ostringstream oss ;
       Vector3d textRelPos ;
+      float r,g,b ;
 
 
       glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
@@ -1250,18 +1254,26 @@ namespace Avogadro
         switch( i )
         {
         case 0 :
-          glColor3f(1.0,0.0,0.0) ; break ;
+          //glColor3f(1.0,0.0,0.0) ; 
+          r=1.0; g=0.0; b=0.0; break ;
         case 1 :
-          glColor3f(0.0,1.0,0.0) ; break ;
+          //glColor3f(0.0,1.0,0.0) ;
+          r=0.0; g=1.0; b=0.0; break ;
         case 2 :
-          glColor3f(0.0,0.0,1.0) ; break ;
+          //glColor3f(0.0,0.0,1.0) ;
+          r=0.0; g=0.0; b=1.0; break ;
         case 3 :
-          glColor3f(0.0,1.0,1.0) ; break ;
+          //glColor3f(0.0,1.0,1.0) ;
+          r=0.0; g=1.0; b=1.0; break ;
         default :
-          glColor3f(0.0,0.0,0.0) ;
+          //glColor3f(0.0,0.0,0.0) ;
+          r=0.0; g=0.0; b=0.0; 
         }
 
-        m_wPainter->drawText( *m_atomForDistDiedre[i]->pos()+textRelPos, tr(tmp1.c_str(), tmp2.c_str()) ) ;
+        //m_wPainter->drawText( *m_atomForDistDiedre[i]->pos()+textRelPos, tr(tmp1.c_str(), tmp2.c_str()) ) ;
+        msg = tr(tmp1.c_str(), tmp2.c_str()) ;
+        textRelPos += *m_atomForDistDiedre[i]->pos() ;
+        displayMsgInRenderZone( textRelPos, msg, m_fontDistDiedre, r, g, b ) ;
       }
 
 
@@ -1272,27 +1284,37 @@ namespace Avogadro
         QString format("%L1"); // For localized measurements, e.g. 1,02 in Europe.
 
         // Text position for distance.
-        glColor3f(1.0,1.0,1.0);
-        m_wPainter->drawText(QPoint(70, wh-25), tr("Distance(s):"));
+        //glColor3f(1.0,1.0,1.0);
+        //m_wPainter->drawText(QPoint(70, wh-25), tr("Distance(s):"));
+        msg = tr("Distance(s):") ;
+        displayMsgOnScreen( QPoint(70, wh-25), msg, m_fontDistDiedre, 1.0,1.0,1.0 ) ;
 
         // Text position for the 1st distance.
-        glColor3f(1.0,1.0,0.0);
-        m_wPainter->drawText(QPoint(180, wh-25), format.arg(m_vector[0].norm(), 0, 'f', 3) + angstrom ) ;
+        //glColor3f(1.0,1.0,0.0);
+        //m_wPainter->drawText(QPoint(180, wh-25), format.arg(m_vector[0].norm(), 0, 'f', 3) + angstrom ) ;
+        msg = format.arg(m_vector[0].norm(), 0, 'f', 3) + m_angstromStr ;
+        displayMsgOnScreen( QPoint(180, wh-25), msg, m_fontDistDiedre, 1.0,1.0,0.0 ) ;
 
 
         if( m_atomForDistDiedre.size() >= 3 )
         {
           // Text position for the 2nd distance.
-          glColor3f(0.0,1.0,1.0);
-          m_wPainter->drawText(QPoint(240, wh-25), format.arg(m_vector[1].norm(), 0, 'f', 3) + angstrom);
+          //glColor3f(0.0,1.0,1.0);
+          //m_wPainter->drawText(QPoint(240, wh-25), format.arg(m_vector[1].norm(), 0, 'f', 3) + angstrom);
+          msg = format.arg(m_vector[1].norm(), 0, 'f', 3) + m_angstromStr ;
+          displayMsgOnScreen( QPoint(240, wh-25), msg, m_fontDistDiedre, 0.0,1.0,1.0 ) ;
 
           // Text position for angle.
-          glColor3f(1.0,1.0,1.0);
-          m_wPainter->drawText(QPoint(70, wh-45), QString(tr("Angle:")));
+          //glColor3f(1.0,1.0,1.0);
+          //m_wPainter->drawText(QPoint(70, wh-45), QString(tr("Angle:")));
+          msg = QString(tr("Angle:")) ;
+          displayMsgOnScreen( QPoint(70, wh-45), msg, m_fontDistDiedre, 1.0,1.0,1.0 ) ;
 
           // Text position for the 1st angle.
-          glColor3f(0.8, 0.8, 0.8);
-          m_wPainter->drawText(QPoint(180, wh-45), format.arg(m_angle[0], 0, 'f', 1) + degree);
+          //glColor3f(0.8f, 0.8f, 0.8f);
+          //m_wPainter->drawText(QPoint(180, wh-45), format.arg(m_angle[0], 0, 'f', 1) + degree);
+          msg = format.arg(m_angle[0], 0, 'f', 1) + m_degreeStr ;
+          displayMsgOnScreen( QPoint(180, wh-45), msg, m_fontDistDiedre, 0.8f, 0.8f, 0.8f ) ;
 
 
           // Draw the angle.
@@ -1302,7 +1324,7 @@ namespace Avogadro
           glEnable(GL_BLEND);
           glDepthMask(GL_FALSE);
 
-          m_wPainter->setColor(0, 1.0, 0, 0.3);
+          m_wPainter->setColor(0, 1.0, 0, 0.3f);
           m_wPainter->drawShadedSector( *origin, *m_atomForDistDiedre[0]->pos(),
                                 *m_atomForDistDiedre[2]->pos(), radius ) ;
           glDepthMask(GL_TRUE);
@@ -1316,25 +1338,221 @@ namespace Avogadro
           if(m_atomForDistDiedre.size() >= 4)
           {
             // Text position for the 3rd distance.
-            glColor3f(1.0, 1.0, 1.0);
-            m_wPainter->drawText(QPoint(300, wh-25), format.arg(m_vector[2].norm(), 0, 'f', 3) + angstrom);
+            //glColor3f(1.0, 1.0, 1.0) ;
+            //m_wPainter->drawText(QPoint(300, wh-25), format.arg(m_vector[2].norm(), 0, 'f', 3) + angstrom);
+            msg = format.arg(m_vector[2].norm(), 0, 'f', 3) + m_angstromStr ;
+            displayMsgOnScreen( QPoint(300, wh-25), msg, m_fontDistDiedre, 1.0, 1.0, 1.0 ) ;
 
             // Text position for the 2nd angle.
-            glColor3f(0.8, 0.8, 0.8);
-            m_wPainter->drawText(QPoint(240, wh-45), format.arg(m_angle[1], 0, 'f', 1) + degree);
+            //glColor3f(0.8f, 0.8f, 0.8f);
+            //m_wPainter->drawText(QPoint(240, wh-45), format.arg(m_angle[1], 0, 'f', 1)+degree);
+            msg = format.arg(m_angle[1], 0, 'f', 1)+m_degreeStr ;
+            displayMsgOnScreen( QPoint(240, wh-45), msg, m_fontDistDiedre, 0.8f, 0.8f, 0.8f ) ;
 
             // Text position for dihetral.
-            glColor3f(1.0, 1.0, 1.0);
-            m_wPainter->drawText(QPoint(70, wh-65), QString(tr("Dihedral:")));
+            //glColor3f(1.0, 1.0, 1.0);
+            //m_wPainter->drawText(QPoint(70, wh-65), QString(tr("Dihedral:")));
+            msg = QString(tr("Dihedral:")) ;
+            displayMsgOnScreen( QPoint(70, wh-65), msg, m_fontDistDiedre, 1.0, 1.0, 1.0 ) ;
 
-            glColor3f(0.6, 0.6, 0.6);
-            m_wPainter->drawText(QPoint(180, wh-65), format.arg(m_dihedral, 0, 'f', 1) + degree);
+            //glColor3f(0.6, 0.6, 0.6);
+            //m_wPainter->drawText(QPoint(180, wh-65), format.arg(m_dihedral, 0, 'f', 1) + degree);
+            msg = format.arg(m_dihedral, 0, 'f', 1)+m_degreeStr ;
+            displayMsgOnScreen( QPoint(180, wh-65), msg, m_fontDistDiedre, 0.6f, 0.6f, 0.6f) ;
           }
         }
       }
 
       glPopAttrib() ;
     }
+  }
+
+
+  /**
+    * Display a message in the render zone, ie. it changes according to the camera.
+    * @param pos (x,y) from the top left corner.
+    * @param pos msg Message to display.
+    * @param r Red composant.
+    * @param g Green composant.
+    * @param b Blue composant.
+    */
+  void WmTool::displayMsgInRenderZone( QPoint pos, QString msg, QFont font, float r, float g, float b )
+  {/*
+    glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
+    glColor3f( r, g, b ) ;
+    m_widget->renderText( pos.x(), pos.y(), 0, msg, font ) ;
+    glPopAttrib() ; 
+    */
+
+    glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
+    glColor3f( r, g, b ) ;
+
+    QGLWidget *myWidget=dynamic_cast<QGLWidget*>(m_widget) ;
+    if( myWidget != NULL )
+      myWidget->renderText( pos.x(), pos.y(), 0, msg, font ) ;
+    else
+      m_wPainter->drawText( pos, msg ) ;
+
+    glPopAttrib() ;
+  }
+
+  /**
+    * Display a message in the render zone, ie. it changes according to the camera.
+    * @param pos (x,y,z) in the render zone.
+    * @param pos msg Message to display.
+    * @param r Red composant.
+    * @param g Green composant.
+    * @param b Blue composant.
+    */
+  void WmTool::displayMsgInRenderZone( Vector3d pos, QString msg, QFont font, float r, float g, float b )
+  {
+    /*
+    glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
+    glColor3f( r, g, b ) ;
+    
+    Vector3d proj=m_widget->camera()->project(pos) ;
+    QPoint p( (int)proj[0], (int)proj[1] ) ;
+    m_widget->renderText( p.x(), p.y(), 0, msg, font ) ;
+
+    glPopAttrib() ;
+    */
+
+    glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
+    glColor3f( r, g, b ) ;
+
+    QGLWidget *myWidget=dynamic_cast<QGLWidget*>(m_widget) ;
+    if( myWidget != NULL )
+      myWidget->renderText( pos[0], pos[1], pos[2], msg, font ) ;
+    else
+      m_wPainter->drawText( pos, msg ) ;
+
+    glPopAttrib() ;
+  }
+
+  /**
+  * Display a message on the render zone. The message stays static.
+  * @param pos (x,y) from the top left corner.
+  * @param pos msg Message to display.
+  * @param r Red composant.
+  * @param g Green composant.
+  * @param b Blue composant.
+  */
+  void WmTool::displayMsgOnScreen( QPoint pos, QString msg, QFont font, float r, float g, float b )
+  {
+    glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
+    glColor3f( r, g, b ) ;
+
+    QGLWidget *myWidget=dynamic_cast<QGLWidget*>(m_widget) ;
+    if( myWidget != NULL )
+      myWidget->renderText( pos.x(), pos.y(), msg, font ) ;
+    else
+      m_wPainter->drawText( pos, msg ) ;
+
+    glPopAttrib() ;
+  }
+
+  /**
+    * Display a message on the render zone. The message stays static.
+    * @param pos (x,y,z) in the render zone.
+    * @param pos msg Message to display.
+    * @param r Red composant.
+    * @param g Green composant.
+    * @param b Blue composant.
+    */
+  void WmTool::displayMsgOnScreen( Vector3d pos, QString msg, QFont font, float r, float g, float b )
+  {
+    glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
+    glColor3f( r, g, b ) ;
+
+    QGLWidget *myWidget=dynamic_cast<QGLWidget*>(m_widget) ;
+    if( myWidget != NULL )
+    {
+      Vector3d proj=m_widget->camera()->project(pos) ;
+      QPoint p( (int)proj[0], (int)proj[1] ) ;
+      myWidget->renderText( p.x(), p.y(), msg, font ) ;
+    }
+    else
+      m_wPainter->drawText( pos, msg ) ;
+
+    glPopAttrib() ;
+  }
+
+
+  /**
+    * All method to render/draw text in the render zone.
+    */
+  void WmTool::displayTextMethods()
+  {
+    QString msg ;
+    QFont myFont( "Times", 32, QFont::Bold ) ;
+
+
+    // 1, Origin : Up/left screen.    
+    glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
+    glColor3f( 1.0, 1.0, 1.0 ) ;
+    msg="Avo::Painter : DrawText() 1" ;
+    m_wPainter->drawText( 150, 10, msg ) ;
+    m_wPainter->drawText( QPoint(150,30), msg ) ;
+    glPopAttrib() ; 
+
+    // 2
+    glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
+    glColor3f( 1.0, 1.0, 1.0 ) ;
+    msg="Avo::Painter : DrawText() 2" ;
+    // Origin : center screen.
+    m_wPainter->drawText( Vector3d(0,0,0), msg, myFont ) ;
+    glPopAttrib() ;
+   
+    // 3.0 ! Painter class isn't a derived class of QPainter.
+    //QPainter *myQPainter=dynamic_cast<QPainter*>(m_wPainter) ;
+
+    // 3.1, Display, but in black ... Be carefull of the background color.
+    glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
+    glPushMatrix() ;
+    glColor3f( 1.0, 1.0, 1.0 ) ;
+    QPainter myQPainter ;
+    myQPainter.begin(m_widget) ;
+    msg = "Qt::QPainter : DrawText() 3.1" ;
+    myQPainter.drawText( QPoint(150,70), msg ) ;
+    msg = "Qt::QPainter : DrawText() 3.2" ;
+    myQPainter.drawText( 150, 80, 150, 150, Qt::AlignLeft, msg ) ;
+    myQPainter.end() ;
+    glPopMatrix() ;
+    glPopAttrib() ;
+
+    // 3.2 No tested ... I do not understand when use it to "gain" performance.
+    //QStaticText test ;
+    //myQPainter.drawStaticText( 150, 130, ) ;
+    //myQPainter.end() ;
+    //glPopAttrib() ; 
+ 
+    // 4 Works sometime ... I don't know why this method do not work properly.
+    //glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
+    //glColor3f( 1.0, 1.0, 1.0 ) ;
+    //msg="Avo::QWidget : renderText() 4" ;
+    //m_widget->renderText( 2, 2, 0, msg, myFont ) ;
+    //glPopAttrib() ;
+    
+
+    // 5
+    glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
+    glColor3f( 1.0, 1.0, 1.0 ) ;
+
+    QGLWidget *myWidget=dynamic_cast<QGLWidget*>(m_widget) ;
+    if( myWidget != NULL )
+    {
+      msg="Qt::QWidget : renderText() 5" ;
+      myWidget->renderText( 40, 40, msg, myFont ) ;
+      msg="Qt::QWidget : renderText() 5.1" ;
+      myWidget->renderText( 80, 80, 0, msg, myFont ) ;
+    }
+    else
+    {
+      msg="Qt::QWidget : renderText() 5 FALSE" ;
+      m_wPainter->drawText( 100, 140, msg ) ;
+    }
+    glPopAttrib() ;
+
   }
 
 }

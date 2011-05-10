@@ -105,7 +105,7 @@ else()
   # ex. : #include <wmavo_const.h> instead of <../../wmavo_const.h>
   include_directories( ${wmavoconst_include_dir} )
   include_directories( ${OPENBABEL2_INCLUDE_DIR} )
-
+  
   # Other files.
   include(${Avogadro_USE_FILE})
 
@@ -122,5 +122,13 @@ else()
   
   # Link the LIBRARY ! Not *.h !
   target_link_libraries( ${PLUGIN_NAME} avogadro )
+  
+  # ?
+  #set_target_properties(${PLUGIN_NAME} PROPERTIES
+  #                      OUTPUT_NAME ${PLUGIN_NAME}
+  #                      PREFIX ""
+  #                      LABELS "${PLUGIN_LABEL}")
+  #set_target_properties(${PLUGIN_NAME} PROPERTIES
+  #                      COMPILE_FLAGS "${NO_RTTI_FLAG}")
 
 endif()

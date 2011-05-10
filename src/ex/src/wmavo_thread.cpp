@@ -82,7 +82,7 @@ void WmAvoThread::run()
           lastUpdate = true ;
         else
           lastUpdate = false ;
-
+        //puts( "poll" ) ;
         updateDataTransfert() ;
         emit wmPolled( m_wmDataTransfert ) ;
       }

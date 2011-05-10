@@ -61,7 +61,7 @@
 /// Specific for wmavo_thread.h.
 ///**********************************************************
 
-#define WMAVOTH_SLEEPBEFORE_NEXTROUND 4 // ms
+#define WMAVOTH_SLEEPBEFORE_NEXTROUND 10 //4 // ms
 
 
 ///**********************************************************

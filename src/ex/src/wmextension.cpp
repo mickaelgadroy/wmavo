@@ -33,6 +33,31 @@
 namespace Avogadro
 {
 
+  void InitializeConsoleStdIO()
+  {
+    // si une console est rattachée au processus, alors il existe des fichiers
+    // virtuel CONIN$ et CONOUT$ qui permettent respectivement de lire
+    // et d'écrire depuis / dans cette console (voir la doc de CreateFile).
+
+    #if _MSC_VER >= 1400 // VC++ 8
+    {
+    // éviter le warning C4996: 'freopen' was declared deprecated
+    // This function or variable may be unsafe. Consider using freopen_s instead.
+    FILE *stream;
+    freopen_s( &stream, "CONIN$", "r", stdin );
+    freopen_s( &stream, "CONOUT$", "w", stdout );
+    freopen_s( &stream, "CONOUT$", "w", stderr );
+    }
+    #else
+    std::freopen( "CONIN$", "r", stdin );
+    std::freopen( "CONOUT$", "w", stdout );
+    std::freopen( "CONOUT$", "w", stderr );
+    #endif
+
+    // la ligne suivante synchronise les flux standards C++ (cin, cout, cerr...)
+    std::ios_base::sync_with_stdio();
+  }
+
   /**
     * Constructor.
     * @param parent Instanciate and initiate by Avogadro
@@ -69,6 +94,12 @@ namespace Avogadro
     m_insertFragAct(NULL),
     m_addSubstituteFragAct(NULL)
   {
+    
+    ::AllocConsole();
+    InitializeConsoleStdIO() ;
+    puts( "Your message" ) ;
+    
+
     // Initiate some data.
     m_time.start() ;
     m_cameraInitialViewPoint.matrix().setIdentity() ;
@@ -130,7 +161,7 @@ namespace Avogadro
     */
   void WmExtension::mouseMoveEvent( QMouseEvent *event )
   {
-    cout << "WmExtension::mouseMoveEvent : [" << event->globalX() << ";" << event->globalY() << "]" << endl ;
+    //cout << "WmExtension::mouseMoveEvent : [" << event->globalX() << ";" << event->globalY() << "]" << endl ;
     //m_widget->update() ;
   }
 
@@ -249,8 +280,10 @@ namespace Avogadro
   void WmExtension::wmActions( WmAvoThread::wmDataTransfert wmData )
   {
     //cout << endl << "WmExtension::wmActions : Signal received" << endl ;
+    //puts( "WmExtension::wmActions : Signal received" ) ;
 
     //m_widget->getQuickRender() ; ??? Test if is activate and desactivate it !
+
 
     QPoint posCursor=wmData.posCursor ;
     int wmavoAction=wmData.wmActions ;
@@ -330,6 +363,8 @@ namespace Avogadro
       int distBetweenSource=wmData.distBetweenSources ;
       sendWmInfoToWmTool( m_wmIsConnected, nbDotsDetected, nbSourcesDetected, distBetweenSource ) ;
     }
+
+    //cout << "WmExtension::wmActions : FIN" << endl ;
   }
 
 
@@ -1137,7 +1172,7 @@ namespace Avogadro
 
           // Toggle the selection.
           m_widget->toggleSelected( pList ) ; // or setSelected()
-          cout << "toggle primitive" << endl ;
+          //cout << "toggle primitive" << endl ;
         }
 
         //
@@ -1200,8 +1235,8 @@ namespace Avogadro
             m_drawCurrentAtom = false ;
             m_drawBond = false ;
 
-            cout << "cursor position:" << p.x() << "," << p.y() << endl ;
-            cout << "ref position:" << pointRef[0] << "," << pointRef[1] << "," << pointRef[2] << endl ;
+            //cout << "cursor position:" << p.x() << "," << p.y() << endl ;
+            //cout << "ref position:" << pointRef[0] << "," << pointRef[1] << "," << pointRef[2] << endl ;
             m_beginPosDraw = m_widget->camera()->unProject( p, pointRef ) ;
             m_curPosDraw = m_beginPosDraw ;
           }
@@ -1525,11 +1560,11 @@ namespace Avogadro
               GLfloat projectionMatrix[16] ;
               glGetFloatv( GL_PROJECTION_MATRIX, projectionMatrix ) ;
 
-              cout << "Projection Matrix:" << endl ;
-              cout<<" "<<projectionMatrix[0]<<" "<<projectionMatrix[4]<<" "<<projectionMatrix[8]<<" "<<projectionMatrix[12]<<endl;
-              cout<<" "<<projectionMatrix[1]<<" "<<projectionMatrix[5]<<" "<<projectionMatrix[9]<<" "<<projectionMatrix[13]<<endl;
-              cout<<" "<<projectionMatrix[2]<<" "<<projectionMatrix[6]<<" "<<projectionMatrix[10]<<" "<<projectionMatrix[14]<<endl;
-              cout<<" "<<projectionMatrix[3]<<" "<<projectionMatrix[7]<<" "<<projectionMatrix[11]<<" "<<projectionMatrix[15]<<endl;
+              //cout << "Projection Matrix:" << endl ;
+              //cout<<" "<<projectionMatrix[0]<<" "<<projectionMatrix[4]<<" "<<projectionMatrix[8]<<" "<<projectionMatrix[12]<<endl;
+              //cout<<" "<<projectionMatrix[1]<<" "<<projectionMatrix[5]<<" "<<projectionMatrix[9]<<" "<<projectionMatrix[13]<<endl;
+              //cout<<" "<<projectionMatrix[2]<<" "<<projectionMatrix[6]<<" "<<projectionMatrix[10]<<" "<<projectionMatrix[14]<<endl;
+              //cout<<" "<<projectionMatrix[3]<<" "<<projectionMatrix[7]<<" "<<projectionMatrix[11]<<" "<<projectionMatrix[15]<<endl;
 
 
             }
@@ -2871,7 +2906,7 @@ namespace Avogadro
 
           if( m_bondDraw->beginAtom()->isHydrogen() )
           {
-            cout << "1 m_bondDraw->endAtom()->isHydrogen()" << endl ;
+            //cout << "1 m_bondDraw->endAtom()->isHydrogen()" << endl ;
             adjBegin=AdjustHydrogens::Never ;
           }
           else
@@ -2882,7 +2917,7 @@ namespace Avogadro
             // pre-existing atoms might need extra work
             if( !m_hasAddedBeginAtom )
             {
-              cout << "test9.3" << endl ;
+              //cout << "test9.3" << endl ;
               foreach( unsigned long id, m_bondDraw->beginAtom()->neighbors() )
               {
                 nbr = molecule->atomById(id) ;
@@ -2895,7 +2930,7 @@ namespace Avogadro
 
           if( m_bondDraw->endAtom()->isHydrogen() )
           {
-            cout << "2 m_bondDraw->endAtom()->isHydrogen()" << endl ;
+            //cout << "2 m_bondDraw->endAtom()->isHydrogen()" << endl ;
             adjEnd=AdjustHydrogens::Never ;
           }
           else
@@ -2904,7 +2939,7 @@ namespace Avogadro
 
             if( !m_hasAddedCurAtom )
             {
-              cout << "test9.4" << endl ;
+              //cout << "test9.4" << endl ;
               foreach( unsigned long id, m_bondDraw->endAtom()->neighbors() )
               {
                 nbr = molecule->atomById(id) ;
@@ -2918,7 +2953,7 @@ namespace Avogadro
       }
 
       bondCommand = new AddBondDrawCommand( molecule, m_bondDraw, adjBegin, adjEnd ) ;
-      cout << "  bondCommand:" << bondCommand << endl ;
+      //cout << "  bondCommand:" << bondCommand << endl ;
       bondCommand->setText( tr("Draw Bond") ) ;
     }
 
@@ -2944,7 +2979,7 @@ namespace Avogadro
           seq->setText(tr("Draw"));
         }
 
-        cout << "  seq->append( beginAtomDrawCommand" << beginAtomDrawCommand << endl ;
+        //cout << "  seq->append( beginAtomDrawCommand" << beginAtomDrawCommand << endl ;
         seq->append( beginAtomDrawCommand ) ;
       }
 
@@ -2956,7 +2991,7 @@ namespace Avogadro
           seq->setText(tr("Draw"));
         }
 
-        cout << "  seq->append( currentAtomDrawCommand" << currentAtomDrawCommand << endl ;
+        //cout << "  seq->append( currentAtomDrawCommand" << currentAtomDrawCommand << endl ;
         seq->append( currentAtomDrawCommand ) ;
       }
 
@@ -2968,24 +3003,24 @@ namespace Avogadro
           seq->setText(tr("Draw"));
         }
 
-        cout << "  seq->append( bondCommand:" << bondCommand << endl ;
+        //cout << "  seq->append( bondCommand:" << bondCommand << endl ;
         seq->append( bondCommand ) ;
       }
 
       if( beginAtomDrawCommand!=NULL || currentAtomDrawCommand!=NULL || bondCommand!=NULL )
       {
-        cout << "  undoStack->push( seq ), sequence undo:" << seq << endl ;
+        //cout << "  undoStack->push( seq ), sequence undo:" << seq << endl ;
         m_widget->undoStack()->push( seq ) ;
       }
     }
     else if( bondCommand != NULL )
     {
-      cout << "  undoStack->push( bondCommand )" << endl ;
+      //cout << "  undoStack->push( bondCommand )" << endl ;
       m_widget->undoStack()->push( bondCommand ) ;
     }
     else if( beginAtomDrawCommand != NULL )
     {
-      cout << "  undoStack->push( beginAtomDrawCommand )" << endl ;
+      //cout << "  undoStack->push( beginAtomDrawCommand )" << endl ;
       m_widget->undoStack()->push( beginAtomDrawCommand ) ;
     }
   }

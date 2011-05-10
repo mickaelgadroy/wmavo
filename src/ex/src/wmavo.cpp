@@ -276,19 +276,19 @@ bool WmAvo::wmPoll()
         break ;
 
       case CWiimote::EVENT_NONE :
-        cout << "EVENT_NONE" << endl ;
+        //cout << "EVENT_NONE" << endl ;
         break ;
       case CWiimote::EVENT_STATUS :
-        cout << "EVENT_STATUS" << endl ;
+        //cout << "EVENT_STATUS" << endl ;
         break ;
       case CWiimote::EVENT_CONNECT :
-        cout << "EVENT_CONNECT" << endl ;
+        //cout << "EVENT_CONNECT" << endl ;
         break ;
       case CWiimote::EVENT_READ_DATA :
-        cout << "EVENT_READ_DATA" << endl ;
+        //cout << "EVENT_READ_DATA" << endl ;
         break ;
       default:
-        cout << "default" << endl ;
+        //cout << "default" << endl ;
         break ;
       }
     }
@@ -667,7 +667,7 @@ float WmAvo::wmGetAcc()
   }
   else
   {
-    cout << "No accel activate, so 'I' am going to activate it." << endl ;
+    //cout << "No accel activate, so 'I' am going to activate it." << endl ;
     m_wm->SetMotionSensingMode( CWiimote::ON ) ;
     return 0.0 ;
   }

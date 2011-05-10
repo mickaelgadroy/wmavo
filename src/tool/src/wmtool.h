@@ -70,6 +70,7 @@
 #include <QLabel>
 #include <QGridLayout>
 #include <QSlider>
+#include <QPainter>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -263,24 +264,35 @@ namespace Avogadro
   // Public constants.
   public:
 
+    /**
+      * @name Mathematical needs.
+      * @{ */
     static const double m_PI ; // Pi approximation.
     static const double m_PI180 ; // 3.14/180 for degree to radian.
     static const double m_180PI ; // 180/3.14 for radian to degree.
+    static const QString m_angstromStr ;
+    static const QString m_degreeStr ;
+    // @}
+
+    /**
+      * @name Fonts definition used in the plugin.
+      * @{ */
+    float m_ratioFontSize ; //< The user can modify this ratio to resize the messages.
+    static const QFont m_fontInfo ;
+    static const QFont m_fontError ;
+    static const QFont m_fontDistDiedre ;
+    // @}
 
 
   //
   // Public methods.
   public:
 
-    /**
-     * Constructor.
-     */
-    WmTool(QObject *parent = 0);
-
-    /**
-     * Destructor.
-     */
-    ~WmTool();
+    /** @name [Des|Cons]tructor methods
+     * @{ */
+    WmTool(QObject *parent = 0); //< Constructor.
+    ~WmTool(); //< Destructor.
+    // @}
 
     /** @name Tool Methods
      * @{
@@ -326,14 +338,17 @@ namespace Avogadro
     void drawBond2( Vector3d begin, Vector3d end ) ;
     // @}
 
-
-
     /**
       * @name Display something in the render zone
       * @{ */
     void displayWmInfo() ;
     void displayMsg() ;
     void displayAtomicNumberCurrent() ;
+    void displayMsgInRenderZone( QPoint pos, QString msg, QFont font, float r, float g, float b ) ;
+    void displayMsgInRenderZone( Vector3d pos, QString msg, QFont font, float r, float g, float b ) ;
+    void displayMsgOnScreen( QPoint pos, QString msg, QFont font, float r, float g, float b ) ;
+    void displayMsgOnScreen( Vector3d pos, QString msg, QFont font, float r, float g, float b ) ;
+    void displayTextMethods() ; //< Methods tested to render text.
     // @}
 
     /**
