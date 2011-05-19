@@ -33,6 +33,7 @@
 namespace Avogadro
 {
 
+  #if WIN32
   void InitializeConsoleStdIO()
   {
     // si une console est rattachée au processus, alors il existe des fichiers
@@ -57,6 +58,7 @@ namespace Avogadro
     // la ligne suivante synchronise les flux standards C++ (cin, cout, cerr...)
     std::ios_base::sync_with_stdio();
   }
+  #endif
 
   /**
     * Constructor.
@@ -90,15 +92,16 @@ namespace Avogadro
     m_cancelAct(NULL), m_periodicTableAct(NULL),
     m_contextMenuMeasure(NULL),
     m_noDistAct(NULL), m_distAct(NULL), m_angleAct(NULL), m_diedreAct(NULL),
-    m_contextMenuFragment(NULL),
+    m_contextMenuFragment(NULL), m_contextMenuResumeFragment(NULL),
     m_insertFragAct(NULL),
     m_addSubstituteFragAct(NULL)
   {
     
+    #if WIN32
     ::AllocConsole();
     InitializeConsoleStdIO() ;
     puts( "Your message" ) ;
-    
+    #endif
 
     // Initiate some data.
     m_time.start() ;
@@ -217,7 +220,8 @@ namespace Avogadro
         m_cameraInitialViewPoint = m_widget->camera()->modelview() ;
 
         m_pullDownMenuActions.at(ConnectWm)->setEnabled(false) ;
-        m_pullDownMenuActions.at(DisconnectWm)->setEnabled(true) ;
+        //m_pullDownMenuActions.at(DisconnectWm)->setEnabled(true) ;
+        // See initPullDownMenu
       }
       break ;
 
@@ -251,6 +255,7 @@ namespace Avogadro
       */
       break ;
 
+/*// See initPullDownMenu
     case OpMode1 :
       m_wmavoThread->setWmOperatingMode(WMAVO_OPERATINGMODE1) ;
       break ;
@@ -262,7 +267,7 @@ namespace Avogadro
     case OpMode3 :
       m_wmavoThread->setWmOperatingMode(WMAVO_OPERATINGMODE3) ;
       break ;
-
+*/
     default :
       break ;
     }
@@ -546,7 +551,7 @@ namespace Avogadro
     action->setText( tr("Connect Wiimote") ) ;
     action->setData( ConnectWm ) ;
     m_pullDownMenuActions.append( action ) ;
-
+/*
     action =  new QAction(this) ;
     action->setText( tr("Disconnect Wiimote") ) ;
     action->setData( DisconnectWm ) ;
@@ -570,6 +575,8 @@ namespace Avogadro
     action->setText( tr("Wm2 + Nc1") ) ;
     action->setData( OpMode3 ) ;
     m_pullDownMenuActions.append( action ) ;
+    */
+    
   }
 
 
@@ -840,7 +847,10 @@ namespace Avogadro
     // Then, initiate the context menu object.
 
     m_contextMenuMain = new ContextMenu( m_widget, NULL ) ;
-    m_contextMenuMain->setTitle( "Wiimote Context Menu" ) ;
+    m_contextMenuMain->setTitle( "WmAvo Context Menu" ) ;
+    m_contextMenuMain->setStyleSheet( "QMenu {background-color: #ABABAB;border: 1px solid black;} \
+                                        QMenu::item { background-color: transparent; } \
+                                        QMenu::item:selected { background-color: #654321; }" ) ;
 
     m_contextMenuMain->addAction( m_periodicTableAct ) ;
     m_contextMenuMain->addSeparator() ;
@@ -853,6 +863,7 @@ namespace Avogadro
 
     m_contextMenuMain->addMenu( m_contextMenuMeasure ) ;
 
+    m_contextMenuMain->addMenu( createMenuResumeSubstituteAtomByFragment() ) ;
     m_contextMenuMain->addMenu( createMenuSubstituteAtomByFragment() ) ;
     m_contextMenuMain->addSeparator() ;
 
@@ -864,6 +875,26 @@ namespace Avogadro
     m_contextMenuMain->setActiveAction( m_periodicTableAct ) ;
 
     return ok ;
+  }
+
+  /**
+    * Change the size of the context menu.
+    */
+  void WmExtension::setFontSizeContextMenu(int ratio)
+  {
+    float r=(float)(ratio)*0.1f ;
+
+    if( r>=WMTOOL_POINTSIZE_RATIO_MIN && r<=WMTOOL_POINTSIZE_RATIO_MAX )
+    {
+      QFont font( WMTOOL_FONT_FAMILY_INFO, r*WMTOOL_FONT_POINTSIZE_INFO, WMTOOL_FONT_WEIGHT_INFO ) ;
+      m_contextMenuMain->setFont( font ) ;
+      m_contextMenuMeasure->setFont( font ) ;
+      m_contextMenuFragment->setFont( font ) ;
+      m_contextMenuResumeFragment->setFont( font ) ;
+
+      for( int i=0 ; i<m_famillyFragAct.size() ; i++ )
+        m_famillyFragAct.at(i)->setFont(font) ;
+    }
   }
 
 
@@ -889,20 +920,108 @@ namespace Avogadro
 
 
   /**
+    * Create the "Substitute Atom By Fragment" resume sub-menu for the context menu.
+    * It lets to search in an Avogadro repository some selected fragment files.
+    * @return A (ContextMenu*) object which represents the "Substitute Atom By Fragment" sub-menu.
+    */
+  ContextMenu* WmExtension::createMenuResumeSubstituteAtomByFragment()
+  {
+    /* 1st method, if the cmake can copy img/ directory in an Avogadro directory.
+    QDir fragRootDir( QCoreApplication::applicationDirPath()+"/../share/avogadro/fragments_resume" ) ;
+
+    if( fragRootDir.exists() )
+    {
+      m_contextMenuFragment = createMenuSABF(m_contextMenuMain, fragRootDir, false ) ;
+      m_contextMenuFragment->setTitle( "Substitute atom by fragment (resume)" ) ;
+    }
+    */
+
+    QDir fragRootDir( QCoreApplication::applicationDirPath()+"/../share/avogadro/fragments" ) ;
+
+    if( fragRootDir.exists() )
+    {  
+      QString absPath=fragRootDir.toNativeSeparators( fragRootDir.absolutePath() ) + fragRootDir.separator() ;
+
+      QVector<QString> listFragment ;
+      QString tmp ;
+      ActionModified *aTmp=NULL ;
+      bool isConnect ;
+
+      listFragment
+        << "methyl.cml" << "-CH3"
+        << "alkenes/ethene.cml" << "-CH=CH2"
+        << "aldehydes/formaldehyde.cml" << "-HC=O"
+        << "carboxylic_acids/formic_acid.cml" << "-COOH"
+        << "amines/ammonia.cml" << "-NH2"
+        << "alcohols/alcohol.cml" << "-OH"
+        << "cyclic alkanes/cyclopentane.cml" << "-cyclopentane"
+        << "cyclic alkanes/cyclohexane.cml" << "-cyclohexane"
+        << "aromatics/benzene.cml" << "-phenyl"
+        << "heteroaromatics/1H-pyrrole.cml" << "-pyrrole"
+        << "chlorine.cml" << "-Cl"
+        << "bromine.cml" << "-Br"
+        << "iodine.cml" << "-I"
+        << "metoxy.cml" << "-ether"
+        << "thiols/thiol.cml" << "-SH"
+        << "nitrogen dioxyde.cml" << "-NO2"
+        
+        //<< "alkynes/acetylene.cml" << "-CCH"
+        //<< "methane.cml" << "-CH4"
+
+       //<< "alcohols/methanol.cml"
+       //<< "alkynes/propyne.cml"
+       //<< "amides/acetamide.cml"
+       //<< "aromatics/aniline.cml"
+       //<< "thiols/methanethiol.cml"
+                   ;
+
+      m_contextMenuResumeFragment = new ContextMenu( "Substitute atom by fragment (resume)", 
+                                                      m_contextMenuMain, m_contextMenuMain ) ;
+     
+      // Get files.
+      for( int i=0 ; i<listFragment.size() ; i+=2 )
+      {
+        tmp = absPath ;
+        tmp += listFragment[i] ;
+        //qDebug() << tmpStr ;
+
+        aTmp = new ActionModified(listFragment[i+1], this) ;
+        m_fragAct.append( aTmp ) ;
+        aTmp->setStatusTip( tmp ) ;
+
+        isConnect = connect( aTmp, SIGNAL(triggeredInfo(QString)),
+                              this, SLOT(substituteAtomByFrag(QString)) ) ;
+
+        if( !isConnect )
+          qDebug() << "Problem connection signal : ActionsModified.triggeredInfo() -> WmExtension.substituteAtomByFrag() !!" ;
+
+        m_contextMenuResumeFragment->addAction( m_fragAct.last() ) ;
+      }
+    }
+
+    return m_contextMenuResumeFragment ;
+  }
+
+
+  /**
     * Help to create the "Substitute Atom By Fragment" sub-menu for the context menu.
     * This is a recursive method to search in an Avogadro repertory.
     * It is called by WmExtension::createMenuSubstituteAtomByFragment() .
     * @return A (ContextMenu*) object which represents a big part of "Substitute Atom By Fragment" sub-menu.
     * @param parent The (ContextMenu*) parent object.
     * @param dirCur The directory which contains all fragments
+    * @param withFamily If a family tree is created or not.
     */
-  ContextMenu* WmExtension::createMenuSABF( ContextMenu *parent, QDir dirCur )
+  ContextMenu* WmExtension::createMenuSABF( ContextMenu *parent, QDir dirCur, bool withFamily )
   {
     bool isConnect=false ;
+    //QStringList filtersName ;
+    //filtersName << "*.cml" ;
+    //dirCur.setNameFilters( filtersName ) ;
 
     ActionModified *aTmp=NULL ;
     QString tmpStr ;
-    ContextMenu *cmCur=NULL ; // Current QMenu.
+    ContextMenu *cmCur=parent ; // Current QMenu.
     QDir::Filters filterDir( QDir::Dirs | QDir::NoDotAndDotDot ) ;
     QDir::Filters filterFile( QDir::Files ) ;
     QStringList dirs=dirCur.entryList( filterDir, QDir::Name ) ; // Get directories entries.
@@ -910,8 +1029,11 @@ namespace Avogadro
     QString absPath=dirCur.toNativeSeparators( dirCur.absolutePath() ) + dirCur.separator() ;
 
     // Create & append current menu.
-    m_famillyFragAct.append( new ContextMenu(dirCur.dirName(), parent, parent) ) ;
-    cmCur = m_famillyFragAct.last() ;
+    if( withFamily )
+    {
+      m_famillyFragAct.append( new ContextMenu(dirCur.dirName(), parent, parent) ) ;
+      cmCur = m_famillyFragAct.last() ;
+    }
 
     // Get directories.
     foreach( QString d, dirs )
@@ -920,7 +1042,10 @@ namespace Avogadro
       tmpStr += d ;
       //qDebug() << tmpStr ;
 
-      cmCur->addMenu( createMenuSABF( cmCur, QDir(tmpStr)) ) ;
+      if( withFamily )
+        cmCur->addMenu( createMenuSABF( cmCur, QDir(tmpStr)) ) ;
+      else
+        createMenuSABF( cmCur, QDir(tmpStr)) ;
     }
 
     // Get files.
@@ -935,12 +1060,10 @@ namespace Avogadro
       aTmp->setStatusTip( tmpStr ) ;
 
       isConnect = connect( aTmp, SIGNAL(triggeredInfo(QString)),
-               this, SLOT(substituteAtomByFrag(QString)) ) ;
+                            this, SLOT(substituteAtomByFrag(QString)) ) ;
 
       if( !isConnect )
-      {
         qDebug() << "Problem connection signal : ActionsModified.triggeredInfo() -> WmExtension.substituteAtomByFrag() !!" ;
-      }
 
       cmCur->addAction( m_fragAct.last() ) ;
     }
@@ -1903,9 +2026,9 @@ namespace Avogadro
   {
     // Close periodic table when visible.
     // CAUTION !!
-    // All features use menu must be before the mouse actions of context menu.
+    // All features using menu must be close before the mouse actions of context menu.
     // Because, the mouse actions of context menu active the opening of feature,
-    // so, if we ask isVisible & OK_MENU, it opens feature with OK_MENU, then this
+    // so, if we ask isVisible & OK_MENU, it opens a feature with OK_MENU, then this
     // feature takes for it too.
     if( m_periodicTable->isVisible() && WMAVO_IS2(wmavoAction, WMAVO_MENU_OK) )
     {
@@ -1936,136 +2059,181 @@ namespace Avogadro
   void WmExtension::transformWrapperActionToShowContextMenu( int &wmavoAction, QPoint posCursor )
   {
 
-    // This must be before context menu actions (explain in the method).
-    transformWrapperActionToClosePeriodicTable( wmavoAction, posCursor ) ;
-
-
-    // Menu activation.
-    if( WMAVO_IS2(wmavoAction, WMAVO_MENU_ACTIVE) )
+    if( m_widget->selectedPrimitives().size() >= 2 )
     {
-      //QContextMenuEvent cme( QContextMenuEvent::Mouse, QPoint(5,5) ) ;
-      //QApplication::sendEvent( m_widget->current(), &cme ) ;
+      m_wmavoThread->setWmMenuMode( false ) ;
+      WMAVO_SETOFF2( wmavoAction, WMAVO_MENU_ACTIVE ) ;
+    }
+    else
+    {
+      // This must be before context menu actions (explain in the method).
+      transformWrapperActionToClosePeriodicTable( wmavoAction, posCursor ) ;
 
-      //cout << "0menu active:" << m_menuActive << endl ;
 
-      if( !m_menuActive && !m_periodicTable->isVisible() )
+      // Menu activation.
+      if( WMAVO_IS2(wmavoAction, WMAVO_MENU_ACTIVE) )
       {
-        //m_periodicTable->show() ;
+        //QContextMenuEvent cme( QContextMenuEvent::Mouse, QPoint(5,5) ) ;
+        //QApplication::sendEvent( m_widget->current(), &cme ) ;
 
-        m_menuActive = true ;
-        m_contextMenuCurrent = m_contextMenuMain ;
-        m_contextMenuMain->setActiveAction( m_periodicTableAct ) ;
+        //cout << "0menu active:" << m_menuActive << endl ;
 
-        // Method 1
-        //m_contextMenuMain->show() ; où est le setPos !!?
-
-        // Method 2, soit Appel non bloquant.
-        m_contextMenuCurrent->popup( posCursor ) ;
-
-        // Method 3, soit appel bloquant
-        //m_contextMenuMain->exec( posCursor ) ;
-        // => return QAction* : either realized QAction, either NULL=echap
-
-        // Here, do not try to realize action according to the return
-        // because it realizes by predefined signals.
-      }
-      else
-      {
-        // If the context menu disappears.
-        if( !m_contextMenuCurrent->isVisible() && !m_periodicTable->isVisible() )
+        if( !m_menuActive && !m_periodicTable->isVisible() )
         {
-          /*
-          if( m_contextMenuCurrent->getMenuParent() == NULL )
-            // The sub-menu can reappear on the menu ...
-            m_contextMenuCurrent->popup( QPoint(posCursor.x()-30, posCursor.y()-30) ) ;
-          else
-          */
-            m_contextMenuCurrent->popup( posCursor ) ;
-        }
-      }
+          //m_periodicTable->show() ;
 
-      //cout << "  menu active:" << m_menuActive << endl ;
+          m_menuActive = true ;
+          m_contextMenuCurrent = m_contextMenuMain ;
+          m_contextMenuMain->setActiveAction( m_periodicTableAct ) ;
 
-
-      if( WMAVO_IS2(wmavoAction,WMAVO_MENU_OK) )
-      {
-        //cout << "  menu OK" << endl ;
-        //QAction *actionMenu=m_contextMenuMain->actionAt( m_contextMenuMain->mapFromGlobal(posCursor) ) ;
-        QAction *actionMenu=m_contextMenuCurrent->activeAction() ;
-
-        if( actionMenu != NULL )
-        {
-          // The test is here to limit the time between the work realized by
-          // the action called by trigger(), and limit the risk that wmavo returns
-          // a signal to execut another instance of this function with bad parameters ...
-
-          if( actionMenu->text().compare(tr("Periodic Table")) != 0 )
+          // Disable useless menu.
+          if( m_widget->selectedPrimitives().size() == 1 )
           {
-            //qDebug() << "FIN" ;
-            m_wmavoThread->setWmMenuMode( false ) ;
-            WMAVO_SETOFF2( wmavoAction, WMAVO_MENU_ACTIVE ) ;
+            m_contextMenuResumeFragment->setEnabled(true) ;
+            m_contextMenuFragment->setEnabled(true) ;
+          }
+          else
+          {
+            m_contextMenuResumeFragment->setEnabled(false) ;
+            m_contextMenuFragment->setEnabled(false) ;
           }
 
-          actionMenu->trigger() ;
+          // Method 1
+          //m_contextMenuMain->show() ; where is setPos !!?
 
-          m_menuActive = false ;
-          //m_contextMenuCurrent->close() ;
-          m_contextMenuMain->close() ;
+          // Method 2, soit Appel non bloquant.
+          m_contextMenuCurrent->popup( posCursor ) ;
 
+          // Method 3, soit appel bloquant
+          //m_contextMenuMain->exec( posCursor ) ;
+          // => return QAction* : either realized QAction, either NULL=echap
+
+          // Here, do not try to realize action according to the return
+          // because it realizes by predefined signals.
         }
-      }
-
-      //QWidget *widgetTmp=m_contextMenuMain->focusWidget() ;
-
-      //if( widgetTmp != NULL )
-      //{
-        if( WMAVO_IS2(wmavoAction, WMAVO_MENU_DOWN) )
+        else
         {
-          QKeyEvent ke(QEvent::KeyPress, Qt::Key_Down, Qt::NoModifier) ;
-          QApplication::sendEvent( m_contextMenuCurrent, &ke ) ;
-        }
-
-        if( WMAVO_IS2(wmavoAction, WMAVO_MENU_UP) )
-        {
-          QKeyEvent ke(QEvent::KeyPress, Qt::Key_Up, Qt::NoModifier) ;
-          QApplication::sendEvent( m_contextMenuCurrent, &ke ) ;
-        }
-
-        if( WMAVO_IS2(wmavoAction, WMAVO_MENU_RIGHT) )
-        {
-          QKeyEvent ke(QEvent::KeyPress, Qt::Key_Right, Qt::NoModifier) ;
-          QApplication::sendEvent( m_contextMenuCurrent, &ke ) ;
-
-          if( m_contextMenuCurrent->activeAction() != NULL )
+          // If the context menu disappears.
+          if( !m_contextMenuCurrent->isVisible() && !m_periodicTable->isVisible() )
           {
+            /*
+            if( m_contextMenuCurrent->getMenuParent() == NULL )
+              // The sub-menu can reappear on the menu ...
+              m_contextMenuCurrent->popup( QPoint(posCursor.x()-30, posCursor.y()-30) ) ;
+            else
+            */
+              m_contextMenuCurrent->popup( posCursor ) ;
+          }
+        }
+
+        //cout << "  menu active:" << m_menuActive << endl ;
+
+
+        if( WMAVO_IS2(wmavoAction,WMAVO_MENU_OK) )
+        {
+          //cout << "  menu OK" << endl ;
+          //QAction *actionMenu=m_contextMenuMain->actionAt( m_contextMenuMain->mapFromGlobal(posCursor) ) ;
+          QAction *actionMenu=m_contextMenuCurrent->activeAction() ;
+
+          if( actionMenu != NULL )
+          {
+            // The test is here to limit the time between the work realized by
+            // the action called by trigger(), and limit the risk that wmavo returns
+            // a signal to execut another instance of this function with bad parameters ...
+             
+
             #ifdef _WIN32
             ContextMenu *cm=dynamic_cast<ContextMenu*>(m_contextMenuCurrent->activeAction()->menu()) ;
             #else
             ContextMenu *cm=static_cast<ContextMenu*>(m_contextMenuCurrent->activeAction()->menu()) ;
             #endif
-            
-            if( cm!=NULL && cm!=m_contextMenuCurrent )
-              m_contextMenuCurrent = cm ;
+
+            // Test if the current action is a "menu" (a root to go to another menu).
+            if( cm==NULL || cm==m_contextMenuCurrent )
+            {
+              if( actionMenu->text().compare(tr("Periodic Table")) != 0 )
+              {
+                //qDebug() << "FIN" ;
+                m_wmavoThread->setWmMenuMode( false ) ;
+                WMAVO_SETOFF2( wmavoAction, WMAVO_MENU_ACTIVE ) ;
+              }
+
+              actionMenu->trigger() ;
+
+              m_menuActive = false ;
+              //m_contextMenuCurrent->close() ;
+              m_contextMenuMain->close() ;
+            }
+            else
+            {
+              QKeyEvent ke(QEvent::KeyPress, Qt::Key_Right, Qt::NoModifier) ;
+              QApplication::sendEvent( m_contextMenuCurrent, &ke ) ;
+              if( cm!=NULL && cm!=m_contextMenuCurrent )
+                m_contextMenuCurrent = cm ;
+            }
           }
         }
 
-        if( WMAVO_IS2(wmavoAction, WMAVO_MENU_LEFT) )
-        {
-          QKeyEvent ke(QEvent::KeyPress, Qt::Key_Left, Qt::NoModifier) ;
-          QApplication::sendEvent( m_contextMenuCurrent, &ke ) ;
+        //QWidget *widgetTmp=m_contextMenuMain->focusWidget() ;
 
-          if( m_contextMenuCurrent->getMenuParent() != NULL )
+        //if( widgetTmp != NULL )
+        //{
+          else if( WMAVO_IS2(wmavoAction, WMAVO_MENU_DOWN) )
           {
-            m_contextMenuCurrent->close() ;
-            m_contextMenuCurrent = m_contextMenuCurrent->getMenuParent() ;
+            QKeyEvent ke(QEvent::KeyPress, Qt::Key_Down, Qt::NoModifier) ;
+            QApplication::sendEvent( m_contextMenuCurrent, &ke ) ;
           }
-        }
-      //}
-    }
-    else
-    {
-      // Desactivate all context menu & Co.
-      m_contextMenuMain->close() ;
+
+          else if( WMAVO_IS2(wmavoAction, WMAVO_MENU_UP) )
+          {
+            QKeyEvent ke(QEvent::KeyPress, Qt::Key_Up, Qt::NoModifier) ;
+            QApplication::sendEvent( m_contextMenuCurrent, &ke ) ;
+          }
+
+          else if( WMAVO_IS2(wmavoAction, WMAVO_MENU_RIGHT) )
+          {
+            QAction *qa=m_contextMenuCurrent->activeAction() ;
+            ContextMenu *cm1=( qa==NULL ? NULL : dynamic_cast<ContextMenu*>(qa->menu()) ) ;
+            //if( qa!=NULL && cm1!=NULL )
+              //printf( "%s:%s:%s\n", cm1->title().toStdString().c_str(), qa->text().toStdString().c_str(), qa->objectName().toStdString().c_str() ) ;
+
+            if( cm1!=NULL && (cm1->title()==qa->text() && cm1->isEnabled()) )
+            {
+              QKeyEvent ke(QEvent::KeyPress, Qt::Key_Right, Qt::NoModifier) ;
+              QApplication::sendEvent( m_contextMenuCurrent, &ke ) ;
+
+              if( m_contextMenuCurrent->activeAction() != NULL )
+              {
+                #ifdef _WIN32
+                ContextMenu *cm=dynamic_cast<ContextMenu*>(m_contextMenuCurrent->activeAction()->menu()) ;
+                #else
+                ContextMenu *cm=static_cast<ContextMenu*>(m_contextMenuCurrent->activeAction()->menu()) ;
+                #endif
+                
+                if( cm!=NULL && cm!=m_contextMenuCurrent )
+                  m_contextMenuCurrent = cm ;
+              }
+            }
+          }
+
+          else if( WMAVO_IS2(wmavoAction, WMAVO_MENU_LEFT) )
+          {
+            QKeyEvent ke(QEvent::KeyPress, Qt::Key_Left, Qt::NoModifier) ;
+            QApplication::sendEvent( m_contextMenuCurrent, &ke ) ;
+
+            if( m_contextMenuCurrent->getMenuParent() != NULL )
+            {
+              m_contextMenuCurrent->close() ;
+              m_contextMenuCurrent = m_contextMenuCurrent->getMenuParent() ;
+            }
+          }
+        //}
+      }
+      else
+      {
+        // Desactivate all context menu & Co.
+        m_contextMenuMain->close() ;
+      }
     }
   }
 
@@ -3392,7 +3560,7 @@ namespace Avogadro
         }
 
         startAtomIndex = startAtom->index() ;
-        removeHydrogen_p( molecule, startAtom ) ;
+        //removeHydrogen_p( molecule, startAtom ) ;
 
 
         // Connect to the first atom of the fragment.
@@ -3447,7 +3615,7 @@ namespace Avogadro
           OpenBabel::OBBuilder::Connect( obmol, startAtomIndex+1, endAtomIndex+1 ) ;
 
           // Adjust the hydrogen of the startAtom.
-          addHydrogen_p( molecule, &obmol, startAtom ) ; //
+          //addHydrogen_p( molecule, &obmol, startAtom ) ; //
 
           // Adjust the hydrogen of the endAtom.
           addHydrogen_p( molecule, &obmol, endAtom ) ; //

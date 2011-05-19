@@ -263,16 +263,19 @@ bool WmAvo::wmPoll()
         {
           if( m_wm->ExpansionDevice.GetType() == m_wm->ExpansionDevice.TYPE_NUNCHUK )  // No concurrence.
           {
+            puts( "case CWiimote::EVENT_NUNCHUK_INSERTED:1" ) ;
             m_wmNunchuk = &(m_wm->ExpansionDevice.Nunchuk) ;
             m_wmGetNunchuk = true ;
           }
         }
+        puts( "case CWiimote::EVENT_NUNCHUK_INSERTED:2" ) ;
         break ;
 
       case CWiimote::EVENT_NUNCHUK_REMOVED:
         m_wmNunchuk = NULL ;
         m_wmGetNunchuk = false ;
         //reloadWiimotes = 1;
+        puts( "case CWiimote::EVENT_NUNCHUK_REMOVED:" ) ;
         break ;
 
       case CWiimote::EVENT_NONE :

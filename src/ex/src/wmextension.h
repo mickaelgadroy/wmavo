@@ -206,9 +206,11 @@ namespace Avogadro
 
       /**
         * @name Receive works from WmTool class
-        * Deprecated : it is not the wrapper which request a distance calculation (by keyboard action).
         * @{ */
       void receiveRequestToCalculDistance() ;
+        //< Deprecated : it is not the wrapper which request a distance calculation (by keyboard action).
+      void setFontSizeContextMenu( int ratio ) ;
+        // Set the size of the context menu font.
       // @}
 
 
@@ -286,7 +288,9 @@ namespace Avogadro
       bool initContextMenu() ; ///< To manipulate a context menu in Avogadro.
       ContextMenu* createMenuSubstituteAtomByFragment() ;
           ///< To help in the initialization of the "Substiture atom by fragment" menu.
-      ContextMenu* createMenuSABF( ContextMenu *parent, QDir dirCur ) ;
+      ContextMenu* createMenuResumeSubstituteAtomByFragment() ;
+          ///< To help in the initialization of the "Substiture atom by fragment" resume menu.
+      ContextMenu* createMenuSABF( ContextMenu *parent, QDir dirCur, bool withFamily=true ) ;
       // @}
 
 
@@ -533,6 +537,7 @@ namespace Avogadro
       ContextMenu *m_contextMenuMeasure ;
       QAction *m_noDistAct, *m_distAct, *m_angleAct, *m_diedreAct ;
       ContextMenu *m_contextMenuFragment ;
+      ContextMenu *m_contextMenuResumeFragment ;
       QAction *m_insertFragAct ;
       QAction *m_addSubstituteFragAct ;
       QVector<ActionModified*> m_fragAct ;

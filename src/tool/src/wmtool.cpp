@@ -42,10 +42,6 @@ namespace Avogadro
   const QString WmTool::m_angstromStr=QString::fromUtf8( " Å" ) ;
   const QString WmTool::m_degreeStr=QString::fromUtf8( "°" ) ;
 
-  const QFont WmTool::m_fontInfo( "Times", 32, QFont::Bold ) ;
-  const QFont WmTool::m_fontError( "Times", 32, QFont::Bold ) ;
-  const QFont WmTool::m_fontDistDiedre( "Times", 28, QFont::Bold ) ;
-
 
   WmTool::WmTool(QObject *parent) :
       Tool(parent),
@@ -61,8 +57,29 @@ namespace Avogadro
       m_beginAtom(Vector3d(0,0,0)), m_endAtom(Vector3d(0,0,0)),
       m_isCalculDistDiedre(false), m_nbAtomForDistDiedre(0),
 
-      m_ratioFontSize(1)
+      /*m_initDisplayDistDiedre(false),*/
+      m_nbHPixelDist(WMTOOL_SPACING_LEFT_WORDGRP ), m_nbHPixelAngle(WMTOOL_SPACING_LEFT_WORDGRP),
+      m_nbHPixelDihedral(WMTOOL_SPACING_LEFT_WORDGRP), m_nbVPixelDist(WMTOOL_SPACING_DOWN_WORDGRP),
+      m_nbVPixelAngle(0), m_nbVPixelDihedral(0),
+
+      m_ratioFontSize(WMTOOL_POINTSIZE_RATIO_DEFAULT)
   {
+    m_fontInfo.setFamily( WMTOOL_FONT_FAMILY_INFO ) ;
+    m_fontInfo.setPointSizeF( WMTOOL_FONT_POINTSIZE_INFO ) ;
+    m_fontInfo.setWeight( WMTOOL_FONT_WEIGHT_INFO ) ;
+
+    m_fontError.setFamily( WMTOOL_FONT_FAMILY_ERROR ) ;
+    m_fontError.setPointSizeF( WMTOOL_FONT_POINTSIZE_ERROR ) ;
+    m_fontError.setWeight( WMTOOL_FONT_WEIGHT_ERROR ) ;
+
+    m_fontDistDiedreInfo.setFamily( WMTOOL_FONT_FAMILY_DISTDIEDREINFO ) ;
+    m_fontDistDiedreInfo.setPointSizeF( WMTOOL_FONT_POINTSIZE_DISTDIEDREINFO ) ;
+    m_fontDistDiedreInfo.setWeight( WMTOOL_FONT_WEIGHT_DISTDIEDREINFO ) ;
+
+    m_fontDistDiedreAtom.setFamily( WMTOOL_FONT_FAMILY_DISTDIEDREATOM ) ;
+    m_fontDistDiedreAtom.setPointSizeF( WMTOOL_FONT_POINTSIZE_DISTDIEDREATOM ) ;
+    m_fontDistDiedreAtom.setWeight( WMTOOL_FONT_WEIGHT_DISTDIEDREATOM ) ;
+
     m_gluQuadricParams = gluNewQuadric() ;
     gluQuadricDrawStyle( m_gluQuadricParams, GLU_LINE ) ;
 
@@ -166,6 +183,8 @@ namespace Avogadro
       m_settingsWidget = new QWidget ;
 
       QLabel *lblWmSensitive = new QLabel(tr("Wiimote sensitive :")) ;
+      QLabel *lblWmSMoins = new QLabel(tr("(-)")) ;
+      QLabel *lblWmSPlus = new QLabel(tr("(+)")) ;
       m_wmSensitiveSlider = new QSlider( Qt::Horizontal ) ;
       m_wmSensitiveSlider->setMaximum( PLUGIN_WM_SENSITIVE_MAX ) ;
       m_wmSensitiveSlider->setMinimum( PLUGIN_WM_SENSITIVE_MIN ) ;
@@ -173,12 +192,30 @@ namespace Avogadro
       m_wmSensitiveSlider->setTickInterval( 1 ) ;
       //m_addHydrogensCheck = new QCheckBox( "Adjust Hydrogen" ) ;
 
-      QHBoxLayout *hBox=new QHBoxLayout() ;
-      hBox->addWidget( lblWmSensitive ) ;
-      hBox->addWidget( m_wmSensitiveSlider ) ;
+      QLabel *lblWmPointSize = new QLabel(tr("Font Size :")) ;
+      QLabel *lblWmMoins = new QLabel(tr("(-)")) ;
+      QLabel *lblWmPlus = new QLabel(tr("(+)")) ;
+      m_wmPointSizeFontSlider = new QSlider( Qt::Horizontal ) ;
+      m_wmPointSizeFontSlider->setMaximum( (int)(WMTOOL_POINTSIZE_RATIO_MAX * 10.0f) ) ;
+      m_wmPointSizeFontSlider->setMinimum( (int)(WMTOOL_POINTSIZE_RATIO_MIN * 10.0f) ) ;
+      m_wmPointSizeFontSlider->setValue( (int)(WMTOOL_POINTSIZE_RATIO_DEFAULT * 10.0f) ) ;
+      m_wmPointSizeFontSlider->setTickInterval( 1 ) ;
+
+      QHBoxLayout *hBoxSens=new QHBoxLayout() ;
+      hBoxSens->addWidget( lblWmSensitive ) ;
+      hBoxSens->addWidget( lblWmSMoins ) ;
+      hBoxSens->addWidget( m_wmSensitiveSlider ) ;
+      hBoxSens->addWidget( lblWmSPlus ) ;
+
+      QHBoxLayout *hBoxPointSize=new QHBoxLayout() ;
+      hBoxPointSize->addWidget( lblWmPointSize ) ;
+      hBoxPointSize->addWidget( lblWmMoins ) ;
+      hBoxPointSize->addWidget( m_wmPointSizeFontSlider ) ;
+      hBoxPointSize->addWidget( lblWmPlus ) ;
 
       QVBoxLayout *vBox=new QVBoxLayout() ;
-      vBox->addLayout( hBox ) ;
+      vBox->addLayout( hBoxSens ) ;
+      vBox->addLayout( hBoxPointSize ) ;
       //vBox->addWidget( m_addHydrogensCheck ) ;
 
       m_settingsWidget->setLayout( vBox ) ;
@@ -188,6 +225,11 @@ namespace Avogadro
                                 this, SLOT(changedWmSensitiveRedirect(int)) ) ;
       if( !isConnect )
         qDebug() << "Problem connection signal : m_wmSensitiveSlider.valueChanged() -> wmTool.changedWmSensitiveRedirect() !!" ;
+
+      isConnect = connect( m_wmPointSizeFontSlider,  SIGNAL(valueChanged(int)),
+                           this, SLOT(setSizeRatioFont(int)) ) ;
+      if( !isConnect )
+        qDebug() << "Problem connection signal : m_wmPointSizeFontSlider.valueChanged() -> wmTool.setSizeRatioFont() !!" ;
 
       //isConnect = connect( m_addHydrogensCheck, SIGNAL(stateChanged(int)),
       //                     this, SLOT(adjustedHydrogenRedirect(int)) ) ;
@@ -263,13 +305,12 @@ namespace Avogadro
       //m_widget->installEventFilter( cm ) ;
     }
 
-    displayTextMethods() ;
+    //displayTextMethods() ;
+    //displayAtomicNumberCurrent() ;
 
-    displayWmInfo() ;
-    displayMsg() ;
-
-    displayAtomicNumberCurrent() ;
-
+    displayMsgInfo() ;
+    displayInfo() ;
+    
     if( !widget->hasFocus() )
       widget->setFocus() ;
 
@@ -283,7 +324,7 @@ namespace Avogadro
 
     // Paint the center (0,0,0) of OpenGL coord.
     drawCenter() ;
-    drawBarycenter() ;
+    //drawBarycenter() ;
 
     // Paint a selection rectangle (it is the last feature to realize the good effects of transparency).
     if( m_activeRect )
@@ -298,9 +339,9 @@ namespace Avogadro
     * @param p1 The up/left position of the rectangle.
     * @param p2 The bottom/right position of the rectangle.
     */
-  void WmTool::drawRect( QPoint p1, QPoint p2 )
+  void WmTool::drawRect( QPoint p1, QPoint p2, int r, int g, int b, int a )
   {
-    drawRect( (float)p1.x(), (float)p1.y(), (float)p2.x(), (float)p2.y() ) ;
+    drawRect( (float)p1.x(), (float)p1.y(), (float)p2.x(), (float)p2.y(), r, g, b, a ) ;
   }
 
 
@@ -311,8 +352,44 @@ namespace Avogadro
     * @param ex The bottom/right position in x of the rectangle.
     * @param ey The bottom/right position in y of the rectangle.
     */
-  void WmTool::drawRect( float sx, float sy, float ex, float ey )
+  void WmTool::drawRect( float sx, float sy, float ex, float ey, int r, int g, int b, int a )
   {
+    // - Inverse color : -1, -1, -1
+    // - Wanted color : >=0, >=0, >=0
+
+    int rBg, gBg, bBg, aBg ;
+    int rLimit, gLimit, bLimit ;
+    float rBgF, gBgF, bBgF, aBgF ;
+    if( !(r>=0 && r<=255 && g>=0 && g<=255 && b>=0 && b<=255 && a>=0 && a<=255) )
+    { // Calculate the inverse color.
+
+      QColor bgColor=m_widget->background() ;
+      /*
+      rBg = 255 - bgColor.red() ;
+      gBg = 255 - bgColor.green() ;
+      bBg = 255 - bgColor.blue() ;
+      aBg = 100 ; //.4f
+      */
+      
+      rBgF = 1.0f - (float)bgColor.redF() ;
+      gBgF = 1.0f - (float)bgColor.greenF() ;
+      bBgF = 1.0f - (float)bgColor.blueF() ;
+      aBgF = 0.4f ;
+
+      //printf( "%d %d %d - %d %d %d\n", rBg, gBg, bBg, bgColor.red(), bgColor.green(), bgColor.blue() ) ;
+      //printf( "%f %f %f - %f %f %f\n", rBgF, gBgF, bBgF, bgColor.redF(), bgColor.greenF(), bgColor.blueF() ) ;
+    }
+    else
+    {
+      rBg=r ; bBg=b ; gBg=g ; aBg=a ;
+      rBgF=(float)r/255.0f ; bBgF=(float)b/255.0f ; 
+      gBgF=(float)g/255.0f ; aBgF=(float)a/255.0f ;
+    }
+
+    rLimit = (int)(float(rBg) / 2.0f) ;
+    gLimit = (int)(float(gBg) / 2.0f) ;
+    bLimit = (int)(float(bBg) / 2.0f) ;
+
     glPushMatrix();
     glLoadIdentity();
 
@@ -336,7 +413,10 @@ namespace Avogadro
     glDisable(GL_LIGHTING);
     glDisable(GL_CULL_FACE);
 
-    glColor4f(1.0f, 0.5f, 0.5f, 0.4f);
+    //glColor4f(1.0f, 0.5f, 0.5f, 0.4f);
+    glColor4f( rBgF, gBgF, bBgF, aBgF ) ;
+    //printf( "%f %f %f %f - %d %d %d %d\n", rBgF, gBgF, bBgF, aBgF, rBg, gBg, bBg, aBg ) ;
+
     glBegin(GL_POLYGON);
       glVertex3d(startPos[0],startPos[1],startPos[2]);
       glVertex3d(startPos[0],endPos[1],startPos[2]);
@@ -347,7 +427,7 @@ namespace Avogadro
     startPos[2] += 0.0001;
     glDisable(GL_BLEND);
 
-    glColor3f(0.0, 0.0, 0.0);
+    glColor3i( rLimit, gLimit, bLimit ) ;
     glBegin(GL_LINE_LOOP);
       glVertex3d(startPos[0],startPos[1],startPos[2]);
       glVertex3d(startPos[0],endPos[1],startPos[2]);
@@ -793,38 +873,60 @@ namespace Avogadro
   /**
     * Display informations of the Wiimote in the render zone.
     */
-  void WmTool::displayWmInfo()
+  void WmTool::displayInfo()
   {
     if( m_wPainter!=NULL )
     {
-      QString msg="Wiimote connected : " ;
-      //GLPainter *wGLPainter=dynamic_cast<GLPainter*>(m_wPainter) ;
+      QFontMetrics fontMetric( m_fontInfo ) ;
+      QString msg ;
+      int border=5 ;
+      int height=fontMetric.height() ; //lineSpacing() ;
+      int xB=10, yB=10+height ;
+      int nbL=0, iH=0 ;
 
+      if( m_wmIsConnected )
+        nbL = 4 ;
+      else
+        nbL = 2 ;
+      
+      drawRect( float(xB-border),
+                float(yB-height),
+                float(xB+fontMetric.width("Current atomic number : 160")+border), 
+                float(yB+(nbL-1)*height+border) ) ;
+      
+      // 1
+      msg = "Wiimote connected : " ;
       if( m_wmIsConnected ) msg += "YES" ;
       else msg += tr("NO") ; //, Press 1+2") ;
-      glColor3f( 1.0, 1.0, 1.0 ) ;
-      m_wPainter->drawText( QPoint(10,20), msg ) ;
+      displayMsgOnScreen( QPoint(xB,yB), msg, m_fontInfo, 1.0, 1.0, 1.0 ) ;
+      iH++ ;
+
+      // 2
+      msg = tr("Current atomic number : ") + QString::number(m_atomicNumberCur) ;
+      displayMsgOnScreen( QPoint(xB,yB+height*iH), msg, m_fontInfo, 1.0, 1.0, 1.0 ) ;
+      iH ++ ;
 
       if( m_wmIsConnected )
       {
+        float r,g,b ;
+
         msg = tr("Nb detected LEDs : ") + QString::number(m_wmNbDots) ;
-        glColor3f( 1.0, 1.0, 1.0 ) ;
-        //m_wPainter->drawText( QPoint(10,40), msg ) ;
+        displayMsgOnScreen( QPoint(xB,yB+height*iH), msg, m_fontInfo, 1.0, 1.0, 1.0 ) ;
+        iH++ ; 
 
         msg = tr("Nb detected sources : ") + QString::number(m_wmNbSources) ;
-        if( m_wmNbSources == 1 )
-          glColor3f( 1.0, 0.5, 0.0 ) ;
-        else if( m_wmNbDots == 0 )
-          glColor3f( 1.0, 0.0, 0.0 ) ;
-        else
-          glColor3f( 1.0, 1.0, 1.0 ) ;
-        m_wPainter->drawText( QPoint(10,60), msg ) ;
+        if( m_wmNbSources == 1 ){ r=1.0; g=0.5; b=0.0; }
+        else if( m_wmNbDots == 0 ){ r=1.0; g=0.0; b=0.0; }
+        else{ r=1.0; g=1.0; b=1.0; }
+
+        displayMsgOnScreen( QPoint(xB,yB+height*iH), msg, m_fontInfo, r, g, b ) ;
+        iH++ ;
 
         //msg = tr("Distance : ") + QString::number(m_wmDistance) ;
         //m_wPainter->drawText( QPoint(10,80), msg ) ;
 
         // "Reset" color.
-        glColor3f( 1.0, 1.0, 1.0 ) ;
+        //glColor3f( 1.0, 1.0, 1.0 ) ;
       }
     }
   }
@@ -833,22 +935,44 @@ namespace Avogadro
   /**
     * Display a message in the render zone.
     */
-  void WmTool::displayMsg()
+  void WmTool::displayMsgInfo()
   {
     if( m_displayMsg && m_wPainter!=NULL )
     {
       int i=0 ;
+      int width=0, height=0, tmp=0 ;
       int t2=m_time.elapsed() ;
+      int spacing=20, border=5 ;
 
       if( (t2-m_displayTime) < WMTOOL_TIME_DISPLAY_MSG )
       {
-        glColor3f( 1.0, 0.0, 0.0 ) ;
+        QFontMetrics fontMetric(m_fontError) ;
+        height = fontMetric.lineSpacing() ;
+
         foreach( QString str, m_displayList )
         {
-          m_wPainter->drawText( QPoint(m_displayPos.x(), m_displayPos.y()+i), str ) ;
+          i++ ;
+          tmp = fontMetric.width( str ) ;
+          if( tmp > width )
+            width = tmp ;
+        }
+
+        drawRect( float(m_displayPos.x()-border), 
+                  float(m_displayPos.y()-(border+fontMetric.lineSpacing())), 
+                  float(m_displayPos.x()+width+border), float(m_displayPos.y()+i*height+border) ) ;
+
+        i = 0 ;
+        //glColor3f( 1.0, 0.0, 0.0 ) ;
+        foreach( QString str, m_displayList )
+        {
+          //m_wPainter->drawText( QPoint(m_displayPos.x(), m_displayPos.y()+i), str ) ;
+          if( i == 0 )
+            displayMsgOnScreen(QPoint(m_displayPos.x(), m_displayPos.y()+i), str, m_fontError, 1, 0.5, 0 ) ;
+          else
+            displayMsgOnScreen(QPoint(m_displayPos.x(), m_displayPos.y()+i), str, m_fontError, 0, 0, 0 ) ;
           i += 20 ;
         }
-        glColor3f( 1.0, 1.0, 1.0 ) ;
+        //glColor3f( 1.0, 1.0, 1.0 ) ;
       }
       else
       {
@@ -863,13 +987,24 @@ namespace Avogadro
     */
   void WmTool::displayAtomicNumberCurrent()
   {
+    /*
     if( m_wPainter != NULL )
     {
+      QFontMetrics fontMetric( m_fontInfo ) ;
       QString str ;
+      int border=0 ;
+
       str = tr("Current atomic number : ") + QString::number(m_atomicNumberCur) ;
-      glColor3f( 1.0, 1.0, 1.0 ) ;
-      m_wPainter->drawText( QPoint(10,100), str ) ;
+
+      //drawRect( float(10-border), float(100-border), 
+      //          float(fontMetric.width(str)+border), 
+      //          float(fontMetric.lineSpacing()+border) ) ;
+      
+      //glColor3f( 1.0, 1.0, 1.0 ) ;
+      //m_wPainter->drawText( QPoint(10,100), str ) ;
+      displayMsgOnScreen( QPoint(x,y), str, m_fontInfo, 1.0, 1.0, 1.0 ) ;
     }
+  */
   }
 
 
@@ -958,10 +1093,15 @@ namespace Avogadro
     * Set the WmExtension object (a hand on the object, a shortcut).
     * @param wmExtens The WmExtension object instanciate by Avogadro.
     */
-  void WmTool::setWmExt( Extension *wmExtens )
+  void WmTool::setWmExt( Extension *wmExtension )
   {
-    if( wmExtens != NULL )
-      m_wmExt = wmExtens ;
+    if( wmExtension != NULL )
+      m_wmExt = wmExtension ;
+
+    bool isConnect = connect( m_wmPointSizeFontSlider,  SIGNAL(valueChanged(int)),
+                         m_wmExt, SLOT(setFontSizeContextMenu(int)) ) ;
+    if( !isConnect )
+      qDebug() << "Problem connection signal : m_wmPointSizeFontSlider.valueChanged() -> m_wmExt.setFontSizeContextMenu() !!" ;
   }
 
 
@@ -1063,6 +1203,7 @@ namespace Avogadro
     m_atomForDistDiedre.clear() ;
     m_isCalculDistDiedre = false ;
     m_nbAtomForDistDiedre = 0 ;
+    //m_initDisplayDistDiedre = false ;
 
     for( int i=0 ; i<6 ; i++ )
       m_lastMeasurement[i] = 0.0 ;
@@ -1230,50 +1371,55 @@ namespace Avogadro
     if( m_atomForDistDiedre.size() > 0 )
     {
       calculateParameters() ;
+      //puts( "After calculateParameters() ;" ) ;
 
       Vector3d btza=m_widget->camera()->backTransformedZAxis() ;
       int wh=m_widget->height() ;
-
+      
       QString msg ;
       string tmp1, tmp2 ;
       ostringstream oss ;
       Vector3d textRelPos ;
       float r,g,b ;
 
+      
+      int maxV = qMax( m_nbVPixelDist, m_nbVPixelAngle ) ;
+      maxV = qMax( maxV, m_nbVPixelDihedral ) ;
+      drawRect( 10.f, float(wh-maxV), float(m_nbHPixelDist), float(wh-3) ) ;
+
+      //m_initDisplayDistDiedre = true ;
+      QFontMetrics fontMetricDisDiedreInfo(m_fontDistDiedreInfo) ;
+
+      m_nbHPixelDist = WMTOOL_SPACING_LEFT_WORDGRP ;
+      m_nbHPixelAngle = WMTOOL_SPACING_LEFT_WORDGRP ;
+      m_nbHPixelDihedral = WMTOOL_SPACING_LEFT_WORDGRP ;
+      m_nbVPixelDist = WMTOOL_SPACING_DOWN_WORDGRP ;
+      m_nbVPixelAngle = 0 ;
+      m_nbVPixelDihedral = 0 ;
+
 
       glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
-      // Text Size ... ?
+      // Save OpenGL attribute stack (color, lightning, texturing ...)
 
       for( int i=0 ; i<m_atomForDistDiedre.size() ; i++ )
       {
         oss.str("") ;
-        oss << "*" << (i+1) ; tmp1 = oss.str() ;
+        oss << "." << (i+1) ; tmp1 = oss.str() ;
         oss << " is a number." ; tmp2 = oss.str() ;
         textRelPos = (0.18 + m_widget->radius(m_atomForDistDiedre[i])) * btza ;
 
         switch( i )
         {
-        case 0 :
-          //glColor3f(1.0,0.0,0.0) ; 
-          r=1.0; g=0.0; b=0.0; break ;
-        case 1 :
-          //glColor3f(0.0,1.0,0.0) ;
-          r=0.0; g=1.0; b=0.0; break ;
-        case 2 :
-          //glColor3f(0.0,0.0,1.0) ;
-          r=0.0; g=0.0; b=1.0; break ;
-        case 3 :
-          //glColor3f(0.0,1.0,1.0) ;
-          r=0.0; g=1.0; b=1.0; break ;
-        default :
-          //glColor3f(0.0,0.0,0.0) ;
-          r=0.0; g=0.0; b=0.0; 
+        case 0 : r=1.0; g=0.0; b=0.0; break ;
+        case 1 : r=0.0; g=1.0; b=0.0; break ;
+        case 2 : r=0.0; g=0.0; b=1.0; break ;
+        case 3 : r=0.0; g=1.0; b=1.0; break ;
+        default : r=0.0; g=0.0; b=0.0; 
         }
 
-        //m_wPainter->drawText( *m_atomForDistDiedre[i]->pos()+textRelPos, tr(tmp1.c_str(), tmp2.c_str()) ) ;
         msg = tr(tmp1.c_str(), tmp2.c_str()) ;
         textRelPos += *m_atomForDistDiedre[i]->pos() ;
-        displayMsgInRenderZone( textRelPos, msg, m_fontDistDiedre, r, g, b ) ;
+        displayMsgInRenderZone( textRelPos, msg, m_fontDistDiedreAtom, r, g, b ) ;
       }
 
 
@@ -1284,37 +1430,39 @@ namespace Avogadro
         QString format("%L1"); // For localized measurements, e.g. 1,02 in Europe.
 
         // Text position for distance.
-        //glColor3f(1.0,1.0,1.0);
-        //m_wPainter->drawText(QPoint(70, wh-25), tr("Distance(s):"));
-        msg = tr("Distance(s):") ;
-        displayMsgOnScreen( QPoint(70, wh-25), msg, m_fontDistDiedre, 1.0,1.0,1.0 ) ;
+        msg = tr("Distance(s) :") ;
+        displayMsgOnScreen( QPoint(m_nbHPixelDist, wh-m_nbVPixelDist),
+                            msg, m_fontDistDiedreInfo, 1.0,1.0,1.0 ) ;
+        m_nbHPixelDist += fontMetricDisDiedreInfo.width(msg) ;
+        m_nbVPixelAngle += (m_nbVPixelDist + fontMetricDisDiedreInfo.lineSpacing() + WMTOOL_SPACING_V_WORDGRP) ;
 
         // Text position for the 1st distance.
-        //glColor3f(1.0,1.0,0.0);
-        //m_wPainter->drawText(QPoint(180, wh-25), format.arg(m_vector[0].norm(), 0, 'f', 3) + angstrom ) ;
         msg = format.arg(m_vector[0].norm(), 0, 'f', 3) + m_angstromStr ;
-        displayMsgOnScreen( QPoint(180, wh-25), msg, m_fontDistDiedre, 1.0,1.0,0.0 ) ;
+        displayMsgOnScreen( QPoint(m_nbHPixelDist, wh-m_nbVPixelDist), 
+                            msg, m_fontDistDiedreInfo, 1.0,1.0,0.0 ) ;
+        m_nbHPixelDist += (fontMetricDisDiedreInfo.width(msg)+WMTOOL_SPACING_H_WORDGRP) ;
 
 
         if( m_atomForDistDiedre.size() >= 3 )
         {
           // Text position for the 2nd distance.
-          //glColor3f(0.0,1.0,1.0);
-          //m_wPainter->drawText(QPoint(240, wh-25), format.arg(m_vector[1].norm(), 0, 'f', 3) + angstrom);
           msg = format.arg(m_vector[1].norm(), 0, 'f', 3) + m_angstromStr ;
-          displayMsgOnScreen( QPoint(240, wh-25), msg, m_fontDistDiedre, 0.0,1.0,1.0 ) ;
+          displayMsgOnScreen( QPoint(m_nbHPixelDist, wh-m_nbVPixelDist), 
+                              msg, m_fontDistDiedreInfo, 0.0,1.0,0.0 ) ;
+          m_nbHPixelDist += (fontMetricDisDiedreInfo.width(msg)+WMTOOL_SPACING_H_WORDGRP) ;
 
           // Text position for angle.
-          //glColor3f(1.0,1.0,1.0);
-          //m_wPainter->drawText(QPoint(70, wh-45), QString(tr("Angle:")));
-          msg = QString(tr("Angle:")) ;
-          displayMsgOnScreen( QPoint(70, wh-45), msg, m_fontDistDiedre, 1.0,1.0,1.0 ) ;
+          msg = QString(tr("Angle         :")) ;
+          displayMsgOnScreen( QPoint(m_nbHPixelAngle, wh-m_nbVPixelAngle), 
+                              msg, m_fontDistDiedreInfo, 1.0,1.0,1.0 ) ;
+          m_nbHPixelAngle += (fontMetricDisDiedreInfo.width(msg)+WMTOOL_SPACING_H_WORDGRP) ;
+          m_nbVPixelDihedral = (m_nbVPixelAngle + fontMetricDisDiedreInfo.lineSpacing() + WMTOOL_SPACING_V_WORDGRP) ;
 
           // Text position for the 1st angle.
-          //glColor3f(0.8f, 0.8f, 0.8f);
-          //m_wPainter->drawText(QPoint(180, wh-45), format.arg(m_angle[0], 0, 'f', 1) + degree);
           msg = format.arg(m_angle[0], 0, 'f', 1) + m_degreeStr ;
-          displayMsgOnScreen( QPoint(180, wh-45), msg, m_fontDistDiedre, 0.8f, 0.8f, 0.8f ) ;
+          displayMsgOnScreen( QPoint(m_nbHPixelAngle, wh-m_nbVPixelAngle), 
+                              msg, m_fontDistDiedreInfo, 0.0f, 1.0f, 1.0f ) ;
+          m_nbHPixelAngle += (fontMetricDisDiedreInfo.width(msg)+WMTOOL_SPACING_H_WORDGRP) ;
 
 
           // Draw the angle.
@@ -1326,44 +1474,44 @@ namespace Avogadro
 
           m_wPainter->setColor(0, 1.0, 0, 0.3f);
           m_wPainter->drawShadedSector( *origin, *m_atomForDistDiedre[0]->pos(),
-                                *m_atomForDistDiedre[2]->pos(), radius ) ;
+                                        *m_atomForDistDiedre[2]->pos(), radius ) ;
           glDepthMask(GL_TRUE);
           glDisable(GL_BLEND);
 
           m_wPainter->setColor(1.0, 1.0, 1.0, 1.0);
           m_wPainter->drawArc( *origin, *m_atomForDistDiedre[0]->pos(),
-                       *m_atomForDistDiedre[2]->pos(), radius, true ) ;
+                               *m_atomForDistDiedre[2]->pos(), radius, true ) ;
 
 
           if(m_atomForDistDiedre.size() >= 4)
           {
             // Text position for the 3rd distance.
-            //glColor3f(1.0, 1.0, 1.0) ;
-            //m_wPainter->drawText(QPoint(300, wh-25), format.arg(m_vector[2].norm(), 0, 'f', 3) + angstrom);
             msg = format.arg(m_vector[2].norm(), 0, 'f', 3) + m_angstromStr ;
-            displayMsgOnScreen( QPoint(300, wh-25), msg, m_fontDistDiedre, 1.0, 1.0, 1.0 ) ;
+            displayMsgOnScreen( QPoint(m_nbHPixelDist, wh-m_nbVPixelDist), 
+                                msg, m_fontDistDiedreInfo, 0.0, 0.0, 1.0 ) ;
+            m_nbHPixelDist += (fontMetricDisDiedreInfo.width(msg)+WMTOOL_SPACING_H_WORDGRP) ;
 
             // Text position for the 2nd angle.
-            //glColor3f(0.8f, 0.8f, 0.8f);
-            //m_wPainter->drawText(QPoint(240, wh-45), format.arg(m_angle[1], 0, 'f', 1)+degree);
             msg = format.arg(m_angle[1], 0, 'f', 1)+m_degreeStr ;
-            displayMsgOnScreen( QPoint(240, wh-45), msg, m_fontDistDiedre, 0.8f, 0.8f, 0.8f ) ;
+            displayMsgOnScreen( QPoint(m_nbHPixelAngle, wh-m_nbVPixelAngle),
+                                msg, m_fontDistDiedreInfo, 0.8f, 0.8f, 0.8f ) ;
 
             // Text position for dihetral.
-            //glColor3f(1.0, 1.0, 1.0);
-            //m_wPainter->drawText(QPoint(70, wh-65), QString(tr("Dihedral:")));
-            msg = QString(tr("Dihedral:")) ;
-            displayMsgOnScreen( QPoint(70, wh-65), msg, m_fontDistDiedre, 1.0, 1.0, 1.0 ) ;
+            msg = QString(tr("Dihedral    :")) ;
+            displayMsgOnScreen( QPoint(m_nbHPixelDihedral, wh-m_nbVPixelDihedral), 
+                                msg, m_fontDistDiedreInfo, 1.0, 1.0, 1.0 ) ;
+            m_nbHPixelDihedral += (fontMetricDisDiedreInfo.width(msg) + WMTOOL_SPACING_H_WORDGRP) ;
 
-            //glColor3f(0.6, 0.6, 0.6);
-            //m_wPainter->drawText(QPoint(180, wh-65), format.arg(m_dihedral, 0, 'f', 1) + degree);
+
             msg = format.arg(m_dihedral, 0, 'f', 1)+m_degreeStr ;
-            displayMsgOnScreen( QPoint(180, wh-65), msg, m_fontDistDiedre, 0.6f, 0.6f, 0.6f) ;
+            displayMsgOnScreen( QPoint(m_nbHPixelDihedral , wh-m_nbVPixelDihedral), 
+                                msg, m_fontDistDiedreInfo, 1.0f, 0.0f, 1.0f) ;
+            m_nbVPixelDihedral += (fontMetricDisDiedreInfo.lineSpacing() + (WMTOOL_SPACING_V_WORDGRP/2)) ;
           }
         }
       }
 
-      glPopAttrib() ;
+      glPopAttrib() ;      
     }
   }
 
@@ -1377,16 +1525,11 @@ namespace Avogadro
     * @param b Blue composant.
     */
   void WmTool::displayMsgInRenderZone( QPoint pos, QString msg, QFont font, float r, float g, float b )
-  {/*
-    glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
-    glColor3f( r, g, b ) ;
-    m_widget->renderText( pos.x(), pos.y(), 0, msg, font ) ;
-    glPopAttrib() ; 
-    */
-
+  {
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
     glColor3f( r, g, b ) ;
 
+    // Method 5, see displayTextMethods().
     QGLWidget *myWidget=dynamic_cast<QGLWidget*>(m_widget) ;
     if( myWidget != NULL )
       myWidget->renderText( pos.x(), pos.y(), 0, msg, font ) ;
@@ -1406,20 +1549,10 @@ namespace Avogadro
     */
   void WmTool::displayMsgInRenderZone( Vector3d pos, QString msg, QFont font, float r, float g, float b )
   {
-    /*
-    glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
-    glColor3f( r, g, b ) ;
-    
-    Vector3d proj=m_widget->camera()->project(pos) ;
-    QPoint p( (int)proj[0], (int)proj[1] ) ;
-    m_widget->renderText( p.x(), p.y(), 0, msg, font ) ;
-
-    glPopAttrib() ;
-    */
-
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
     glColor3f( r, g, b ) ;
 
+    // Method 5, see displayTextMethods().
     QGLWidget *myWidget=dynamic_cast<QGLWidget*>(m_widget) ;
     if( myWidget != NULL )
       myWidget->renderText( pos[0], pos[1], pos[2], msg, font ) ;
@@ -1442,6 +1575,7 @@ namespace Avogadro
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
     glColor3f( r, g, b ) ;
 
+    // Method 5, see displayTextMethods().
     QGLWidget *myWidget=dynamic_cast<QGLWidget*>(m_widget) ;
     if( myWidget != NULL )
       myWidget->renderText( pos.x(), pos.y(), msg, font ) ;
@@ -1464,12 +1598,13 @@ namespace Avogadro
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
     glColor3f( r, g, b ) ;
 
+    // Method 5, see displayTextMethods().
     QGLWidget *myWidget=dynamic_cast<QGLWidget*>(m_widget) ;
     if( myWidget != NULL )
     {
       Vector3d proj=m_widget->camera()->project(pos) ;
       QPoint p( (int)proj[0], (int)proj[1] ) ;
-      myWidget->renderText( p.x(), p.y(), msg, font ) ;
+      myWidget->renderText( (int)pos.x(), (int)pos.y(), msg, font ) ;
     }
     else
       m_wPainter->drawText( pos, msg ) ;
@@ -1487,7 +1622,7 @@ namespace Avogadro
     QFont myFont( "Times", 32, QFont::Bold ) ;
 
 
-    // 1, Origin : Up/left screen.    
+    // 1, Origin : Up/left screen. Nothing change during a camera movement.
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
     glColor3f( 1.0, 1.0, 1.0 ) ;
     msg="Avo::Painter : DrawText() 1" ;
@@ -1495,13 +1630,14 @@ namespace Avogadro
     m_wPainter->drawText( QPoint(150,30), msg ) ;
     glPopAttrib() ; 
 
-    // 2
-    glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
-    glColor3f( 1.0, 1.0, 1.0 ) ;
-    msg="Avo::Painter : DrawText() 2" ;
+    // 2 Change with the camera like a point in the 3D-space
+    // ! Works sometime ... Realize 2 calls of this method => don't work ...
+    //glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
+    //glColor3f( 1.0, 1.0, 1.0 ) ;
+    //msg="Avo::Painter : DrawText() 2" ;
     // Origin : center screen.
-    m_wPainter->drawText( Vector3d(0,0,0), msg, myFont ) ;
-    glPopAttrib() ;
+    //m_wPainter->drawText( Vector3d(0,0,0), msg, myFont ) ;
+    //glPopAttrib() ;
    
     // 3.0 ! Painter class isn't a derived class of QPainter.
     //QPainter *myQPainter=dynamic_cast<QPainter*>(m_wPainter) ;
@@ -1526,15 +1662,16 @@ namespace Avogadro
     //myQPainter.end() ;
     //glPopAttrib() ; 
  
-    // 4 Works sometime ... I don't know why this method do not work properly.
+    // 4 Works sometime, The font size change with zoom.
+    // Problem with others visual feature like the blue selection ...
     //glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
     //glColor3f( 1.0, 1.0, 1.0 ) ;
     //msg="Avo::QWidget : renderText() 4" ;
-    //m_widget->renderText( 2, 2, 0, msg, myFont ) ;
+    //m_widget->renderText( 40, 200, 0, msg, myFont ) ;
     //glPopAttrib() ;
     
 
-    // 5
+    // 5 Nothing change during a camera movement.
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
     glColor3f( 1.0, 1.0, 1.0 ) ;
 
@@ -1544,15 +1681,31 @@ namespace Avogadro
       msg="Qt::QWidget : renderText() 5" ;
       myWidget->renderText( 40, 40, msg, myFont ) ;
       msg="Qt::QWidget : renderText() 5.1" ;
+      // Sometime below the previous message, sometime in the 3D-space coordonate.
       myWidget->renderText( 80, 80, 0, msg, myFont ) ;
+      msg="Qt::QWidget : renderText() 5.2" ;
+      myWidget->renderText( -6.879, 0.298, 0.51, msg, myFont ) ;
     }
     else
     {
       msg="Qt::QWidget : renderText() 5 FALSE" ;
       m_wPainter->drawText( 100, 140, msg ) ;
     }
-    glPopAttrib() ;
 
+    glPopAttrib() ;
+  }
+
+  void WmTool::setSizeRatioFont( int ratio )
+  {
+    float r=(float)(ratio)*0.1f ;
+
+    if( r>=WMTOOL_POINTSIZE_RATIO_MIN && r<=WMTOOL_POINTSIZE_RATIO_MAX )
+    {
+      m_fontDistDiedreAtom.setPointSizeF( r * WMTOOL_FONT_POINTSIZE_DISTDIEDREATOM ) ;
+      m_fontDistDiedreInfo.setPointSizeF( r * WMTOOL_FONT_POINTSIZE_DISTDIEDREINFO ) ;
+      m_fontError.setPointSizeF( r * WMTOOL_FONT_POINTSIZE_ERROR ) ;
+      m_fontInfo.setPointSizeF( r * WMTOOL_FONT_POINTSIZE_INFO ) ;
+    }
   }
 
 }

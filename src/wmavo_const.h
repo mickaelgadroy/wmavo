@@ -40,7 +40,7 @@
 
 #define PLUGIN_DRAWTOOL_NAME "Draw"
 
-#define WMTOOL_TIME_DISPLAY_MSG 5000
+#define WMTOOL_TIME_DISPLAY_MSG 10000
 
 #define PLUGIN_WM_SENSITIVE_DEFAULT 30
 #define PLUGIN_WM_SENSITIVE_MIN 15
@@ -151,6 +151,46 @@
 #define WMRUMBLE_MIN_DURATION_TREMOR WMRUMBLE_MIN_TIME // 150 // 30
 #define WMRUMBLE_MAX_DURATION_POSE 1000 // 2000 // ((fr) "prendre un pose")
 #define WMRUMBLE_MIN_DURATION_POSE WMRUMBLE_MIN_TIME // 150 //
+
+
+///**********************************************************
+/// Specific for wmtool.h.
+///**********************************************************
+
+// Fonts in the render zone.
+
+#define WMTOOL_POINTSIZE_RATIO_MIN 0.7f
+#define WMTOOL_POINTSIZE_RATIO_MAX 3.0f
+#define WMTOOL_POINTSIZE_RATIO_DEFAULT 1.0f
+
+#define WMTOOL_SPACING_LEFT_WORDGRP 20 //70
+#define WMTOOL_SPACING_DOWN_WORDGRP 10 //25
+#define WMTOOL_SPACING_H_WORDGRP 10
+#define WMTOOL_SPACING_V_WORDGRP 10
+
+// Family : 
+// QFont::AnyStyle, QFont::System
+// QFont::Helvetica "0"
+// QFont::Serif "Times" == QFont::Times
+// QFont::TypeWriter "Courier" == QFont::Courier
+// QFont::OldEnglish == QFont::Decorative "OldEnglish"
+#define WMTOOL_FONT_FAMILY_INFO "0"
+#define WMTOOL_FONT_FAMILY_ERROR "Times"
+#define WMTOOL_FONT_FAMILY_DISTDIEDREINFO "0"
+#define WMTOOL_FONT_FAMILY_DISTDIEDREATOM "0"
+
+// PointSize : default : 12
+#define WMTOOL_FONT_POINTSIZE_INFO 12
+#define WMTOOL_FONT_POINTSIZE_ERROR 14
+#define WMTOOL_FONT_POINTSIZE_DISTDIEDREINFO 12
+#define WMTOOL_FONT_POINTSIZE_DISTDIEDREATOM 14
+
+// Weight : QFont::Light, QFont::Normal, QFont::DemiBold, QFont::Bold, QFont::Black
+#define WMTOOL_FONT_WEIGHT_INFO QFont::Normal
+#define WMTOOL_FONT_WEIGHT_ERROR QFont::Bold
+#define WMTOOL_FONT_WEIGHT_DISTDIEDREINFO QFont::Bold
+#define WMTOOL_FONT_WEIGHT_DISTDIEDREATOM QFont::DemiBold
+
 
 
 ///**********************************************************

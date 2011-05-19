@@ -78,10 +78,13 @@ if( "${LINK_LIBS}" STREQUAL "avogadro" )
   target_link_libraries( ${PLUGIN_NAME} ${wiiuse_lib_name} ) 
   target_link_libraries( ${PLUGIN_NAME} ${wiiusecpp_lib_name} )
 
-  # To install wiiuse/wiiusecpp libraries in the Avogadro bin.
+  # To install wiiuse/wiiusecpp libraries (& other things)in the Avogadro bin.
   file( GLOB wiiuse_files ${wiiuse_lib_dir}/*wiiuse* )
   if( WIN32 ) 
     install( FILES ${wiiuse_files} DESTINATION ${BIN_INSTALL_DIR} )
+   
+    #file( GLOB_RECURSE frag_files img/fragments/* )
+    #install( FILES ${frag_files} DESTINATION ${BIN_INSTALL_DIR}/../share/avogadro/fragments_resume )
   else()
     install( FILES ${wiiuse_files} DESTINATION "/usr/lib" )
   endif()
@@ -197,6 +200,12 @@ else()
   target_link_libraries( ${PLUGIN_NAME} ${wiiusecpp_lib_name} )
   target_link_libraries( ${PLUGIN_NAME} avogadro )
   target_link_libraries( ${PLUGIN_NAME} ${OPENGL_LIBRARIES} )
+  
+  # Copy some files in the Avogadro directory.
+  file( GLOB_RECURSE frag_files img/fragments/* )
+  message( STATUS "fragments_resume directory:" "${BIN_INSTALL_DIR}/../share/avogadro/fragments_resume" )
+  message( STATUS "fragments_resume files:" ${frag_files} )
+  #install( FILES ${frag_files} DESTINATION "${BIN_INSTALL_DIR}/../share/avogadro/fragments/resume" )
 
 endif()
 

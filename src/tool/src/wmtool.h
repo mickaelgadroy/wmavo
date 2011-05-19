@@ -232,6 +232,7 @@ namespace Avogadro
   public slots :
 
     void setWmExt( Extension *wmExtens ) ;
+    void setSizeRatioFont( int ratio ) ; //< Change the size of all the font.
 
     /**
       * @name Wiimote informations for the WmTool class.
@@ -272,15 +273,6 @@ namespace Avogadro
     static const double m_180PI ; // 180/3.14 for radian to degree.
     static const QString m_angstromStr ;
     static const QString m_degreeStr ;
-    // @}
-
-    /**
-      * @name Fonts definition used in the plugin.
-      * @{ */
-    float m_ratioFontSize ; //< The user can modify this ratio to resize the messages.
-    static const QFont m_fontInfo ;
-    static const QFont m_fontError ;
-    static const QFont m_fontDistDiedre ;
     // @}
 
 
@@ -328,8 +320,8 @@ namespace Avogadro
     /**
       * @name Draw something in the render zone
       * @{ */
-    void drawRect( QPoint p1, QPoint p2 ) ;
-    void drawRect( float sx, float sy, float ex, float ey ) ;
+    void drawRect( QPoint p1, QPoint p2, int r=-1, int g=-1, int b=-1, int a=-1  ) ;
+    void drawRect( float sx, float sy, float ex, float ey, int r=-1, int g=-1, int b=-1, int a=-1 ) ;
     void drawBondAtom() ;
     void drawAtom( float rayon, Vector3d from ) ;
     void drawCenter() ;
@@ -341,8 +333,8 @@ namespace Avogadro
     /**
       * @name Display something in the render zone
       * @{ */
-    void displayWmInfo() ;
-    void displayMsg() ;
+    void displayInfo() ;
+    void displayMsgInfo() ;
     void displayAtomicNumberCurrent() ;
     void displayMsgInRenderZone( QPoint pos, QString msg, QFont font, float r, float g, float b ) ;
     void displayMsgInRenderZone( Vector3d pos, QString msg, QFont font, float r, float g, float b ) ;
@@ -369,6 +361,7 @@ namespace Avogadro
       * @{ */
     QWidget *m_settingsWidget ;
     QSlider *m_wmSensitiveSlider ;
+    QSlider *m_wmPointSizeFontSlider ;
     //QCheckBox *m_addHydrogensCheck ;
     // @}
 
@@ -429,6 +422,24 @@ namespace Avogadro
     // Need to store the previous values of all variables in order to only send
     // an event to the information pane once
     double m_lastMeasurement[6] ;
+    // @}
+
+    /**
+      * @name To display distance and diedre
+      * @{ */
+    //bool m_initDisplayDistDiedre ;
+    int m_nbHPixelDist, m_nbHPixelAngle, m_nbHPixelDihedral ;
+    int m_nbVPixelDist, m_nbVPixelAngle, m_nbVPixelDihedral ;
+    // @}
+
+    /**
+      * @name Fonts definition used in the plugin.
+      * @{ */
+    float m_ratioFontSize ; //< The user can modify this ratio to resize the messages.
+    QFont m_fontInfo ;
+    QFont m_fontError ;
+    QFont m_fontDistDiedreAtom ;
+    QFont m_fontDistDiedreInfo ;
     // @}
 
   };
