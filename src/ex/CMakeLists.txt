@@ -135,14 +135,23 @@ else()
   #set( OpenBabel2_include_DIR "C:/src/openbabel-2.3.0/include" ) # .h
   #set( OpenBabel22_include_DIR "C:/src/openbabel-2.3.0/windows-vc2008/build/include" ) # .h
   if( NOT EXISTS "${OPENBABEL2_INCLUDE_DIR}" )
-    if( WIN32 ) 
+    if( WIN32 )
       set( OPENBABEL2_INCLUDE_DIR "C:/src/openbabel-2.3.0/windows-vc2008/install/include/openbabel-2.0" ) # .h
-      message( STATUS "OPENBABEL2_INCLUDE_DIR is by default : " ${OPENBABEL2_INCLUDE_DIR} )
     else()
       set( OPENBABEL2_INCLUDE_DIR "/usr/include/openbabel-2.0/" )
+      
+      if( NOT EXISTS "${OPENBABEL2_INCLUDE_DIR}" )
+        set( OPENBABEL2_INCLUDE_DIR "/usr/local/include/openbabel-2.0/" )
+      endif()
     endif()
   else()
+    #message( STATUS "OPENBABEL2_INCLUDE_DIR is : " ${OPENBABEL2_INCLUDE_DIR} )
+  endif()
+  
+  if( EXISTS "${OPENBABEL2_INCLUDE_DIR}" )
     message( STATUS "OPENBABEL2_INCLUDE_DIR is : " ${OPENBABEL2_INCLUDE_DIR} )
+  else()
+    message( STATUS "OPENBABEL2_INCLUDE_DIR NOT found : " ${OPENBABEL2_INCLUDE_DIR} )
   endif()
   
   # 
