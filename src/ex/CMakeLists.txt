@@ -99,15 +99,18 @@ else()
   # Avogadro needs.
  
   if( NOT EXISTS "${Avogadro_DIR}" )
-    set( Avogadro_DIR "C:/src/avogadro-1.1.0/build" ) # .h
-    message( STATUS "Avogadro_DIR is by default : " ${Avogadro_DIR} )
+    if( WIN32 ) 
+      set( Avogadro_DIR "C:/src/avogadro-1.1.0/build" )
+      #set( Avogadro_DIR "C:/Program Files (x86)/Avogadro/bin/avogadro" )
+      #message( STATUS "Avogadro_DIR is by default : " ${Avogadro_DIR} )
+    endif()
   else()
-    message( STATUS "Avogadro_DIR is : " ${Avogadro_DIR} )
+    #message( STATUS "Avogadro_DIR is : " ${Avogadro_DIR} )
   endif()
   
-  message( STATUS "Avogadro directories is searching ..." )
+  #message( STATUS "Avogadro directories is searching ..." )
   find_package( Avogadro 1.0.0 REQUIRED )
-  message( STATUS "Avogadro found." )
+  message( STATUS "Avogadro directory: ${Avogadro_DIR}" )
   
   # OpenGL needs (Useless, "included" in Avogadro)
   #find_package(OpenGL REQUIRED) # find and setup OpenGL.
@@ -120,8 +123,10 @@ else()
 
   # Eigen needs.
   if( NOT EXISTS "${EIGEN2_INCLUDE_DIR}" )
-    set( EIGEN2_INCLUDE_DIR "C:/src/eigen-2.0.15" ) # .h
-    message( STATUS "EIGEN2_INCLUDE_DIR is by default : " ${EIGEN2_INCLUDE_DIR} )
+    if( WIN32 ) 
+      set( EIGEN2_INCLUDE_DIR "C:/src/eigen-2.0.15" ) # .h
+      message( STATUS "EIGEN2_INCLUDE_DIR is by default : " ${EIGEN2_INCLUDE_DIR} )
+    endif()
   else()
     message( STATUS "EIGEN2_INCLUDE_DIR is : " ${EIGEN2_INCLUDE_DIR} )
   endif()
@@ -130,8 +135,10 @@ else()
   #set( OpenBabel2_include_DIR "C:/src/openbabel-2.3.0/include" ) # .h
   #set( OpenBabel22_include_DIR "C:/src/openbabel-2.3.0/windows-vc2008/build/include" ) # .h
   if( NOT EXISTS "${OPENBABEL2_INCLUDE_DIR}" )
-    set( OPENBABEL2_INCLUDE_DIR "C:/src/openbabel-2.3.0/windows-vc2008/install/include/openbabel-2.0" ) # .h
-    message( STATUS "OPENBABEL2_INCLUDE_DIR is by default : " ${OPENBABEL2_INCLUDE_DIR} )
+    if( WIN32 ) 
+      set( OPENBABEL2_INCLUDE_DIR "C:/src/openbabel-2.3.0/windows-vc2008/install/include/openbabel-2.0" ) # .h
+      message( STATUS "OPENBABEL2_INCLUDE_DIR is by default : " ${OPENBABEL2_INCLUDE_DIR} )
+    endif()
   else()
     message( STATUS "OPENBABEL2_INCLUDE_DIR is : " ${OPENBABEL2_INCLUDE_DIR} )
   endif()

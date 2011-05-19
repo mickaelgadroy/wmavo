@@ -1439,7 +1439,7 @@ namespace Avogadro
         // Text position for the 1st distance.
         msg = format.arg(m_vector[0].norm(), 0, 'f', 3) + m_angstromStr ;
         displayMsgOnScreen( QPoint(m_nbHPixelDist, wh-m_nbVPixelDist), 
-                            msg, m_fontDistDiedreInfo, 1.0,1.0,0.0 ) ;
+                            msg, m_fontDistDiedreInfo, 0.0,1.0,0.0 ) ;
         m_nbHPixelDist += (fontMetricDisDiedreInfo.width(msg)+WMTOOL_SPACING_H_WORDGRP) ;
 
 
@@ -1448,7 +1448,7 @@ namespace Avogadro
           // Text position for the 2nd distance.
           msg = format.arg(m_vector[1].norm(), 0, 'f', 3) + m_angstromStr ;
           displayMsgOnScreen( QPoint(m_nbHPixelDist, wh-m_nbVPixelDist), 
-                              msg, m_fontDistDiedreInfo, 0.0,1.0,0.0 ) ;
+                              msg, m_fontDistDiedreInfo, 0.0,0.0,1.0 ) ;
           m_nbHPixelDist += (fontMetricDisDiedreInfo.width(msg)+WMTOOL_SPACING_H_WORDGRP) ;
 
           // Text position for angle.
@@ -1461,7 +1461,7 @@ namespace Avogadro
           // Text position for the 1st angle.
           msg = format.arg(m_angle[0], 0, 'f', 1) + m_degreeStr ;
           displayMsgOnScreen( QPoint(m_nbHPixelAngle, wh-m_nbVPixelAngle), 
-                              msg, m_fontDistDiedreInfo, 0.0f, 1.0f, 1.0f ) ;
+                              msg, m_fontDistDiedreInfo, 0.0f, 1.0f, 0.0f ) ;
           m_nbHPixelAngle += (fontMetricDisDiedreInfo.width(msg)+WMTOOL_SPACING_H_WORDGRP) ;
 
 
@@ -1488,13 +1488,13 @@ namespace Avogadro
             // Text position for the 3rd distance.
             msg = format.arg(m_vector[2].norm(), 0, 'f', 3) + m_angstromStr ;
             displayMsgOnScreen( QPoint(m_nbHPixelDist, wh-m_nbVPixelDist), 
-                                msg, m_fontDistDiedreInfo, 0.0, 0.0, 1.0 ) ;
+                                msg, m_fontDistDiedreInfo, 0.0, 1.0, 1.0 ) ;
             m_nbHPixelDist += (fontMetricDisDiedreInfo.width(msg)+WMTOOL_SPACING_H_WORDGRP) ;
 
             // Text position for the 2nd angle.
             msg = format.arg(m_angle[1], 0, 'f', 1)+m_degreeStr ;
             displayMsgOnScreen( QPoint(m_nbHPixelAngle, wh-m_nbVPixelAngle),
-                                msg, m_fontDistDiedreInfo, 0.8f, 0.8f, 0.8f ) ;
+                                msg, m_fontDistDiedreInfo, 0.0f, 0.0f, 1.0f  ) ;
 
             // Text position for dihetral.
             msg = QString(tr("Dihedral    :")) ;
@@ -1505,7 +1505,7 @@ namespace Avogadro
 
             msg = format.arg(m_dihedral, 0, 'f', 1)+m_degreeStr ;
             displayMsgOnScreen( QPoint(m_nbHPixelDihedral , wh-m_nbVPixelDihedral), 
-                                msg, m_fontDistDiedreInfo, 1.0f, 0.0f, 1.0f) ;
+                                msg, m_fontDistDiedreInfo, 0.0f, 1.0f, 0.0f) ;
             m_nbVPixelDihedral += (fontMetricDisDiedreInfo.lineSpacing() + (WMTOOL_SPACING_V_WORDGRP/2)) ;
           }
         }
