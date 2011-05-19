@@ -138,6 +138,8 @@ else()
     if( WIN32 ) 
       set( OPENBABEL2_INCLUDE_DIR "C:/src/openbabel-2.3.0/windows-vc2008/install/include/openbabel-2.0" ) # .h
       message( STATUS "OPENBABEL2_INCLUDE_DIR is by default : " ${OPENBABEL2_INCLUDE_DIR} )
+    else()
+      set( OPENBABEL2_INCLUDE_DIR "/usr/include/openbabel-2.0/" )
     endif()
   else()
     message( STATUS "OPENBABEL2_INCLUDE_DIR is : " ${OPENBABEL2_INCLUDE_DIR} )
