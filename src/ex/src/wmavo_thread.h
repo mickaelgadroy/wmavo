@@ -116,6 +116,7 @@ class WmAvoThread : public QThread
     void setWmOperatingMode(int opMode) ;
     void setWmRumble( bool start, bool continu=true, bool loop=false, int gradual=-1 ) ;
     void setWmRumble( int gradual ) ;
+    void setWmRumbleEnable( bool state ) ;
     void setWmSizeWidget( int x, int y, int width, int height ) ;
     void setWmMenuMode( bool menuMode ) ;
     void setWmActionMode( bool actionMode ) ; // == !menuMode
@@ -138,8 +139,8 @@ class WmAvoThread : public QThread
     bool m_updateOpMode ; // Need update ?
     int m_operatingMode ;
 
-    bool m_updateRumble, m_updateRumbleGrad ; // Need update ?
-    bool m_start, m_continu, m_loop ;
+    bool m_updateRumble, m_updateRumbleGrad, m_updateRumbleEnable ; // Need update ?
+    bool m_start, m_continu, m_loop, m_rumbleState ;
     int m_gradual ;
 
     bool m_addAtom, m_delAtom ; // "Need update ?" and data to use.

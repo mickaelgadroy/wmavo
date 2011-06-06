@@ -40,8 +40,9 @@ else()
   # Avogadro needs.
   if( NOT EXISTS "${Avogadro_DIR}" )
     if( WIN32 )
-      set( Avogadro_DIR "C:/src/avogadro-1.1.0/build" ) # .h
+      #set( Avogadro_DIR "C:/src/avogadro-1.1.0/build" ) # .h
       #set( Avogadro_DIR "C:/Program Files (x86)/Avogadro/bin/avogadro" )
+      set( Avogadro_DIR "C:/Program Files (x86)/Avogadro-1.0.3_debug/bin/avogadro" )
       #message( STATUS "Avogadro_DIR is by default : " ${Avogadro_DIR} )
     endif()
   else()
@@ -71,7 +72,7 @@ else()
   #set( OpenBabel22_include_DIR "C:/src/openbabel-2.3.0/windows-vc2008/build/include" ) # .h
   if( NOT EXISTS "${OPENBABEL2_INCLUDE_DIR}" )
     if( WIN32 )
-      set( OPENBABEL2_INCLUDE_DIR "C:/src/openbabel-2.3.0/windows-vc2008/install/include/openbabel-2.0" ) # .h
+      set( OPENBABEL2_INCLUDE_DIR "C:/src/openbabeld-2.3.0/windows-vc2008/install/include/openbabel-2.0" ) # .h
     else()
       set( OPENBABEL2_INCLUDE_DIR "/usr/include/openbabel-2.0/" )
       

@@ -31,8 +31,9 @@
 #define __WMEXTENSION_H__
 
 #ifdef _WIN32
-#define EIGEN_DONT_ALIGN
+//#define EIGEN_DONT_ALIGN
 	//error C2719: 'transfAtomRotate': formal parameter with __declspec(align('16')) won't be aligned
+  // And EIGEN_MAKE_ALIGNED_OPERATOR_NEW at the end of the file.
 #endif
 
 #ifdef _WIN32
@@ -72,6 +73,10 @@
 #include <avogadro/periodictableview.h>
 #include <avogadro/glhit.h>
 #include <avogadro/undosequence.h>
+
+
+#include "constraintsmodel.h"
+#include <openbabel/forcefield.h>
 
 #include <QUndoCommand>
 #include <QMessageBox>
@@ -157,7 +162,7 @@ namespace Avogadro
           * Inform WmTool class to display something
           * @{ */
         void renderedSelectRect( bool active, QPoint p1, QPoint p2 ) ;
-        void renderedAtomBond( Vector3d beginAtom, Vector3d endAtom, bool drawBeginAtom, bool drawEndAtom, bool drawBond ) ;
+        void renderedAtomBond( const Vector3d& beginAtom, const Vector3d& endAtom, bool drawBeginAtom, bool drawEndAtom, bool drawBond ) ;
 
         void displayedMsg( QList<QString> strList, QPoint pos ) ;
         void displayedWmInfo( bool connect, int nbDots, int nbSources, int distance ) ;
@@ -210,7 +215,8 @@ namespace Avogadro
       void receiveRequestToCalculDistance() ;
         //< Deprecated : it is not the wrapper which request a distance calculation (by keyboard action).
       void setFontSizeContextMenu( int ratio ) ;
-        // Set the size of the context menu font.
+        //< Set the size of the context menu font.
+      void setActivatedVibration( int state ) ;
       // @}
 
 
@@ -222,6 +228,8 @@ namespace Avogadro
           ///< For "substitute atom by fragment" feature (Context menu)
       void setAtomicNumberCurrent( int atomicNumber ) ;
           ///< Let the periodic table to save the selected element (Context menu)
+      void addAllHydrogens() ;
+      void removeAllHydrogens() ;
 
       /**
         * @name For "distance between atoms" feature (Context menu)
@@ -297,17 +305,17 @@ namespace Avogadro
       /**
         * @name Transform the wrapper actions to the Avogadro actions.
         * @{ */
-      void transformWrapperActionToMoveAtom( int wmavoAction, Vector3d pos3dCurrent, Vector3d pos3dLast, double rotAtomdegX, double rotAtomdegY ) ;
+      void transformWrapperActionToMoveAtom( int wmavoAction, const Vector3d& pos3dCurrent, const Vector3d& pos3dLast, double rotAtomdegX, double rotAtomdegY ) ;
       void transformWrapperActionToMoveMouse( int wmavoAction, QPoint posCursor ) ;
       void transformWrapperActionToSelectAtom( int wmavoAction, QPoint posCursor ) ;
-      void transformWrapperActionToCreateAtomBond( int wmavoAction, QPoint posCursor, Vector3d pointRef) ;
+      void transformWrapperActionToCreateAtomBond( int wmavoAction, QPoint posCursor, const Vector3d& pointRef) ;
       void transformWrapperActionToDeleteAllAtomBond( int wmavoAction ) ;
       void transformWrapperActionToRemoveAtomBond( int wmavoAction, QPoint posCursor ) ;
 
-      void transformWrapperActionToRotateCamera( int wmavoAction, Vector3d pointRef, double rotCamAxeXDeg, double rotCamAxeYDeg ) ;
-      void transformWrapperActionToTranslateCamera( int wmavoAction, Vector3d pointRef, double distCamXTranslate, double distCamYTranslate ) ;
-      void transformWrapperActionToZoomCamera( int wmavoAction, Vector3d pointRef, double distCamZoom ) ;
-      void transformWrapperActionToInitiateCamera( int wmavoAction, Vector3d pointRef ) ;
+      void transformWrapperActionToRotateCamera( int wmavoAction, const Vector3d& pointRef, double rotCamAxeXDeg, double rotCamAxeYDeg ) ;
+      void transformWrapperActionToTranslateCamera( int wmavoAction, const Vector3d& pointRef, double distCamXTranslate, double distCamYTranslate ) ;
+      void transformWrapperActionToZoomCamera( int wmavoAction, const Vector3d& pointRef, double distCamZoom ) ;
+      void transformWrapperActionToInitiateCamera( int wmavoAction, const Vector3d& pointRef ) ;
 
       void transformWrapperActionToClosePeriodicTable( int &wmavoAction, QPoint posCursor ) ;
       void transformWrapperActionToShowContextMenu( int &wmavoAction, QPoint posCursor ) ;
@@ -327,13 +335,13 @@ namespace Avogadro
 
       /**
         * @name Tools for all basics manipulations
-        * All basic methods rewrite/mainly encpasulate, and the Avogadro methods for the
+        * All basic methods rewrite/mainly encapsulate, and the Avogadro methods for the
         * same things (almost).
         * Avogadro methods are specify as deprecated (for some reason explain somewhere)
         * and they are the only to realize the undo/redo feature.
         * @{ */
-      void moveAtomBegin( int wmavoAction, QList<Atom*> atomList, Vector3d vectAtomTranslate, Transform3d transfAtomRotate ) ;
-      void moveAtomBegin( int wmavoAction, QList<Primitive*> primList, Vector3d vectAtomTranslate, Transform3d transfAtomRotate ) ;
+      void moveAtomBegin( int wmavoAction, QList<Atom*> atomList, const Vector3d& vectAtomTranslate, const Transform3d& transfAtomRotate ) ;
+      void moveAtomBegin( int wmavoAction, QList<Primitive*> primList, const Vector3d& vectAtomTranslate, const Transform3d& transfAtomRotate ) ;
       void moveAtomEnd( QList<Atom*> atomList ) ;
       void moveAtomEnd( QList<Primitive*> primList ) ;
 
@@ -385,13 +393,17 @@ namespace Avogadro
 
       void deleteSelectedElementUndoRedo( Molecule *molecule ) ; ///< Deprecated : Avogadro style.
       void deleteAllElement( Molecule *molecule ) ;
+
+      void optimizeGeometry( Molecule *molecule ) ;
       // @}
 
 
       /**
-        * @name Tools to add Hydrogen.
-        * Generic code to help in the adjustment of the Hydrogen atoms.
+        * @name Tools to add/remove Hydrogen.
+        * Generic code to help in the adjustment of Hydrogen atoms.
         * @{ */
+      void addHydrogens( Molecule *molecule ) ;
+      void removeHydrogens( Molecule *molecule ) ;
       OpenBabel::OBAtom* setImplicitValence_p( OpenBabel::OBMol *molecule, OpenBabel::OBAtom* atom ) ;
       void adjustPartialCharge_p( Molecule *molecule, OpenBabel::OBMol *obmol ) ;
       bool addHydrogen_p( Molecule *molecule, OpenBabel::OBMol *obmol, Atom* atom ) ;
@@ -411,14 +423,14 @@ namespace Avogadro
         * @name Calculate the move of the atoms
         * Calculate the transformation matrix to apply its in the modelview matrix to move atoms.
         * @{ */
-      bool calculateTransformationMatrix( int wmavoAction, Vector3d curPos, Vector3d lastPos, Vector3d refPoint, double rotAtomdegX, double rotAtomdegY ) ;
+      bool calculateTransformationMatrix( int wmavoAction, const Vector3d& curPos, const Vector3d& lastPos, const Vector3d& refPoint, double rotAtomdegX, double rotAtomdegY ) ;
       // @}
 
       /**
         * @name For the barycenter
         * @{ */
       void resetBarycenter_p() ;
-      void updateBarycenter( Vector3d atomPos, bool addOrDel, bool forceNoTestToRecalculateBarycenter=false ) ;
+      void updateBarycenter( const Vector3d& atomPos, bool addOrDel, bool forceNoTestToRecalculateBarycenter=false ) ;
       void recalculateBarycenter( Molecule *molecule ) ;
       // @}
 
@@ -426,8 +438,6 @@ namespace Avogadro
 
     // Private attributs.
     private:
-
-      int iUnIncrementQuiVousVeutDuBIEN ;
 
       /**
         * Use in the pull-down menu to represent the actions of each button of
@@ -446,7 +456,7 @@ namespace Avogadro
       //
       GLWidget *m_widget ; ///< (shortcut)
       Tool *m_wmTool, *m_drawTool ; ///< (shortcut)
-      Transform3d m_cameraInitialViewPoint ; // Save the initial view point.
+      //Transform3d *m_cameraInitialViewPoint ; // Save the initial view point.
       QList<QAction*> m_pullDownMenuActions ;
       WmAvoThread *m_wmavoThread ;
       bool m_wmIsConnected ;
@@ -477,7 +487,7 @@ namespace Avogadro
         * To store the transformation matrix which represent the move.
         * @{ */
       Vector3d m_vectAtomTranslate ;
-      Transform3d m_transfAtomRotate ;
+      Transform3d *m_transfAtomRotate ;
       // @}
 
 
@@ -544,12 +554,16 @@ namespace Avogadro
       QVector<ContextMenu*> m_famillyFragAct ;
 
       QAction *m_changeAddHAct ;
+      ContextMenu *m_contextMenuHydrogen ;
+      QAction *m_addAllHAct ;
+      QAction *m_removeAllHAct ;
       // @}
 
 
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
       // http://eigen.tuxfamily.org/dox/StructHavingEigenMembers.html
+      // And EIGEN_DONT_ALIGN in the begin of the file. (If no in comentary...)
   };
 
 

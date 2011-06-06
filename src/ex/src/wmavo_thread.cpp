@@ -186,6 +186,20 @@ void WmAvoThread::setWmRumble( int gradual )
   }
 }
 
+void WmAvoThread::setWmRumbleEnable( bool state )
+{
+  if( m_wmavo != NULL )
+  {
+    if( m_rumbleState != state )
+    {
+      m_mutex.lock() ;
+      m_rumbleState = state ;
+      m_updateRumbleEnable = true ;
+      m_mutex.unlock() ;
+    }
+  }
+}
+
 void WmAvoThread::setWmSizeWidget( int x, int y, int width, int height )
 {
   if( m_wmavo != NULL )
@@ -273,6 +287,12 @@ void WmAvoThread::updateWmAttributs()
       //cout << "update RumbleGrad" << endl ;
       m_updateRumbleGrad = false ;
       m_wmavo->wmSetRumble( m_gradual ) ;
+    }
+
+    if( m_updateRumbleEnable )
+    {
+      m_updateRumbleEnable = false ;
+      m_wmavo->wmSetRumbleEnable( m_rumbleState ) ;
     }
 
     if( m_updateSizeWidget )

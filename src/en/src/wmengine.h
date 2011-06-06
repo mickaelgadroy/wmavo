@@ -287,6 +287,11 @@ namespace Avogadro {
        */
       //void setOpacity(int value);
 
+      
+  public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+      // http://eigen.tuxfamily.org/dox/StructHavingEigenMembers.html
+
   };
 
   /*

@@ -42,9 +42,11 @@
 
 #define WMTOOL_TIME_DISPLAY_MSG 10000
 
-#define PLUGIN_WM_SENSITIVE_DEFAULT 30
+#define PLUGIN_WM_SENSITIVE_DEFAULT 20
 #define PLUGIN_WM_SENSITIVE_MIN 15
-#define PLUGIN_WM_SENSITIVE_MAX 60
+#define PLUGIN_WM_SENSITIVE_MAX 40
+
+#define PLUGIN_WM_VIBRATION_ONOFF true
 
 
 ///**********************************************************
@@ -72,6 +74,7 @@
 #define WMAVO_CONNECTION_TIMEOUT 5.0 // Computer lets few time to the connection of the Wiimote (in seconde).
 #define WMAVO_IRSENSITIVITY 3
 #define WMAVO_SMOOTH 10
+#define WMAVO_ACTIVATEMENU_AFTER 1000 //ms
 
 #define WMAVO_CURSOR_CALIBRATION_X 2.4 // 2.5
 #define WMAVO_CURSOR_CALIBRATION_Y 2.4 // 3.0
@@ -91,7 +94,7 @@
 #define WMAVO_WM_XY_MAXPOINTING_MOVEALLOWED 60 // 40 Normally to avoid "jumping cursor".
   //Remember: cursor moves itself by difference calculate here (wmavo), not by a position gets by wiiuse.
 
-#define WMAVO_WM_Z_MINPOINTING_MOVEALLOWED 0.2 // 0.1 : By experience.
+#define WMAVO_WM_Z_MINPOINTING_MOVEALLOWED 0.2 // 0.1
 
 #define WMAVO_NC_MINJOY_MOVEALLOWED 0.1
 

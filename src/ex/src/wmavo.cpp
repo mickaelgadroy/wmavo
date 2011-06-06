@@ -78,6 +78,9 @@ WmAvo::WmAvo( int operatingMode ) :
   m_accPrec.gForceX = 0 ; m_accPrec.gForceY = 0 ; m_accPrec.gForceZ = 0 ;
   m_accPrec.gForce = 0 ;
   m_accCur.accVarX = 0 ; m_accCur.accVarY = 0 ; m_accCur.accVarZ = 0 ;
+  m_accCur.timeAcc = 0 ;
+  m_accCur.velocityX = 0 ; m_accCur.velocityY = 0 ; m_accCur.velocityZ = 0 ;
+  m_accCur.distanceX = 0 ; m_accCur.distanceY = 0 ; m_accCur.distanceZ = 0 ;
 
   // Smoothing.
   m_smoothXY = new WIWO<Vector3d>(WMAVO_SMOOTH) ;
@@ -357,6 +360,28 @@ void WmAvo::wmSetRumble( int gradual )
     m_wmRumble->setGradual( gradual ) ;
 }
 
+/**
+  * Enable or Disable the rumble feature.
+  * @param state Rumble : On/Off
+  */
+void WmAvo::wmSetRumbleEnable( bool state )
+{
+  if( state != m_wmRumble->getRumbleEnabled() ) // Limit mutex.
+  {
+    m_wmRumble->setRumbleEnabled( state ) ;
+    puts( "Change state of the rumble" ) ;
+
+    if( !state )
+    {
+      if( !m_wmRumble->isQuit() || m_wmRumble->getContinu() )
+      {
+        m_wmRumble->quit() ;
+        puts( "Stop the rumble" ) ;
+      }
+    }
+  }
+}
+
 
 // Ajouter des méthodes surchargées pour rendre la méthode plus simple d'utilisation
 // ((fr:)tremor : Petite secousse sismique)
@@ -593,8 +618,6 @@ bool WmAvo::wmGetSmoothedCursor()
       return true ;
     else
       return false ;
-
-
   }
 }
 
@@ -605,10 +628,17 @@ bool WmAvo::wmGetSmoothedCursor()
   * to use it ...
   * <br/>This method is used to get a "jerk" (the acceleration derived) to have
   * a ratio which will be applied on the vector of movement.
+  * <br/> jerk == acceleration variation => da/dt (jerk in m/s3) http://en.wikipedia.org/wiki/Jerk_%28physics%29
   */
 float WmAvo::wmGetAcc()
 {
-  if( m_wm->isUsingACC() )
+  if( m_wm->isUsingACC() == 0 )
+  {
+    //cout << "No accel activate, so 'I' am going to activate it." << endl ;
+    m_wm->SetMotionSensingMode( CWiimote::ON ) ;
+    return 0.0 ;
+  }
+  else
   {
     //float pitch=0, roll=0, yaw=0 ;
     //float gForceX=0, gForceY=0, gForceZ=0 ;
@@ -630,6 +660,9 @@ float WmAvo::wmGetAcc()
     m_accPrec.yaw = m_accCur.yaw ; m_accPrec.accVarX = m_accCur.accVarX ;
     m_accPrec.accVarY = m_accCur.accVarY ; m_accPrec.accVarZ = m_accCur.accVarZ ;
     m_accPrec.accVarNorm = m_accCur.accVarNorm ;
+    m_accPrec.velocityX = m_accCur.velocityX ; m_accPrec.velocityY = m_accCur.velocityY ;
+    m_accPrec.velocityZ = m_accCur.velocityZ ; m_accPrec.distanceX = m_accCur.distanceX ;
+    m_accPrec.distanceY = m_accCur.distanceY ; m_accPrec.distanceZ = m_accCur.distanceZ ;
 
 
     // Get the current values.
@@ -648,13 +681,33 @@ float WmAvo::wmGetAcc()
                             m_accCur.gForceY*m_accCur.gForceY +
                             m_accCur.gForceZ*m_accCur.gForceZ ) ;
 
-    // Calcul the difference of the accel
-    // == acceleration variation => da/dt ? (jerk?)
+    // Calculate distance between each get acceleration.
+    // Info : 1g = 9.80665m/s²
+    //v = a0 (t-t0) + v0
+    //d = 1/2 a (t-t0)² + v0 (t-t0) + d0
+    /*
+    if( m_accPrec.timeAcc == 0 )
+      m_accPrec.timeAcc = m_time.elapsed() ;
+    m_accCur.timeAcc = m_time.elapsed() ;
+    float ms2=9.80665 ;
+    float diffTime=(float)m_accCur.timeAcc - (float)m_accPrec.timeAcc ;
+    m_accCur.velocityX = (m_accCur.gForceX*ms2)*diffTime + m_accPrec.velocityX ;
+    m_accCur.velocityY = m_accCur.gForceY*diffTime + m_accPrec.velocityY ;
+    m_accCur.velocityZ = m_accCur.gForceZ*diffTime + m_accPrec.velocityZ ;
+    m_accCur.distanceX = 0.5f*m_accCur.gForceX*diffTime*diffTime + m_accCur.velocityX*diffTime + m_accPrec.velocityX ;
+    m_accCur.distanceY = 0.5f*m_accCur.gForceY*diffTime*diffTime + m_accCur.velocityY*diffTime + m_accPrec.velocityY ;
+    m_accCur.distanceZ = 0.5f*m_accCur.gForceZ*diffTime*diffTime + m_accCur.velocityZ*diffTime + m_accPrec.velocityZ ;
+
+    m_timeAcc1 = m_timeAcc2 ;
+    */
+
+
+    // Calculate the difference of the accel (jerk).
     m_accCur.accVarX = m_accCur.gForceX - m_accPrec.gForceX ;
     m_accCur.accVarY = m_accCur.gForceY - m_accPrec.gForceY ;
     m_accCur.accVarZ = m_accCur.gForceZ - m_accPrec.gForceZ ;
 
-    // Calculer la norme du jerk
+    // Calculate the jerk norm.
     m_accCur.accVarNorm = sqrt( m_accCur.accVarX*m_accCur.accVarX +
                                 m_accCur.accVarY*m_accCur.accVarY +
                                 m_accCur.accVarZ*m_accCur.accVarZ ) ;
@@ -663,16 +716,9 @@ float WmAvo::wmGetAcc()
     // Se baser sur le jerk de chaque axe pour les ratio à appliquer
     // Se baser sur le jerk total pour le déplacement ou juste la norme de l'acc ?
 
-    //printf( "gForce:%1.3f, by axe:\t%1.3f\t%1.3f\t%1.3f\n", m_accCur.gForce, m_accCur.gForceX, m_accCur.gForceY, m_accCur.gForceZ ) ;
-
-    //printf( "acc var:%1.3f, by axe:\t%1.3f\t%1.3f\t%1.3f\n", m_accCur.accVarNorm, m_accCur.accVarX, m_accCur.accVarY, m_accCur.accVarZ ) ;
+    printf( "gForce:%1.3f, by axe:\t%1.3f\t%1.3f\t%1.3f\n", m_accCur.gForce, m_accCur.gForceX, m_accCur.gForceY, m_accCur.gForceZ ) ;
+    printf( "Jerk  :%1.3f, by axe:\t%1.3f\t%1.3f\t%1.3f\n", m_accCur.accVarNorm, m_accCur.accVarX, m_accCur.accVarY, m_accCur.accVarZ ) ;
     return m_accCur.accVarNorm ;
-  }
-  else
-  {
-    //cout << "No accel activate, so 'I' am going to activate it." << endl ;
-    m_wm->SetMotionSensingMode( CWiimote::ON ) ;
-    return 0.0 ;
   }
 }
 
@@ -977,7 +1023,7 @@ void WmAvo::translateCursorToScreen()
     m_posCursor.setY( m_yWidget ) ;
   else
     m_posCursor.setY( y ) ;
-    */
+  */
 }
 
 
@@ -1375,7 +1421,7 @@ bool WmAvo::transformWmAction1ToRotateAtomOrActivateMenu()
         m_timeSecond = m_time.elapsed() ;
 
       if( m_wm->Buttons.isPressed(CButtons::BUTTON_RIGHT)
-          && (m_timeSecond-m_timeFirst)>1000 )
+          && (m_timeSecond-m_timeFirst)>WMAVO_ACTIVATEMENU_AFTER )
       { // Activate menu.
 
           //m_menuActivate = true ;
@@ -1390,7 +1436,7 @@ bool WmAvo::transformWmAction1ToRotateAtomOrActivateMenu()
       // !!! Voir pour l'ajouter sur les autres fonctionnalités l'utilisant !!!
       m_timeSecond = m_time.elapsed() ;
 
-      if( (m_timeSecond-m_timeFirst) < 1000 )
+      if( (m_timeSecond-m_timeFirst) < WMAVO_ACTIVATEMENU_AFTER )
       {
         //m_isCamRotateWm = true ;
         WMAVO_SETON( WMAVO_CAM_ROTATE_BYWM ) ;

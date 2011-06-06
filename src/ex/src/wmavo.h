@@ -147,6 +147,7 @@ class WmAvo
 
     void wmSetRumble( bool start, bool continu=true, bool loop=false, int gradual=-1 ) ;
     void wmSetRumble( int gradual ) ;
+    void wmSetRumbleEnable( bool state ) ;
 
     void wmSetSizeWidget( int x, int y, int width, int height ) ;
 
@@ -313,11 +314,15 @@ class WmAvo
     {
       float pitch, roll, yaw ;
       float gForceX, gForceY, gForceZ ;
-          ///< Acceleration/gForce in each axe = "acceleration vector".
+          ///< Acceleration/gForce in each axe = "acceleration vector", in g unit.
       float gForce ;
-          ///< gForce applies on the Wiimote : gForce == acceleration (in physic) == "acceleration vector" norm
-      float accVarX, accVarY, accVarZ ; ///< Acceleration variations = "move vector"
-      float accVarNorm ; ///< Acceleration variations norm.
+          ///< gForce applies on the Wiimote : gForce == acceleration (in physic) == "acceleration vector" norm, in g unit.
+      float accVarX, accVarY, accVarZ ; ///< Acceleration variations = "move vector", in g/s unit.
+      float accVarNorm ; ///< Acceleration variations norm, in g/s unit.
+
+      int timeAcc ;
+      float velocityX, velocityY, velocityZ ;
+      float distanceX, distanceY, distanceZ ;
     };
     acc_t m_accPrec, m_accCur ;
     // @}

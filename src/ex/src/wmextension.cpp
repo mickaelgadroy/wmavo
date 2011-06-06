@@ -68,10 +68,13 @@ namespace Avogadro
     Extension(parent),
 
     m_widget(NULL), m_wmTool(NULL), m_drawTool(NULL),
+    //m_cameraInitialViewPoint(NULL),
     m_wmavoThread(NULL), m_wmIsConnected(false),
 
     m_isMoveAtom(false), m_wmIsAlreadyConnected(false), m_wmSensitive(PLUGIN_WM_SENSITIVE_DEFAULT),
     m_pointRefBarycenter(Vector3d(0,0,0)), m_sumOfWeights(0), m_atomsBarycenter(Vector3d(0,0,0)),
+    m_tmpBarycenter(Vector3d(0,0,0)),
+    m_vectAtomTranslate(Vector3d(0,0,0)),m_transfAtomRotate(NULL),
     m_testEventPress(false),
 
     m_addHydrogens(WMEX_ADJUST_HYDROGEN),
@@ -94,9 +97,10 @@ namespace Avogadro
     m_noDistAct(NULL), m_distAct(NULL), m_angleAct(NULL), m_diedreAct(NULL),
     m_contextMenuFragment(NULL), m_contextMenuResumeFragment(NULL),
     m_insertFragAct(NULL),
-    m_addSubstituteFragAct(NULL)
+    m_addSubstituteFragAct(NULL),
+    m_changeAddHAct(NULL), 
+    m_contextMenuHydrogen(NULL), m_addAllHAct(NULL), m_removeAllHAct(NULL)
   {
-    
     #if WIN32
     ::AllocConsole();
     InitializeConsoleStdIO() ;
@@ -105,7 +109,10 @@ namespace Avogadro
 
     // Initiate some data.
     m_time.start() ;
-    m_cameraInitialViewPoint.matrix().setIdentity() ;
+    //m_cameraInitialViewPoint = new Transform3d() ;
+    //m_cameraInitialViewPoint->matrix().setIdentity() ;
+    m_transfAtomRotate = new Transform3d() ;
+    m_transfAtomRotate->matrix().setIdentity() ;
     m_periodicTable = new PeriodicTableView(/*m_widget*/) ;
 
     // Initiate the Wiimote pull-down menu before IHM starts.
@@ -124,10 +131,12 @@ namespace Avogadro
     */
   WmExtension::~WmExtension()
   {
-    delete( m_me1 ) ;
-    delete( m_me2 ) ;
-    delete( m_me3 ) ;
-    delete( m_p ) ;
+    //if( m_cameraInitialViewPoint != NULL ) delete( m_cameraInitialViewPoint ) ;
+    if( m_transfAtomRotate != NULL ) delete( m_transfAtomRotate ) ;
+    if( m_me1 != NULL ) delete( m_me1 ) ;
+    if( m_me2 != NULL ) delete( m_me2 ) ;
+    if( m_me3 != NULL ) delete( m_me3 ) ;
+    if( m_p != NULL ) delete( m_p ) ;
 
     if( m_wmavoThread != NULL )
     {
@@ -217,7 +226,7 @@ namespace Avogadro
       {
         // The camera initialization is here because some data in Avogadro are not initialize
         // when constructor is called.
-        m_cameraInitialViewPoint = m_widget->camera()->modelview() ;
+        //*m_cameraInitialViewPoint = m_widget->camera()->modelview() ;
 
         m_pullDownMenuActions.at(ConnectWm)->setEnabled(false) ;
         //m_pullDownMenuActions.at(DisconnectWm)->setEnabled(true) ;
@@ -394,6 +403,7 @@ namespace Avogadro
       // Initiate the "Wiimote class".
 
       m_wmavoThread = new WmAvoThread(this) ;
+      m_wmavoThread->setWmRumbleEnable(PLUGIN_WM_VIBRATION_ONOFF) ;
 
       //
       // Connect all signal between the "Wiimote class" and WmExtension class.
@@ -659,8 +669,8 @@ namespace Avogadro
     else
     {
       qRegisterMetaType<Vector3d>("Vector3d") ;
-      bool isConnect=connect( this, SIGNAL(renderedAtomBond( Vector3d, Vector3d, bool, bool, bool)),
-                              m_wmTool, SLOT(renderAtomBond( Vector3d, Vector3d, bool, bool, bool)) ) ;
+      bool isConnect=connect( this, SIGNAL(renderedAtomBond( const Vector3d&, const Vector3d&, bool, bool, bool)),
+                              m_wmTool, SLOT(renderAtomBond( const Vector3d&, const Vector3d&, bool, bool, bool)) ) ;
       if( !isConnect )
       {
         qDebug() << "Problem connection signal : m_wmextension.renderedAtomBond() -> m_wmTool.renderAtomBond() !!" ;
@@ -767,9 +777,9 @@ namespace Avogadro
 
     m_cancelAct = new QAction( tr("Close menu"), this ) ;
     m_cancelAct->setStatusTip( tr("Close this context menu") ) ;
-    QIcon icon( "/home/mickaelgadroy/Dropbox/Photos/Plan9bunnysmblack.jpg" ) ;
-    m_cancelAct->setIcon( icon ) ;
-    m_cancelAct->setIconVisibleInMenu(true) ;
+    //QIcon icon( "/home/mickaelgadroy/Dropbox/Photos/Plan9bunnysmblack.jpg" ) ;
+    //m_cancelAct->setIcon( icon ) ;
+    //m_cancelAct->setIconVisibleInMenu(true) ;
     isConnect=connect( m_cancelAct, SIGNAL(triggered()), this, SLOT(closeContextMenu()) ) ;
     if( !isConnect )
     {
@@ -828,12 +838,12 @@ namespace Avogadro
       ok = false ;
     }
 
-
+    m_changeAddHAct = new QAction( tr("Adjust Hydrogen ..."), this ) ;
+    m_changeAddHAct->setCheckable( true ) ;
     if( WMEX_ADJUST_HYDROGEN ) // Just to initiate the value at begin.
-      m_changeAddHAct = new QAction( tr("No Adjust Hydrogen ..."), this ) ;
+      m_changeAddHAct->setChecked(true) ;
     else
-      m_changeAddHAct = new QAction( tr("Adjust Hydrogen ..."), this ) ;
-
+      m_changeAddHAct->setChecked(false) ;
     m_changeAddHAct->setStatusTip( tr("Measure & display dihedral angle between atoms") ) ;
     isConnect=connect( m_changeAddHAct, SIGNAL(triggered()), this, SLOT(invertAddHydrogen()) ) ;
     if( !isConnect )
@@ -842,6 +852,27 @@ namespace Avogadro
       isConnect = false ;
       ok = false ;
     }
+
+    m_addAllHAct = new QAction( tr("Add all Hydrogen"), this ) ;
+    m_addAllHAct->setStatusTip( tr("Add all Hydrogen atoms in the molecule") ) ;
+    isConnect=connect( m_addAllHAct, SIGNAL(triggered()), this, SLOT(addAllHydrogens()) ) ;
+    if( !isConnect )
+    {
+      qDebug() << "Problem connection signal : m_addAllHAct.triggered() -> WmExtension.addAllHydrogens() !!" ;
+      isConnect = false ;
+      ok = false ;
+    }
+
+    m_removeAllHAct = new QAction( tr("Remove all Hydrogen"), this ) ;
+    m_removeAllHAct->setStatusTip( tr("Remove all Hydrogen atoms in the molecule") ) ;
+    isConnect=connect( m_removeAllHAct, SIGNAL(triggered()), this, SLOT(removeAllHydrogens()) ) ;
+    if( !isConnect )
+    {
+      qDebug() << "Problem connection signal : m_removeAllHAct.triggered() -> WmExtension.removeAllHydrogens() !!" ;
+      isConnect = false ;
+      ok = false ;
+    }
+
 
     //
     // Then, initiate the context menu object.
@@ -868,6 +899,14 @@ namespace Avogadro
     m_contextMenuMain->addSeparator() ;
 
     m_contextMenuMain->addAction( m_changeAddHAct ) ;
+
+    m_contextMenuHydrogen = new ContextMenu( "Hydrogen", m_contextMenuMain, m_contextMenuMain ) ;
+    m_contextMenuHydrogen->addAction( m_addAllHAct ) ;
+    m_contextMenuHydrogen->addAction( m_removeAllHAct ) ;
+
+    m_contextMenuMain->addMenu( m_contextMenuHydrogen ) ;
+    m_contextMenuMain->addSeparator() ;
+
     m_contextMenuMain->addAction( m_cancelAct ) ;
 
     // Init default actions.
@@ -895,6 +934,11 @@ namespace Avogadro
       for( int i=0 ; i<m_famillyFragAct.size() ; i++ )
         m_famillyFragAct.at(i)->setFont(font) ;
     }
+  }
+
+  void WmExtension::setActivatedVibration( int state )
+  {
+    m_wmavoThread->setWmRumbleEnable( (state==1?true:false) ) ;
   }
 
 
@@ -1080,7 +1124,7 @@ namespace Avogadro
     * @param rotAtomDegX The desired X-axis angle
     * @param rotAtomDegY The desired Y-axis angle
     */
-  void WmExtension::transformWrapperActionToMoveAtom( int wmavoAction, Vector3d pos3dCurrent, Vector3d pos3dLast, double rotAtomDegX, double rotAtomDegY )
+  void WmExtension::transformWrapperActionToMoveAtom( int wmavoAction, const Vector3d& pos3dCurrent, const Vector3d& pos3dLast, double rotAtomDegX, double rotAtomDegY )
   {
     if( WMAVO_IS2(wmavoAction,WMAVO_ATOM_MOVE) )
     { // Object is in "travel mode", but just in the mode.
@@ -1096,7 +1140,7 @@ namespace Avogadro
         if( isMoved )
         {
           QList<Primitive*> pList=m_widget->selectedPrimitives().subList(Primitive::AtomType) ;
-          moveAtomBegin( wmavoAction, pList, m_vectAtomTranslate, m_transfAtomRotate ) ;
+          moveAtomBegin( wmavoAction, pList, m_vectAtomTranslate, *m_transfAtomRotate ) ;
 
           // Active rumble in the Wiimote only if one atom is selected.
           if( pList.size() == 1 )
@@ -1177,7 +1221,11 @@ namespace Avogadro
         //  }
         //}
 
-        if( atom != NULL )
+        if( atom == NULL )
+        {
+          m_widget->clearSelected() ;
+        }
+        else
         {
           if( m_isCalculDistDiedre )
           { // Manage the selection of atom. It works with an association of the WmTool class.
@@ -1321,7 +1369,7 @@ namespace Avogadro
     * @param posCursor The position of the cursor
     * @param pointRef The position of the reference point.
     */
-  void WmExtension::transformWrapperActionToCreateAtomBond( int wmavoAction, QPoint posCursor, Vector3d pointRef )
+  void WmExtension::transformWrapperActionToCreateAtomBond( int wmavoAction, QPoint posCursor, const Vector3d& pointRef )
   {
     if( WMAVO_IS2(wmavoAction,WMAVO_CREATE) || m_isAtomDraw )
       // for m_isAtomDraw : Necessary for the action of "isCreateAtom".
@@ -1805,7 +1853,7 @@ namespace Avogadro
     * @param rotCamAxeXDeg The desired angle on the X-axis of the screen
     * @param rotCamAxeYDeg The desired angle on the Y-axis of the screen
     */
-  void WmExtension::transformWrapperActionToRotateCamera( int wmavoAction, Vector3d pointRef, double rotCamAxeXDeg, double rotCamAxeYDeg )
+  void WmExtension::transformWrapperActionToRotateCamera( int wmavoAction, const Vector3d& pointRef, double rotCamAxeXDeg, double rotCamAxeYDeg )
   {
     if( WMAVO_IS2(wmavoAction,WMAVO_CAM_ROTATE) )
     {
@@ -1841,7 +1889,7 @@ namespace Avogadro
     * @param distCamXTranslate Desired distance on the X-axis of the screen
     * @param distCamYTranslate Desired distance on the Y-axis of the screen
     */
-  void WmExtension::transformWrapperActionToTranslateCamera( int wmavoAction, Vector3d pointRef, double distCamXTranslate, double distCamYTranslate )
+  void WmExtension::transformWrapperActionToTranslateCamera( int wmavoAction, const Vector3d& pointRef, double distCamXTranslate, double distCamYTranslate )
   {
     if( WMAVO_IS2(wmavoAction,WMAVO_CAM_TRANSLATE) )
     {
@@ -1857,7 +1905,7 @@ namespace Avogadro
     * @param pointRef The position of the reference point
     * @param distCamZoom Desired distance for the zoom on the Z-axis of the screen
     */
-  void WmExtension::transformWrapperActionToZoomCamera( int wmavoAction, Vector3d pointRef, double distCamZoom )
+  void WmExtension::transformWrapperActionToZoomCamera( int wmavoAction, const Vector3d& pointRef, double distCamZoom )
   {
     if( WMAVO_IS2(wmavoAction,WMAVO_CAM_ZOOM) )
     {
@@ -1872,7 +1920,7 @@ namespace Avogadro
     * @param wmavoAction All actions ask by the wrapper
     * @param pointRef The position of the reference point.
     */
-  void WmExtension::transformWrapperActionToInitiateCamera( int wmavoAction, Vector3d pointRef )
+  void WmExtension::transformWrapperActionToInitiateCamera( int wmavoAction, const Vector3d& pointRef )
   {
     if( WMAVO_IS2(wmavoAction,WMAVO_CAM_INITIAT) )
     {
@@ -2087,7 +2135,7 @@ namespace Avogadro
           m_contextMenuMain->setActiveAction( m_periodicTableAct ) ;
 
           // Disable useless menu.
-          if( m_widget->selectedPrimitives().size() == 1 )
+          if( !m_addHydrogens || (m_addHydrogens && m_widget->selectedPrimitives().size()==1) )
           {
             m_contextMenuResumeFragment->setEnabled(true) ;
             m_contextMenuFragment->setEnabled(true) ;
@@ -2166,10 +2214,13 @@ namespace Avogadro
             }
             else
             {
-              QKeyEvent ke(QEvent::KeyPress, Qt::Key_Right, Qt::NoModifier) ;
-              QApplication::sendEvent( m_contextMenuCurrent, &ke ) ;
-              if( cm!=NULL && cm!=m_contextMenuCurrent )
-                m_contextMenuCurrent = cm ;
+              if( cm!=NULL && cm->isEnabled() )
+              {
+                QKeyEvent ke(QEvent::KeyPress, Qt::Key_Right, Qt::NoModifier) ;
+                QApplication::sendEvent( m_contextMenuCurrent, &ke ) ;
+                if( cm!=NULL && cm!=m_contextMenuCurrent )
+                  m_contextMenuCurrent = cm ;
+              }
             }
           }
         }
@@ -2381,7 +2432,7 @@ namespace Avogadro
     * @param vectAtomTranslate The transformation vector to translate atom(s)
     * @param transfAtomRotate The transformation matrix to rotate atom(s)
     */
-  void WmExtension::moveAtomBegin( int wmavoAction, QList<Atom*> atomList, Vector3d vectAtomTranslate, Transform3d transfAtomRotate  )
+  void WmExtension::moveAtomBegin( int wmavoAction, QList<Atom*> atomList, const Vector3d& vectAtomTranslate, const Transform3d& transfAtomRotate  )
   {
     if( atomList.size()>0 )
     {
@@ -2420,7 +2471,7 @@ namespace Avogadro
     * @param vectAtomTranslate The transformation vector to translate atom(s)
     * @param transfAtomRotate The transformation matrix to rotate atom(s)
     */
-  void WmExtension::moveAtomBegin( int wmavoAction, QList<Primitive*> primList, Vector3d vectAtomTranslate, Transform3d transfAtomRotate  )
+  void WmExtension::moveAtomBegin( int wmavoAction, QList<Primitive*> primList, const Vector3d& vectAtomTranslate, const Transform3d& transfAtomRotate  )
   {
     if( primList.size()>0 )
     {
@@ -4154,6 +4205,115 @@ namespace Avogadro
 
 
   /**
+    * Realize an optimization of the geometry with default parameters.
+    * 0, // force field id
+    * 500, // nSteps, a reasonable starting point (not too much time)
+    * 0, // algorithm, steepest descent
+    * 7, // convergence
+    * 0 // task
+    */
+  void WmExtension::optimizeGeometry( Molecule *molecule )
+  {
+    /*
+    ConstraintsModel constraints ;
+    OpenBabel::OBForceField *forceField=NULL ;
+    OpenBabel::OBMol obmol=molecule->OBMol() ;
+    ostringstream buff;
+    
+    forceField = OBForceField::FindForceField( "MMFF94" );
+
+    if( !forceField->Setup( obmol, constraints.constraints() ) )
+    {
+      forceField = OBForceField::FindForceField("UFF") ;
+      forceField->SetLogFile( &buff ) ;
+      forceField->SetLogLevel( OBFF_LOGLVL_LOW ) ;
+    }
+
+    QUndoCommand undo = new ForceFieldCommand( molecule, forceField, constraints,
+                                  0, // force field id
+                                  500, // nSteps, a reasonable starting point (not too much time)
+                                  0, // algorithm, steepest descent
+                                  7, // convergence
+                                  0 // task
+                                  );
+    undo->setText( QObject::tr( "Geometric Optimization" ) );
+    */
+  }
+
+
+  /**
+    * Fill out the molecule with Hydrogens.
+    */
+  void WmExtension::addHydrogens( Molecule *molecule )
+  {
+    if( molecule != NULL )
+    {
+      OpenBabel::OBMol obmol=molecule->OBMol() ;
+      int nba=molecule->numAtoms() ;
+      int nb=nba ;
+      
+      foreach( Atom *atom, molecule->atoms() )
+      {
+        if( --nb < 0 )
+          break;
+        else
+          addHydrogen_p( molecule, &obmol, atom ) ;
+      }
+
+      adjustPartialCharge_p( molecule, &obmol ) ;
+
+      /* Just longer to execut ...
+      OpenBabel::OBMol obmol=molecule->OBMol() ;
+      int nba=molecule->numAtoms() ;
+      int nboba=0 ;
+      
+      OpenBabel::OBAtom *obh=NULL, *oba=NULL, *oba2=NULL ;
+      OpenBabel::OBBond *obb=NULL ;
+      OpenBabel::OBBondIterator obbi ;
+      Atom *h=NULL, *a=NULL, *a2=NULL ;
+
+      obmol.AddHydrogens() ; // Take many time to execut !
+      nboba = obmol.NumAtoms() ;
+
+      // All new atoms in the OBMol must be the additional hydrogens.
+      for( int i=nba+1 ; i<=nboba ; ++i )
+      {
+        obh = obmol.GetAtom(i) ;
+
+        if( obh!=NULL && obh->IsHydrogen() )
+        {
+          h = addAtom( molecule, obh ) ;
+          
+          OpenBabel::OBBondIterator iter ;
+          oba = obh->BeginNbrAtom(iter) ;
+          a = molecule->atom(oba->GetIdx()-1) ;
+
+          if( h!=NULL && oba!=NULL && a!=NULL )
+            addBond( molecule, a, h, 1 ) ;
+          else
+            puts( "Bug in WmExtension::addHydrogens() : a NULL-object not expected" ) ;
+        }
+      }
+      */
+     }
+  }
+
+  /**
+    * Remove all Hydrogen of the molecule.
+    */
+  void WmExtension::removeHydrogens( Molecule *molecule )
+  {
+    if( molecule != NULL )
+    {
+      foreach( Atom *atom, molecule->atoms() )
+      {
+        if( atom->isHydrogen() )
+          removeAtom(molecule, atom) ;
+      }
+    }
+  }
+
+  /**
     * Avogadro code :
     * In theorical, add feature in the "add Hydrogen" feature to correct OpenBabel.
     * But, OpenBabel has maybe correct this thing already ...
@@ -4544,6 +4704,19 @@ namespace Avogadro
     emit displayedAtomicNumberCurrent( atomicNumber ) ;
   }
 
+  /**
+    * Fill out the molecule of Hydrogen atoms. (Slot to call addHydrogens() method)
+    */
+  void WmExtension::addAllHydrogens()
+  {
+    addHydrogens( m_widget->molecule() ) ;
+  }
+
+  void WmExtension::removeAllHydrogens()
+  {
+    removeHydrogens( m_widget->molecule() ) ;
+  }
+
 
   /**
     * Set the Wiimote sensitive..
@@ -4578,11 +4751,6 @@ namespace Avogadro
   void WmExtension::invertAddHydrogen()
   {
     m_addHydrogens = !m_addHydrogens ;
-
-    if( m_addHydrogens  )
-      m_changeAddHAct->setText( "No adjust Hydrogen ...") ;
-    else
-      m_changeAddHAct->setText( "Adjust Hydrogen ...") ;
   }
 
 
@@ -4693,7 +4861,7 @@ namespace Avogadro
     * @param addOrDel Add or del the position according the need
     * @param forceNoTestToRecalculateBarycenter Force not to test if a recalculation must be realized.
     */
-  void WmExtension::updateBarycenter( Vector3d atomPos, bool addOrDel, bool forceNoTestToRecalculateBarycenter )
+  void WmExtension::updateBarycenter( const Vector3d& atomPos, bool addOrDel, bool forceNoTestToRecalculateBarycenter )
   {
     bool recalculateB=false ;
     unsigned int numAtoms=m_widget->molecule()->numAtoms() ;
@@ -4761,6 +4929,7 @@ namespace Avogadro
 
   /**
     * Calculate the transformation vector and/or matrix according to the need.
+    * "Convert" the wiimote coordinate system to the Avogadro coordinate system.
     * @return TRUE if the transformation matrix is different to null ; FALSE else.
     * @param wmactions All actions ask by the wrapper
     * @param curPos The current position calculate by the Wiimote
@@ -4769,7 +4938,7 @@ namespace Avogadro
     * @param rotAtomdegX The desired X-axis angle
     * @param rotAtomdegY The desired Y-axis angle
     */
-  bool WmExtension::calculateTransformationMatrix( int wmactions, Vector3d curPos, Vector3d lastPos, Vector3d refPoint, double rotAtomdegX, double rotAtomdegY )
+  bool WmExtension::calculateTransformationMatrix( int wmactions, const Vector3d& curPos, const Vector3d& lastPos, const Vector3d& refPoint, double rotAtomdegX, double rotAtomdegY )
   {
     bool isMoved=false ;
 
@@ -4831,16 +5000,16 @@ namespace Avogadro
 
         // Rotate the selected atoms about the center
         // rotate only selected primitives
-        m_transfAtomRotate.matrix().setIdentity();
+        m_transfAtomRotate->matrix().setIdentity();
 
         // Return to the center of the 3D-space.
-        m_transfAtomRotate.translation() = m_tmpBarycenter ;
+        m_transfAtomRotate->translation() = m_tmpBarycenter ;
 
         // Apply rotations.
-        m_transfAtomRotate.rotate(
+        m_transfAtomRotate->rotate(
             AngleAxisd( (rotAtomdegX/90.0)*0.1, camBackTransformedYAxis) );
 
-        m_transfAtomRotate.rotate(
+        m_transfAtomRotate->rotate(
             AngleAxisd( (rotAtomdegY/90.0)*0.1, camBackTransformedXAxis) );
 
         /*
@@ -4855,14 +5024,14 @@ namespace Avogadro
         */
 
         // Return to the object.
-        m_transfAtomRotate.translate( -m_tmpBarycenter ) ;
+        m_transfAtomRotate->translate( -m_tmpBarycenter ) ;
         isMoved = true ;
       }
       else
       { // Put all transformation "at zero".
 
-        m_transfAtomRotate.matrix().setIdentity();
-        m_transfAtomRotate.translation() = Vector3d(0,0,0) ;
+        m_transfAtomRotate->matrix().setIdentity();
+        m_transfAtomRotate->translation() = Vector3d(0,0,0) ;
 
         m_vectAtomTranslate[0] = 0.0 ;
         m_vectAtomTranslate[1] = 0.0 ;

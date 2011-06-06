@@ -201,22 +201,41 @@ namespace Avogadro
       m_wmPointSizeFontSlider->setValue( (int)(WMTOOL_POINTSIZE_RATIO_DEFAULT * 10.0f) ) ;
       m_wmPointSizeFontSlider->setTickInterval( 1 ) ;
 
+      QLabel *lblVibration = new QLabel(tr("Vibration :")) ;
+      m_checkBoxActivateVibration = new QCheckBox( "ON/OFF" ) ;
+      m_checkBoxActivateVibration->setChecked(PLUGIN_WM_VIBRATION_ONOFF) ;
+
+
+      QVBoxLayout *vBoxSens=new QVBoxLayout() ;
       QHBoxLayout *hBoxSens=new QHBoxLayout() ;
-      hBoxSens->addWidget( lblWmSensitive ) ;
       hBoxSens->addWidget( lblWmSMoins ) ;
       hBoxSens->addWidget( m_wmSensitiveSlider ) ;
       hBoxSens->addWidget( lblWmSPlus ) ;
+      vBoxSens->addWidget( lblWmSensitive ) ;
+      vBoxSens->addLayout( hBoxSens ) ;
+      vBoxSens->addStretch( 1 ) ;
 
+      QVBoxLayout *vBoxPointSize=new QVBoxLayout() ;
       QHBoxLayout *hBoxPointSize=new QHBoxLayout() ;
-      hBoxPointSize->addWidget( lblWmPointSize ) ;
       hBoxPointSize->addWidget( lblWmMoins ) ;
       hBoxPointSize->addWidget( m_wmPointSizeFontSlider ) ;
       hBoxPointSize->addWidget( lblWmPlus ) ;
+      vBoxPointSize->addWidget( lblWmPointSize ) ;
+      vBoxPointSize->addLayout( hBoxPointSize ) ;
+      vBoxPointSize->addStretch( 1 ) ;
+
+      QHBoxLayout *hBoxVibration=new QHBoxLayout() ;
+      hBoxVibration->addWidget( lblVibration ) ;
+      hBoxVibration->addWidget( m_checkBoxActivateVibration ) ;
+
 
       QVBoxLayout *vBox=new QVBoxLayout() ;
-      vBox->addLayout( hBoxSens ) ;
-      vBox->addLayout( hBoxPointSize ) ;
-      //vBox->addWidget( m_addHydrogensCheck ) ;
+      vBox->addLayout( vBoxSens ) ;
+      vBox->addSpacing( 30 ) ;
+      vBox->addLayout( vBoxPointSize ) ;
+      vBox->addSpacing( 30 ) ;
+      vBox->addLayout( hBoxVibration ) ;
+      vBox->addStretch( 1 ) ;
 
       m_settingsWidget->setLayout( vBox ) ;
 
@@ -357,9 +376,9 @@ namespace Avogadro
     // - Inverse color : -1, -1, -1
     // - Wanted color : >=0, >=0, >=0
 
-    int rBg, gBg, bBg, aBg ;
-    int rLimit, gLimit, bLimit ;
-    float rBgF, gBgF, bBgF, aBgF ;
+    int rBg=0, gBg=0, bBg=0, aBg=0 ;
+    int rLimit=0, gLimit=0, bLimit=0 ;
+    float rBgF=0, gBgF=0, bBgF=0, aBgF=0 ;
     if( !(r>=0 && r<=255 && g>=0 && g<=255 && b>=0 && b<=255 && a>=0 && a<=255) )
     { // Calculate the inverse color.
 
@@ -446,7 +465,7 @@ namespace Avogadro
     * @param radius Radius of the atom.
     * @param from The position of the atom.
     */
-  void WmTool::drawAtom( float radius, Vector3d from )
+  void WmTool::drawAtom( float radius, const Vector3d& from )
   {
     // Init & Save.
     glPushMatrix() ;
@@ -568,7 +587,7 @@ namespace Avogadro
     * @param begin 1st end of the "bond".
     * @param end 2nd end of the "bond".
     */
-  void WmTool::drawBond2( Vector3d begin, Vector3d end )
+  void WmTool::drawBond2( const Vector3d& begin, const Vector3d& end )
   {
     glPushAttrib(GL_ALL_ATTRIB_BITS);
 
@@ -591,7 +610,7 @@ namespace Avogadro
   }
 
 /*
-  void WmTool::drawBond( float radius, Vector3d begin, Vector3d end )
+  void WmTool::drawBond( float radius, const Vector3d& begin, const Vector3d& end )
   {
 
     // The position of the bond is calculated in 2 steps :
@@ -1102,6 +1121,11 @@ namespace Avogadro
                          m_wmExt, SLOT(setFontSizeContextMenu(int)) ) ;
     if( !isConnect )
       qDebug() << "Problem connection signal : m_wmPointSizeFontSlider.valueChanged() -> m_wmExt.setFontSizeContextMenu() !!" ;
+
+    isConnect = connect( m_checkBoxActivateVibration,  SIGNAL(stateChanged(int)),
+                         m_wmExt, SLOT(setActivatedVibration(int)) ) ;
+    if( !isConnect )
+      qDebug() << "Problem connection signal : m_checkBoxActivateVibration.stateChanged() -> m_wmExt.setActivatedVibration() !!" ;
   }
 
 
@@ -1115,7 +1139,7 @@ namespace Avogadro
     * @param drawEndAtom A boolean to draw or not the 2nd atom.
     * @param drawBond A boolean to draw or not the bond.
     */
-  void WmTool::renderAtomBond( Vector3d beginAtom, Vector3d endAtom, bool drawBeginAtom, bool drawEndAtom, bool drawBond )
+  void WmTool::renderAtomBond( const Vector3d& beginAtom, const Vector3d& endAtom, bool drawBeginAtom, bool drawEndAtom, bool drawBond )
   {
     /*
     cout << "atom begin:[" << beginAtom[0] << ";" << beginAtom[1] << ";" << beginAtom[2]  << "]" << endl ;
@@ -1547,7 +1571,7 @@ namespace Avogadro
     * @param g Green composant.
     * @param b Blue composant.
     */
-  void WmTool::displayMsgInRenderZone( Vector3d pos, QString msg, QFont font, float r, float g, float b )
+  void WmTool::displayMsgInRenderZone( const Vector3d& pos, QString msg, QFont font, float r, float g, float b )
   {
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
     glColor3f( r, g, b ) ;
@@ -1593,7 +1617,7 @@ namespace Avogadro
     * @param g Green composant.
     * @param b Blue composant.
     */
-  void WmTool::displayMsgOnScreen( Vector3d pos, QString msg, QFont font, float r, float g, float b )
+  void WmTool::displayMsgOnScreen( const Vector3d& pos, QString msg, QFont font, float r, float g, float b )
   {
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
     glColor3f( r, g, b ) ;

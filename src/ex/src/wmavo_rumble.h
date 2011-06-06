@@ -81,11 +81,10 @@ class WmRumble : public QThread
               unsigned int nbTremorBySequence=0 ) ;
     ~WmRumble() ;
 
-    bool getRumbleEnabled() ;
-
     /**
       * Be careful, all method uses int value. (unsigned long) and (unsigned int) are here for ease the use with timer method for example.
       */
+    bool getRumbleEnabled() ;
     unsigned long getDurationTremor() ;
     unsigned long getBetweenSequence() ;
     unsigned int getNbTremorBySequence() ;

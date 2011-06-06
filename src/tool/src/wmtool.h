@@ -246,7 +246,7 @@ namespace Avogadro
       * @{ */
     void setDisplayMsg( QList<QString> strList, QPoint pos ) ;
     void setActiveRect( bool active, QPoint p1, QPoint p2 ) ;
-    void renderAtomBond( Vector3d beginAtom, Vector3d endAtom, bool drawBeginAtom, bool drawEndAtom, bool drawBond ) ;
+    void renderAtomBond( const Vector3d& beginAtom, const Vector3d& endAtom, bool drawBeginAtom, bool drawEndAtom, bool drawBond ) ;
     void setAtomicNumberCurent( int atomicNumber ) ;
     // @}
 
@@ -323,11 +323,11 @@ namespace Avogadro
     void drawRect( QPoint p1, QPoint p2, int r=-1, int g=-1, int b=-1, int a=-1  ) ;
     void drawRect( float sx, float sy, float ex, float ey, int r=-1, int g=-1, int b=-1, int a=-1 ) ;
     void drawBondAtom() ;
-    void drawAtom( float rayon, Vector3d from ) ;
+    void drawAtom( float rayon, const Vector3d& from ) ;
     void drawCenter() ;
     void drawBarycenter() ;
-    //void drawBond( float radius, Vector3d begin, Vector3d end ) ;
-    void drawBond2( Vector3d begin, Vector3d end ) ;
+    //void drawBond( float radius, const Vector3d& begin, const Vector3d& end ) ;
+    void drawBond2( const Vector3d& begin, const Vector3d& end ) ;
     // @}
 
     /**
@@ -337,9 +337,9 @@ namespace Avogadro
     void displayMsgInfo() ;
     void displayAtomicNumberCurrent() ;
     void displayMsgInRenderZone( QPoint pos, QString msg, QFont font, float r, float g, float b ) ;
-    void displayMsgInRenderZone( Vector3d pos, QString msg, QFont font, float r, float g, float b ) ;
+    void displayMsgInRenderZone( const Vector3d& pos, QString msg, QFont font, float r, float g, float b ) ;
     void displayMsgOnScreen( QPoint pos, QString msg, QFont font, float r, float g, float b ) ;
-    void displayMsgOnScreen( Vector3d pos, QString msg, QFont font, float r, float g, float b ) ;
+    void displayMsgOnScreen( const Vector3d& pos, QString msg, QFont font, float r, float g, float b ) ;
     void displayTextMethods() ; //< Methods tested to render text.
     // @}
 
@@ -362,6 +362,7 @@ namespace Avogadro
     QWidget *m_settingsWidget ;
     QSlider *m_wmSensitiveSlider ;
     QSlider *m_wmPointSizeFontSlider ;
+    QCheckBox *m_checkBoxActivateVibration ;
     //QCheckBox *m_addHydrogensCheck ;
     // @}
 
@@ -442,6 +443,9 @@ namespace Avogadro
     QFont m_fontDistDiedreInfo ;
     // @}
 
+  public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+      // http://eigen.tuxfamily.org/dox/StructHavingEigenMembers.html
   };
 
   /**
