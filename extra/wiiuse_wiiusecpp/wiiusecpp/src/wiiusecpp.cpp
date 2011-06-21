@@ -31,9 +31,16 @@
  *        See http://www.wiiuse.net to get the wiiuse library which is required
  *        to build this package.  A SWIG based Python wrapper for this C++ library
  *        is available from http://www.missioncognition.org.
+ * Note:  The current version of wiiusecpp does not work with the previous wrapper
+ *        Check the available version in the official website of http://www.missioncognition.org.
  */
 
 #include "wiiusecpp.h"
+
+// 1 1 1 1 1 1 2 4 8 4 2 = 26
+double gausTab[]={1, 1, 1, 1, 1, 1, 2, 4, 8, 4, 2} ;
+int gausTabSum = 26 ;
+
 
 /*
  * CButtonBase class methods.
@@ -225,20 +232,29 @@ void CJoystick::GetPosition(float &Angle, float &Magnitude)
 
 CAccelerometer::CAccelerometer() :
   mpAccelCalibPtr(NULL), mpAccelPtr(NULL), mpAccelThresholdPtr(NULL),
-  mpOrientPtr(NULL), mpOrientThresholdPtr(NULL), mpGForcePtr(NULL)
-{}
+  mpOrientPtr(NULL), mpOrientThresholdPtr(NULL), mpGForcePtr(NULL),
+  mpUpdateOneMore(false)
+{
+  initValuesInTime() ;
+}
 
 CAccelerometer::CAccelerometer( struct accel_t *AccelCalPtr, struct vec3b_t *AccelerationPtr, int *AccelThresholdPtr,
                                 struct orient_t *OrientationPtr, float *OrientationThresholdPtr,
                                 struct gforce_t *GForcePtr ) :
   mpAccelCalibPtr(AccelCalPtr), mpAccelPtr(AccelerationPtr), mpOrientPtr(OrientationPtr),
-  mpGForcePtr(GForcePtr), mpAccelThresholdPtr(AccelThresholdPtr), mpOrientThresholdPtr(OrientationThresholdPtr)
-{}
+  mpGForcePtr(GForcePtr), mpAccelThresholdPtr(AccelThresholdPtr), mpOrientThresholdPtr(OrientationThresholdPtr),
+  mpUpdateOneMore(false)
+{
+  initValuesInTime() ;
+}
 
 CAccelerometer::CAccelerometer( const CAccelerometer& ca ) :
   mpAccelCalibPtr(ca.mpAccelCalibPtr), mpAccelPtr(ca.mpAccelPtr), mpOrientPtr(ca.mpOrientPtr),
-  mpGForcePtr(ca.mpGForcePtr), mpAccelThresholdPtr(ca.mpAccelThresholdPtr), mpOrientThresholdPtr(ca.mpOrientThresholdPtr)
-{}
+  mpGForcePtr(ca.mpGForcePtr), mpAccelThresholdPtr(ca.mpAccelThresholdPtr), mpOrientThresholdPtr(ca.mpOrientThresholdPtr),
+  mpUpdateOneMore(false)
+{
+  initValuesInTime() ;
+}
 
 CAccelerometer::~CAccelerometer()
 {
@@ -250,6 +266,7 @@ CAccelerometer::~CAccelerometer()
   mpAccelThresholdPtr = NULL ;
   mpOrientThresholdPtr = NULL ;
 }
+
 
 float CAccelerometer::SetSmoothAlpha(float Alpha)
 {
@@ -324,44 +341,358 @@ void CAccelerometer::GetAccCalOne(float &X, float &Y, float &Z)
     Z = (float)(mpAccelCalibPtr->cal_g.z + mpAccelCalibPtr->cal_zero.z) ;
   }
   else
-  {
-    X = 0.0 ;
-    Y = 0.0 ;
-    Z = 0.0 ;
-  }
+  { X = 0.0 ; Y = 0.0 ; Z = 0.0 ; }
 }
 
 void CAccelerometer::GetAccCalZero(float &X, float &Y, float &Z)
 {
   if( mpAccelCalibPtr != NULL )
   {
-    X = mpAccelCalibPtr->cal_zero.x;
-    Y = mpAccelCalibPtr->cal_zero.y;
-    Z = mpAccelCalibPtr->cal_zero.z;
+    X = (float)mpAccelCalibPtr->cal_zero.x;
+    Y = (float)mpAccelCalibPtr->cal_zero.y;
+    Z = (float)mpAccelCalibPtr->cal_zero.z;
   }
   else
-  {
-    X = 0.0 ;
-    Y = 0.0 ;
-    Z = 0.0 ;
-  }
+  { X = 0.0 ; Y = 0.0 ; Z = 0.0 ; }
 }
 
-void CAccelerometer::GetGForce(float &X, float &Y, float &Z)
+void CAccelerometer::GetGForceInG(double &X, double &Y, double &Z)
 {
-  if( mpGForcePtr != NULL )
+  X = mpValuesInTime[0].gForceX/WIIUSECPP_GUNIT_TO_MS2UNIT ;
+  Y = mpValuesInTime[0].gForceY/WIIUSECPP_GUNIT_TO_MS2UNIT ;
+  Z = mpValuesInTime[0].gForceZ/WIIUSECPP_GUNIT_TO_MS2UNIT ;
+}
+
+double CAccelerometer::GetGForceInG()
+{
+  return mpValuesInTime[0].gForce/WIIUSECPP_GUNIT_TO_MS2UNIT ;
+}
+
+void CAccelerometer::GetGForceInMS2(double &X, double &Y, double &Z)
+{
+  X = mpValuesInTime[0].gForceX ;
+  Y = mpValuesInTime[0].gForceY ;
+  Z = mpValuesInTime[0].gForceZ ;
+}
+
+double CAccelerometer::GetGForceInMS2()
+{
+  return mpValuesInTime[0].gForce ;
+}
+
+double CAccelerometer::GetGForceElapse()
+{
+  return mpValuesInTime[0].gForce - mpValuesInTime[1].gForce ;
+}
+
+void CAccelerometer::GetJerkInMS3(double &X, double &Y, double &Z)
+{
+  X = mpValuesInTime[0].jerkX ;
+  Y = mpValuesInTime[0].jerkY ;
+  Z = mpValuesInTime[0].jerkZ ;
+}
+
+double CAccelerometer::GetJerkInMS3()
+{
+  return mpValuesInTime[0].jerk ;
+}
+
+void CAccelerometer::GetVelocity(double &X, double &Y, double &Z)
+{
+  X = mpValuesInTime[1].velocityX ;
+  Y = mpValuesInTime[1].velocityY ;
+  Z = mpValuesInTime[1].velocityZ ;
+}
+
+double CAccelerometer::GetVelocity()
+{
+  return mpValuesInTime[1].velocity ;
+}
+
+void CAccelerometer::GetDistance(double &X, double &Y, double &Z)
+{
+  X = mpValuesInTime[0].distanceX ;
+  Y = mpValuesInTime[0].distanceY ;
+  Z = mpValuesInTime[0].distanceZ ;
+}
+
+double CAccelerometer::GetDistance()
+{
+  return mpValuesInTime[0].distance ;
+}
+
+void CAccelerometer::GetPosition( double &X, double &Y, double &Z )
+{
+  X = mpValuesInTime[0].positionX ;
+  Y = mpValuesInTime[0].positionY ;
+  Z = mpValuesInTime[0].positionZ ;
+}
+
+bool CAccelerometer::isCountdownEnoughAccuracyInMS()
+{
+  // Test if the number of clock is enough to have a accuracy in ms
+  // to use the clock() method.
+  // CLOCKS_PER_SEC: macro of ctime library.
+  //printf( "CLOCKS_PER_SEC: %f, CLOCKS_PER_SEC:%f\n", CLOCKS_PER_SEC, CLOCKS_PER_SEC/1000 ) ;
+  return (((float)CLOCKS_PER_SEC)*0.001f)>=1.0f ;
+}
+
+double CAccelerometer::getElapsedTime()
+{
+  return ((double)clock()) / ((double)CLOCKS_PER_SEC) ;
+}
+
+void CAccelerometer::initValuesInTime()
+{
+  for( int i=0 ; i<WIIUSECPP_ACC_NB_SAVED_VALUES ; i++ )
+    mpValuesInTime.push_front( values_t() ) ;
+}
+
+
+bool CAccelerometer::calculateValues( bool mustBeCalculated )
+{
+  double timeNow=getElapsedTime() ;
+  bool valuesIsCalculated=false ;
+  
+  if( false //!(mustBeCalculated //|| mpUpdateOneMore )
+      || (mpGForcePtr==NULL
+          || !(mpGForcePtr!=NULL && (mpGForcePtr->x > -20 && mpGForcePtr->x < 20)))
+          // To avoid a bug with the 1st get values.
+    )
   {
-    X = mpGForcePtr->x;
-    Y = mpGForcePtr->y;
-    Z = mpGForcePtr->z;
+    valuesIsCalculated = false ;
+  }
+  else
+  { 
+    valuesIsCalculated = true ;
+
+    //if( !mustBeCalculated && mpUpdateOneMore ) 
+    //  mpUpdateOneMore = false ;
+    //else
+    //  mpUpdateOneMore = true ;
+    
+    values_t t ;
+    t.time = timeNow ;
+    t.diffTime = timeNow - mpValuesInTime[0].time ;
+    t.diffTimeSquarred = t.diffTime * t.diffTime ;
+
+    //mpValuesInTime[0].diffTime = 1 ; //0.01 // 0.005
+    //mpValuesInTime[0].diffTimeSquarred = 1 ; // 0.0001 // 0.000025
+    // When the Wiimote is not used, no communication is realized.
+    // When the Wiimote is moving, there is communication.
+    // The acceleration value get after a "non-used", it is a acceleration during
+    // all "non-used" time, or just the last millisecond.
+    // So the hypothesis is : the acceleration is for the 5 last millisecond.
+
+    t.gForceX = mpGForcePtr->x * WIIUSECPP_GUNIT_TO_MS2UNIT ;
+    t.gForceY = mpGForcePtr->y * WIIUSECPP_GUNIT_TO_MS2UNIT ;
+    t.gForceZ = mpGForcePtr->z * WIIUSECPP_GUNIT_TO_MS2UNIT ;
+    t.gForce = sqrt( t.gForceX*t.gForceX +
+                     t.gForceY*t.gForceY + 
+                     t.gForceZ*t.gForceZ ) ;
+
+    double elapseX=t.gForceX-mpValuesInTime[0].gForceX ;
+    double elapseY=t.gForceY-mpValuesInTime[0].gForceY ;
+    double elapseZ=t.gForceZ-mpValuesInTime[0].gForceZ ;
+    double elapseNorm=sqrt( elapseX*elapseX + elapseY*elapseY + elapseZ*elapseZ ) ;
+
+   
+    if( //elapseNorm<0.04 // Base values to init at zero.
+        (timeNow-mpValuesInTime[0].time)>=0.1 // The elapse time is non contant, so useless to init each time even without calculation. 
+        || mpValuesInTime[0].diffTime==0 ) // To avoid a divide by zero.    
+    {
+      // Caution during constant movement ...
+
+      t.jerkX=0 ; t.jerkY=0 ; t.jerkZ=0 ; t.jerk=0 ;
+      t.accelerationX=0 ; t.accelerationY=0 ; t.accelerationZ=0 ; t.acceleration=0 ;
+      t.velocityX=0 ; t.velocityY=0 ; t.velocityZ=0 ; t.velocity=0 ;
+      t.distanceX=0 ; t.distanceY=0 ; t.distanceZ=0 ; t.distance=0 ;
+
+      // The current position must be unchanged.
+      t.positionX=mpValuesInTime[0].positionX ;
+      t.positionY=mpValuesInTime[0].positionY ;
+      t.positionZ=mpValuesInTime[0].positionZ ;
+    }
+    else
+    
+    {
+      /*
+      // Limit with max values (jerk?, acc?, velocity?)
+      // Average values to reduce parasit and jerk variation.
+      for( int i=0 ; i<WIIUSECPP_ACC_NB_SAVED_VALUES ; i++ )
+      {
+        t.gForceX += (mpValuesInTime[i].gForceX * gausTab[i]) ;
+        t.gForceY += (mpValuesInTime[i].gForceY * gausTab[i]) ;
+        t.gForceZ += (mpValuesInTime[i].gForceZ * gausTab[i]) ;
+      }
+
+      t.gForceX /= gausTabSum ; //(WIIUSECPP_ACC_NB_SAVED_VALUES+1) ;
+      t.gForceY /= gausTabSum ; //(WIIUSECPP_ACC_NB_SAVED_VALUES+1) ;
+      t.gForceZ /= gausTabSum ; //(WIIUSECPP_ACC_NB_SAVED_VALUES+1) ;
+      */
+
+      
+
+      // Distance values.
+      if( false /*&& hasElapsedTime*/ )
+        calculateFromTailorFormulaWithConstantTime_p(t) ;
+      else if( true )
+        calculateFromTailorFormulaWithNonConstantTime_p(t) ;
+      else if( false )
+        calculateByPhysicBasicFormula_p(t) ;
+      
+      t.acceleration = sqrt( t.accelerationX*t.accelerationX +
+                             t.accelerationY*t.accelerationY +
+                             t.accelerationZ*t.accelerationZ ) ;
+      t.velocity = sqrt( t.velocityX*t.velocityX +
+                         t.velocityY*t.velocityY +
+                         t.velocityZ*t.velocityZ ) ;
+      t.distance = sqrt( t.distanceX*t.distanceX +
+                         t.distanceY*t.distanceY +
+                         t.distanceZ*t.distanceZ ) ;
+    }
+
+    mpValuesInTime.push_front(t) ;
+    mpValuesInTime.pop_back() ;
+  }
+
+  return valuesIsCalculated ;
+}
+
+
+void CAccelerometer::calculateFromTailorFormulaWithConstantTime_p( values_t &t )
+{
+  // Based on Tailor formula :
+  // f(x) = f(x0) + f'(x0).(x-x0) + 1/(2!) . (x-x0)².f''(x0) + 1/(3!) . (x-x0)^3.f'''(x0) ...
+  // x = t = time
+  // f(x) = x(t) = distance at the t time
+  // f''(x) = x''(t) = a(t) = acceleration at the t time
+  
+  // x(t+dt) = x(t) + x'(t).dt    + 1/2 . dt² . x''(t)
+  // x(t-dt) = x(t) + x'(t).(-dt) + 1/2 . dt² . x''(t)
+  // <=> x(t+dt) + x(t-dt) = 2.x(t) + 1/2 . dt² . x''(t)
+  // <=> x(t+dt) = 2.x(t) - x(t-dt) + 1/2 . dt² . a(t)
+
+  mpValuesInTime[0].velocityX = 0 ;
+  mpValuesInTime[0].velocityY = 0 ;
+  mpValuesInTime[0].velocityZ = 0 ;
+
+  t.positionX = 2*mpValuesInTime[0].positionX - mpValuesInTime[1].positionX
+                           + t.diffTimeSquarred * t.gForceX ;
+  t.positionY = 2*mpValuesInTime[0].positionY - mpValuesInTime[1].positionY
+                           + t.diffTimeSquarred * t.gForceY ;
+  t.positionZ = 2*mpValuesInTime[0].positionZ - mpValuesInTime[1].positionZ 
+                           + t.diffTimeSquarred * (t.gForceZ-1.0f) ;
+
+  t.distanceX = t.positionX - mpValuesInTime[0].positionX ;
+  t.distanceY = t.positionY - mpValuesInTime[0].positionY ;
+  t.distanceZ = t.positionZ - mpValuesInTime[0].positionZ ;
+}
+
+void CAccelerometer::calculateFromTailorFormulaWithNonConstantTime_p( values_t &t )
+{
+  // Based on Tailor formula : see calculateFromTailorFormulaWithNonConstantTime().
+  // With the integration of the non constant delta time.
+
+  double dt1=t.time-mpValuesInTime[0].time ;
+  double dt2=mpValuesInTime[0].time-mpValuesInTime[1].time ;
+  double dt1Sqr=dt1*dt1 ;
+  double dt2Sqr=dt2*dt2 ;
+  double dt1Cube=dt1*dt1*dt1 ;
+  double dt2Cube=dt2*dt2*dt2 ;
+  double dt1Plusdt2=dt1+dt2 ;
+
+  // Jerk values (derivative of the GForce).
+  mpValuesInTime[0].jerkX = (t.gForceX - mpValuesInTime[1].gForceX) / dt1Plusdt2 ;
+  mpValuesInTime[0].jerkY = (t.gForceY - mpValuesInTime[1].gForceY) / dt1Plusdt2 ;
+  mpValuesInTime[0].jerkZ = (t.gForceZ - mpValuesInTime[1].gForceZ) / dt1Plusdt2 ;
+  mpValuesInTime[0].jerk = sqrt( mpValuesInTime[0].jerkX*mpValuesInTime[0].jerkX 
+                                  + mpValuesInTime[0].jerkY*mpValuesInTime[0].jerkY 
+                                  + mpValuesInTime[0].jerkZ*mpValuesInTime[0].jerkZ ) ;
+
+  // The velocity is non null, so it must be calculated.
+  mpValuesInTime[0].velocityX = mpValuesInTime[1].velocityX                // v(t-dt2)
+                                + dt2 * mpValuesInTime[0].gForceX          // dt2 . a(t)
+                                - 0.5 * dt2Sqr * mpValuesInTime[0].jerkX ; // -1/2 . dt2² . a'(t)
+  mpValuesInTime[0].velocityY = mpValuesInTime[1].velocityY
+                                + dt2 * mpValuesInTime[0].gForceY
+                                - 0.5 * dt2Sqr * mpValuesInTime[0].jerkY ;
+  mpValuesInTime[0].velocityZ = mpValuesInTime[1].velocityZ
+                                + dt2 * mpValuesInTime[0].gForceZ
+                                - 0.5 * dt2Sqr * mpValuesInTime[0].jerkZ ;
+
+  if( fabs(mpValuesInTime[0].gForceX) > 1.0 )
+  { 
+    t.positionX = 2*mpValuesInTime[0].positionX - mpValuesInTime[1].positionX // 2.x(t) - x(t-dt2)
+                  //+ mpValuesInTime[0].velocityX * (dt1-dt2)                   // x'(t) . (dt1-dt2)
+                  + mpValuesInTime[0].gForceX * 0.5 * (dt1Sqr + dt2Sqr) ;      // x''(t) . 1/2 . (dt1²+dt2²)
+                  //- mpValuesInTime[0].jerkX * 1/6 * (dt1Cube + dt1Cube) ;     // x'''(t) . 1/6 . (dt1^3+dt2^3)
+
+    t.tmp1 = 2*mpValuesInTime[0].positionX - mpValuesInTime[1].positionX ;
+    t.tmp2 = mpValuesInTime[0].velocityX * (dt1-dt2)  ;
+    t.tmp3 = mpValuesInTime[0].gForceX * 0.5 * (dt1Sqr + dt2Sqr) ;
+
+    t.positionY = 2*mpValuesInTime[0].positionY - mpValuesInTime[1].positionY
+                   //+ mpValuesInTime[0].velocityY * (dt1-dt2)
+                   + mpValuesInTime[0].gForceY * 0.5 * (dt1Sqr + dt2Sqr) ;
+                   //- mpValuesInTime[0].jerkY * 1/6 * (dt1Cube + dt1Cube) ;
+    t.positionZ = 2*mpValuesInTime[0].positionZ - mpValuesInTime[1].positionZ
+                   //+ mpValuesInTime[0].velocityZ * (dt1-dt2)
+                   + mpValuesInTime[0].gForceZ * 0.5 * (dt1Sqr + dt2Sqr) ;
+                   //- mpValuesInTime[0].jerkZ * 1/6 * (dt1Cube + dt1Cube) ;
   }
   else
   {
-    X = 0.0 ;
-    Y = 0.0 ;
-    Z = 0.0 ;
+     t.positionX = mpValuesInTime[0].positionX ;
+
+    t.tmp1 = 2*mpValuesInTime[0].positionX - mpValuesInTime[1].positionX ;
+    t.tmp2 = mpValuesInTime[0].velocityX * (dt1-dt2)  ;
+    t.tmp3 = mpValuesInTime[0].gForceX * 0.5 * (dt1Sqr + dt2Sqr) ;
+
+    t.positionY = mpValuesInTime[0].positionY ;
+    t.positionZ = mpValuesInTime[0].positionZ ;
   }
+
+  t.distanceX = t.positionX - mpValuesInTime[0].positionX ;
+  t.distanceY = t.positionY - mpValuesInTime[0].positionY ;
+  t.distanceZ = t.positionZ - mpValuesInTime[0].positionZ ;
 }
+
+void CAccelerometer::calculateByPhysicBasicFormula_p( values_t &t )
+{
+  // Based on :
+  // v = v0 +a.t ; d = d0 + v.t + 1/2.a.t
+  // t = time interval ; a, v, d => vector
+
+  // Jerk values (derivative of the GForce).
+  t.jerkX = (t.gForceX - mpValuesInTime[0].gForceX) / t.diffTime ;
+  t.jerkY = (t.gForceY - mpValuesInTime[0].gForceY) / t.diffTime ;
+  t.jerkZ = (t.gForceZ - mpValuesInTime[0].gForceZ) / t.diffTime ;
+  t.jerk = sqrt( t.jerkX*t.jerkX + t.jerkY*t.jerkY + t.jerkZ*t.jerkZ ) ;
+
+  double elapsedTime = t.diffTime ;
+	double elapsedTime2 = elapsedTime * elapsedTime;
+	double elapsedTime3 = elapsedTime * elapsedTime * elapsedTime;
+
+	const double half  = 1.0/2.0;
+	const double third = 1.0/3.0;
+
+  // at = j0 * (t-t0) + a0
+  t.accelerationX = mpValuesInTime[0].jerkX * elapsedTime + mpValuesInTime[0].accelerationX;
+  t.accelerationY = mpValuesInTime[0].jerkY * elapsedTime + mpValuesInTime[0].accelerationY;
+  t.accelerationZ = mpValuesInTime[0].jerkZ * elapsedTime + mpValuesInTime[0].accelerationZ;
+
+  // vt = 1/2 * j0 * (t-t0)^2 + a0 * (t-t0) + v0
+  t.velocityX = half * mpValuesInTime[0].jerkX * elapsedTime2 + mpValuesInTime[0].accelerationX * elapsedTime + mpValuesInTime[0].velocityX;
+  t.velocityY = half * mpValuesInTime[0].jerkY * elapsedTime2 + mpValuesInTime[0].accelerationY * elapsedTime + mpValuesInTime[0].velocityY;
+  t.velocityZ = half * mpValuesInTime[0].jerkZ * elapsedTime2 + mpValuesInTime[0].accelerationZ * elapsedTime + mpValuesInTime[0].velocityZ;
+
+  // xt = 1/2 * 1/3 * j0 * (t-t0)^3 + 1/2 * a0 * (t-t0)^2 + v0 * (t-t0) + x0
+  t.positionX = half * third * mpValuesInTime[0].jerkX * elapsedTime3 + half * mpValuesInTime[0].accelerationX * elapsedTime2 + mpValuesInTime[0].velocityX * elapsedTime + mpValuesInTime[0].positionX;
+  t.positionY = half * third * mpValuesInTime[0].jerkY * elapsedTime3 + half * mpValuesInTime[0].accelerationY * elapsedTime2 + mpValuesInTime[0].velocityY * elapsedTime + mpValuesInTime[0].positionY;
+  t.positionZ = half * third * mpValuesInTime[0].jerkZ * elapsedTime3 + half * mpValuesInTime[0].accelerationZ * elapsedTime2 + mpValuesInTime[0].velocityZ * elapsedTime + mpValuesInTime[0].positionZ;
+}
+
 
 /*
  * CIRDot class methods.
@@ -1020,6 +1351,18 @@ int CWiimote::isLEDSet(int LEDNum)
   return result;
 }
 
+CWiimoteData* CWiimote::copyData()
+{
+  CWiimoteData *wm=NULL ;
+ 
+  if( mpWiimotePtr != NULL )
+  {
+    wm = new CWiimoteData(*this) ;
+  }
+
+  return wm ;
+}
+
 /*
  * Wii Class Methods
  */
@@ -1159,7 +1502,7 @@ std::vector<CWiimote*>& CWii::GetWiimotes(int Refresh)
     if(Refresh)
         RefreshWiimotes();
 
-    return mpWiimotesVector;
+    return mpWiimotesVector ;
 }
 
 void CWii::SetBluetoothStack(CWii::BTStacks Type)
@@ -1183,7 +1526,37 @@ std::vector<CWiimote*>& CWii::Connect()
     return mpWiimotesVector;
 }
 
+
 int CWii::Poll()
 {
-    return wiiuse_poll((struct wiimote_t**) mpWiimoteArray, mpWiimoteArraySize);
+    int poll=wiiuse_poll((struct wiimote_t**) mpWiimoteArray, mpWiimoteArraySize) ;
+
+    for( int i=0 ; i<mpWiimoteArraySize ; i++ )
+    {
+      if( poll )
+        mpWiimotesVector[i]->Accelerometer.calculateValues( true ) ;
+      else
+        mpWiimotesVector[i]->Accelerometer.calculateValues( false ) ;
+    }
+
+    return poll ;
+}
+
+void CWii::Poll( bool &updateButton_out, bool &updateAccelerometerData_out )
+{
+    bool isUpdated=false ;
+    int poll=wiiuse_poll((struct wiimote_t**) mpWiimoteArray, mpWiimoteArraySize) ;
+    updateButton_out = (poll==0?false:true) ;
+    updateAccelerometerData_out = false ;    
+
+    for( int i=0 ; i<mpWiimoteArraySize ; i++ )
+    {
+      if( poll )
+        isUpdated = mpWiimotesVector[i]->Accelerometer.calculateValues( true ) ;
+      else
+        isUpdated = mpWiimotesVector[i]->Accelerometer.calculateValues( false ) ;
+
+      if( isUpdated )
+        updateAccelerometerData_out = true ;
+    }
 }

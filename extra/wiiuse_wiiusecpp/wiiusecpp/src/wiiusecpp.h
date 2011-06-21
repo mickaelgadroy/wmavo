@@ -32,7 +32,8 @@
 #define WIIUSECPP_DEFAULT_NUM_WM 1 /**< Number of Wiimote used by default */
 #define WIIUSECPP_MAX_NUM_WM 4 /**< Max number of Wiimote usable */
 #define WIIUSECPP_NUM_IRDOTS 4 /**< Number ir dots seen by the Wiimote (4 is the max) */
-
+#define WIIUSECPP_GUNIT_TO_MS2UNIT 9.80665 /**< Constant to convert g unit to m.s^-2 unit. */
+#define WIIUSECPP_ACC_NB_SAVED_VALUES 10 //< Number saved values in the mpValuesInTime attribut (CAccelerometer class) (3 is a minimum!).
 
 
 #ifdef _WIN32
@@ -42,11 +43,17 @@
 #endif
 
 #include <vector>
+#include <deque> // ~list
 #include <iostream>
+#include <ctime>
+#include <cmath>
 using namespace std;
+
 
 class CButtonBase
 {
+  friend class CButtonBaseData ;
+
 public:
     CButtonBase(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr);
     ~CButtonBase() ;
@@ -124,6 +131,7 @@ private:
 class CClassicButtons : public CButtonBase
 {
   friend class CClassic ;
+  friend class CClassicData ;
 
 public:
     enum ButtonDefs
@@ -186,6 +194,8 @@ class CJoystick
   friend class CNunchuk ;
   friend class CClassic ;
   friend class CGuitarHero3 ;
+  friend class CJoystickData ;
+  friend class CClassicData ;
 
 public:
     CJoystick(struct joystick_t *JSPtr);
@@ -213,6 +223,7 @@ class CAccelerometer
 {
   friend class CWiimote ;
   friend class CNunchuk ;
+  friend class CAccelerometerData ;
 
 public:
     CAccelerometer( struct accel_t *AccelCalPtr, struct vec3b_t *AccelerationPtr,
@@ -227,7 +238,13 @@ public:
     ~CAccelerometer() ;
 
     /**
-      * wiiuse.accel_t.st_alĥa
+      * Enable the calculation of values contained in the mpValuesInTime attribut.
+      * The calculation is realised when some getter method is called like GetGForce*, GetJerk*, GetDistance* ...
+      */
+    void setNeedUpdateValuesInTime( bool update ) ;
+
+    /**
+      * wiiuse.accel_t.st_alpha
       * Use to smooth the angle values when flags FLAGS_SMOOTHING is on.
       * @return Old value of alpha.
       */
@@ -236,16 +253,19 @@ public:
     /**
       * wiiuse.wiimote_t.orient_threshold
       * Threshold ((fr:)seuil) for orient to generate an event.
+      * @{
       */
     float GetOrientThreshold();
     void SetOrientThreshold(float Threshold);
+    // @}
 
     /**
       * wiiuse.wiimote_t.accel_threshold
       * Threshold for accel to generate an event.
-      */
+      * @{*/
     int GetAccelThreshold();
     void SetAccelThreshold(int Threshold);
+    // @}
 
     /**
       * wiiuse.orient_t.roll .pitch .yaw
@@ -270,44 +290,130 @@ public:
       * Here, it provide just for informations.
       * The acc calibrated zero values represent where are the "zero g" position.
       * The acc calibrated one values represent where are the "one g" position.
-      */
+      * @{ */
     void GetAccCalOne(float &X, float &Y, float &Z);
     void GetAccCalZero(float &X, float &Y, float &Z);
+    // @}
 
     /*
      * wiiuse.gforce_t.x .y .z
-     * Get GForce on 3 axes in g units. To get in m.s^-2, mult by ~9.8 .
-     */
-    void GetGForce(float &X, float &Y, float &Z) ;
+     * Get GForce on 3 axes.
+     * @{*/
+    void GetGForceInG(double &X, double &Y, double &Z) ; //< in g unit.
+    double GetGForceInG() ; //< in g unit.
+    void GetGForceInMS2(double &X, double &Y, double &Z) ; //< in m.s^-2 unit.
+    double GetGForceInMS2() ; //< in m.s^-2 unit.
+    double GetGForceElapse() ; //< in g unit.
+    // @}
     
     /**
       * Difference between the last and the current gForce values.
       * It lets to know the user movement in theory ...
-      */
-    //void GetInstantAcc(float &X, float &Y, float &Z) ;
-    
-    /**
-      * Inform on the accel that the Wiimote has globaly.
-      */
-    //float GetAccGlobal() ;
+      * This acceleration represents the derivative of the GForce => a jerk (m.s^-3).
+      * jerk == the rate of change of acceleration => da/dt
+      * http://en.wikipedia.org/wiki/Jerk_%28physics%29
+      * Nota Bene: this method need be called twice before to get "good" values.
+      * @{ */
+    void GetJerkInMS3(double &X, double &Y, double &Z) ; //< in m.s^-3 unit.
+    double GetJerkInMS3() ; //< in m.s^-3 unit.
+    // @}
 
+    /*
+     * An estimation of the instant velocity in m.s^-1.
+     * @{*/
+    void GetVelocity(double &X, double &Y, double &Z) ;
+    double GetVelocity() ;
+    // @}
+
+    /*
+     * An estimation of the traveled distance in m.
+     * @{*/
+    void GetDistance(double &X, double &Y, double &Z) ;
+    double GetDistance() ;
+    // @}
+
+    // An estimation of the position according to the 1st position of the Wiimote.
+    void GetPosition( double &X, double &Y, double &Z ) ;
+    void getTmp( double &tmp1, double &tmp2, double &tmp3 )
+    {
+      tmp1 = mpValuesInTime[0].tmp1 ;
+      tmp2 = mpValuesInTime[0].tmp2 ;
+      tmp3 = mpValuesInTime[0].tmp3 ;
+    };
+
+    // Calculate all things we can.
+    bool calculateValues( bool mustBeCalculated ) ;
+
+// Public attributs.
+public :
+  struct values_t
+    {
+      double time, diffTime, diffTimeSquarred ; // in s.
+      double gForceX, gForceY, gForceZ ; // in m.s^-2.
+      double gForce ; // in m.s^-2.
+      double accelerationX, accelerationY, accelerationZ ; // in m.s^-2.
+      double acceleration ; // in m.s^-2.
+      double jerkX, jerkY, jerkZ ; // in m.s^-3.
+      double jerk ; // in m.s^-3.
+      double velocityX, velocityY, velocityZ ; // in m.s^-1.
+      double velocity ; // in m.s^-1.
+      double distanceX, distanceY, distanceZ ; // in m.
+      double distance ; // in m.
+      double positionX, positionY, positionZ ; // in m.
+      double tmp1, tmp2, tmp3 ;
+
+      values_t()      
+      { time=0; diffTime=0; diffTimeSquarred=0;
+        gForceX=0; gForceY=0; gForceZ=0; gForce=0; 
+        accelerationX=0; accelerationY=0; accelerationZ=0; acceleration=0; 
+        jerkX=0; jerkY=0; jerkZ=0; jerk=0; 
+        velocityX=0; velocityY=0; velocityZ=0; velocity=0; 
+        distanceX=0; distanceY=0; distanceZ=0; distance=0; 
+        positionX=0; positionY=0; positionZ=0; 
+        tmp1=0; tmp2=0; tmp3=0;
+      }
+    };
+
+// Private methods.
 private:
     CAccelerometer() ;
     CAccelerometer( const CAccelerometer& ca ) ;
 
-    struct accel_t *mpAccelCalibPtr;
-    struct vec3b_t *mpAccelPtr;
-    int *mpAccelThresholdPtr; 
+    void initValuesInTime() ;
 
-    struct orient_t *mpOrientPtr;
-    float *mpOrientThresholdPtr;
+    /**
+      * Time methods.
+      * @{ */
+    bool isCountdownEnoughAccuracyInMS() ; //< Test if the time system is accuracy in ms unit.
+    double getElapsedTime() ; //< In s.
+    // @}
 
-    struct gforce_t *mpGForcePtr;
+    /**
+      * Methods to calculate velocity, distance and position.
+      * @{ */
+    void calculateByPhysicBasicFormula_p( values_t &t ) ;
+    void calculateFromTailorFormulaWithNonConstantTime_p( values_t &t ) ;
+    void calculateFromTailorFormulaWithConstantTime_p( values_t &t ) ;
+    // @}
+
+// Private attributs.
+private:
+    struct accel_t *mpAccelCalibPtr ;
+    struct vec3b_t *mpAccelPtr ;
+    int *mpAccelThresholdPtr ;
+
+    struct orient_t *mpOrientPtr ;
+    float *mpOrientThresholdPtr ;
+
+    struct gforce_t *mpGForcePtr ;
+    deque<values_t> mpValuesInTime ; // ~lists
+    bool mpUpdateOneMore ;
 };
 
 class CIRDot
 {
   friend class CIR ; // For default/copy constructor.
+  friend class CIRDotData ;
 
 public:
     CIRDot(struct ir_dot_t *DotPtr) ;
@@ -329,6 +435,7 @@ private:
 class CIR
 {
   friend class CWiimote ;
+  friend class CIRData ;
 
 public:
     enum BarPositions
@@ -389,6 +496,7 @@ private:
 class CNunchuk
 {
   friend class CExpansionDevice ; // For default/copy constructor.
+  friend class CNunchukData ;
 
 public:
     CNunchuk( struct expansion_t *ExpPtr ) ;
@@ -408,6 +516,8 @@ private:
 
 class CClassic
 {
+  friend class CClassicData ;
+
 public:
     CClassic(struct expansion_t *ExpPtr);
     ~CClassic() ;
@@ -430,6 +540,7 @@ private:
 
 class CGuitarHero3
 {
+  friend class CGuitarHero3Data ;
 public:
     CGuitarHero3( struct expansion_t *ExpPtr ) ;
 
@@ -450,6 +561,7 @@ private:
 class CExpansionDevice
 {
   friend class CWiimote ;
+  friend class CExpansionDeviceData ;
 
 public:
     enum ExpTypes
@@ -479,6 +591,7 @@ private:
 
 class CWiimote
 {
+  friend class CWiimoteData ;
 public:
     enum LEDS
     {
@@ -527,44 +640,40 @@ public:
     CWiimote(struct wiimote_t *wmPtr) ;
     ~CWiimote() ;
 
-    void Disconnected();
-
+    int SetFlags(int Enable, int Disable);
+    void SetLEDs(int LEDs);
     void SetRumbleMode(OnOffSelection State);
     void ToggleRumble();
-
-    int GetLEDs();
-    void SetLEDs(int LEDs);
-
-    float GetBatteryLevel();
-
-    int GetHandshakeState();
-
-    EventTypes GetEvent();
-    const unsigned char *GetEventBuffer();
-
     void SetMotionSensingMode(OnOffSelection State);
 
-    void ReadData(unsigned char *Buffer, unsigned int Offset, unsigned int Length);
-    void WriteData(unsigned int Address, unsigned char *Data, unsigned int Length);
-
-    void UpdateStatus();
-
     int GetID();
-
     int GetState();
-
     int GetFlags();
-    int SetFlags(int Enable, int Disable);
-
-    void Resync();
-
-    void Disconnect();
+    int GetLEDs();
+    float GetBatteryLevel();
+    int GetHandshakeState();
+    EventTypes GetEvent();
+    const unsigned char *GetEventBuffer();
 
     int isUsingACC();
     int isUsingEXP();
     int isUsingIR();
     int isUsingSpeaker();
     int isLEDSet(int LEDNum);
+
+    void ReadData(unsigned char *Buffer, unsigned int Offset, unsigned int Length);
+    void WriteData(unsigned int Address, unsigned char *Data, unsigned int Length);
+
+    void UpdateStatus();
+    void Resync();
+    void Disconnect();
+    void Disconnected();
+
+    /**
+      * Method to copy all usefull data. The returned CWiimote object cannot be used to manipulated
+      * the Wiimote (!). Do not forget to delete the object after using.
+      */
+    CWiimoteData* copyData() ;
 
     CIR IR;
     CButtons Buttons;
@@ -594,7 +703,7 @@ public:
 
     CWii() ;
     CWii( int MaxNumCWiimotes ) ;
-    /*virtual*/ ~CWii() ;
+    ~CWii() ;
 
     int GetNumConnectedWiimotes();
 
@@ -610,7 +719,9 @@ public:
     int Find(int timeout) ;
     std::vector<CWiimote*>& Connect() ;
 
-    int Poll() ;
+    int Poll() ; //< Return if a button has been pressed.
+    void Poll( bool &updateButton_out, bool &updateAccelerometerData_out ) ;
+      //< "Return" if buttons has been pressed, and if accelemeter data have changed.
 
 private:
     CWii( const CWii& cw ) ;
@@ -621,5 +732,8 @@ private:
     int mpWiimoteArraySize ;
     std::vector<CWiimote*> mpWiimotesVector ;
 };
+
+
+#include "wiiusecppdata.h"
 
 #endif /* WIIUSECPP_H_ */

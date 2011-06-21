@@ -308,26 +308,6 @@ class WmAvo
     // @}
 
     /**
-      * @name Manage the accelerometers
-      * @{ */
-    struct acc_t
-    {
-      float pitch, roll, yaw ;
-      float gForceX, gForceY, gForceZ ;
-          ///< Acceleration/gForce in each axe = "acceleration vector", in g unit.
-      float gForce ;
-          ///< gForce applies on the Wiimote : gForce == acceleration (in physic) == "acceleration vector" norm, in g unit.
-      float accVarX, accVarY, accVarZ ; ///< Acceleration variations = "move vector", in g/s unit.
-      float accVarNorm ; ///< Acceleration variations norm, in g/s unit.
-
-      int timeAcc ;
-      float velocityX, velocityY, velocityZ ;
-      float distanceX, distanceY, distanceZ ;
-    };
-    acc_t m_accPrec, m_accCur ;
-    // @}
-
-    /**
       * @name Movements informations
       * @{ */
     Vector3d m_vectAtomTranslate ;
@@ -351,6 +331,7 @@ class WmAvo
     int m_nbZoom ;
     QTime m_time ;
     int m_timeFirst, m_timeSecond ; // In ms
+    int m_timeTmp1, m_timeTmp2 ;
     // @}
 
     /**

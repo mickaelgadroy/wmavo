@@ -49,6 +49,7 @@ WmAvo::WmAvo( int operatingMode ) :
   m_distCamZoom(0.0), m_distCamXTranslate(0.0), m_distCamYTranslate(0.0),
 
   m_activeZoom(false), m_nbZoom(0), m_timeFirst(0), m_timeSecond(0),
+  m_timeTmp1(0), m_timeTmp2(0),
 
   m_pressedButton(false),
   m_selectRelease(false), m_homeRelease(false),
@@ -69,18 +70,6 @@ WmAvo::WmAvo( int operatingMode ) :
 
   m_wii = new CWii(1) ;
   m_wmRumble = new WmRumble(this) ;
-
-  m_accCur.pitch = 0 ; m_accCur.roll = 0 ; m_accCur.yaw = 0 ;
-  m_accCur.gForceX = 0 ; m_accCur.gForceY = 0 ; m_accCur.gForceZ = 0 ;
-  m_accCur.gForce = 0 ;
-  m_accCur.accVarX = 0 ; m_accCur.accVarY = 0 ; m_accCur.accVarZ = 0 ;
-  m_accPrec.pitch = 0 ; m_accPrec.roll = 0 ; m_accPrec.yaw = 0 ;
-  m_accPrec.gForceX = 0 ; m_accPrec.gForceY = 0 ; m_accPrec.gForceZ = 0 ;
-  m_accPrec.gForce = 0 ;
-  m_accCur.accVarX = 0 ; m_accCur.accVarY = 0 ; m_accCur.accVarZ = 0 ;
-  m_accCur.timeAcc = 0 ;
-  m_accCur.velocityX = 0 ; m_accCur.velocityY = 0 ; m_accCur.velocityZ = 0 ;
-  m_accCur.distanceX = 0 ; m_accCur.distanceY = 0 ; m_accCur.distanceZ = 0 ;
 
   // Smoothing.
   m_smoothXY = new WIWO<Vector3d>(WMAVO_SMOOTH) ;
@@ -226,19 +215,13 @@ bool WmAvo::wmPoll()
     isPoll = m_wii->Poll() ;
     m_mutex->unlock() ;
 
+    //m_timeTmp2 = m_timeTmp1 ;
+    //m_timeTmp1 = m_time.elapsed() ;
+    //printf( "Tps ecart:%d\n", m_timeTmp1-m_timeTmp2 ) ;
+
     if( !isPoll )
-    { // Few initialisations.
-
-      // Else it causes undesirable movement with camera.
-      // When camera is out of pointing zone, translating matrice is not initialized at 0.
-      // So it continues to moving.
-      /*
-      m_vectAtomTranslate[0] = 0.0 ;
-      m_vectAtomTranslate[1] = 0.0 ;
-      m_vectAtomTranslate[2] = 0.0 ;
-
-      m_transfAtomRotate.matrix().setIdentity() ;
-      */
+    { 
+      // Few initialisations ...
     }
     else
     { // Poll the wiimotes to get the status like pitch or roll.
@@ -483,23 +466,24 @@ Vector3d WmAvo::wmGetIrCursor()
     return m_refPoint0 ;
   else
   {
-    int x=0, y=0 ;
-
     // Get Values.
-    m_wm->IR.GetCursorPosition(x,y) ;
+    //int x=0, y=0 ;
+    //m_wm->IR.GetCursorPosition(x,y) ;
+    float x=0, y=0, z=0 ;
+    m_wm->Accelerometer.GetPosition( x, y, z ) ;
 
     // Save data.
     m_wmLastIrCursorPos = m_wmCurrentIrCursorPos ;
 
     // Get new value of m_wmCurrentIrCursorPos.
-    m_wmCurrentIrCursorPos[0] = (double)x * WMAVO_CURSOR_CALIBRATION_X ;
-    m_wmCurrentIrCursorPos[1] = (double)y * WMAVO_CURSOR_CALIBRATION_Y ;
+    m_wmCurrentIrCursorPos[0] = (double)x * WMAVO_CURSOR_CALIBRATION_X *1000000.0;
+    m_wmCurrentIrCursorPos[1] = (double)y * WMAVO_CURSOR_CALIBRATION_Y *1000000.0;
     m_wmCurrentIrCursorPos[2] = m_wm->IR.GetPixelDistance() * WMAVO_CURSOR_CALIBRATION_Z ;
 
     /*
     cout << "         [x,y]=" << x << " " << y << endl ;
-    cout << "  Last:[x,y,z]=" << m_wmLastIrCursorPos[0] << " " << m_wmLastIrCursorPos[1] << " " << m_wmLastIrCursorPos[2] << endl ;
-    cout << "Current[x,y,z]=" << m_wmCurrentIrCursorPos[0] << " " << m_wmCurrentIrCursorPos[1] << " " << m_wmCurrentIrCursorPos[2] << endl ;
+    cout << "   Last:[x,y,z]=" << m_wmLastIrCursorPos[0] << " " << m_wmLastIrCursorPos[1] << " " << m_wmLastIrCursorPos[2] << endl ;
+    cout << "Current:[x,y,z]=" << m_wmCurrentIrCursorPos[0] << " " << m_wmCurrentIrCursorPos[1] << " " << m_wmCurrentIrCursorPos[2] << endl ;
     */
 
     return m_wmCurrentIrCursorPos ;
@@ -558,36 +542,12 @@ bool WmAvo::wmGetSmoothedCursor()
     else
       m_diffPos = m_wmCurrentIrCursorPos - m_wmLastIrCursorPos ;
 
-    // Smooth cursor.
-    if( m_smoothXY->isFull() )
-      m_lastSmooth -= m_smoothXY->getQueue() ;
-
-    m_smoothXY->pushAtBegin( m_diffPos ) ;
-    m_lastSmooth += m_smoothXY->getTete() ;
-    m_diffSmooth = m_lastSmooth/m_smoothXY->getNbCaseUse() ;
 
     voir pour diminuer le nombre de valeur à moyenner qd il y a trop de zero
         pour permet un re-demarrage plus rapide.
 
     Ajouter une moyenne pondérée comme expliqué par Mat
-
-    //printf( "acc:%1.3f, m_wmSensitive:%d, m_diffSmooth:%2.3f\n", acc, m_wmSensitive, m_diffSmooth[2] ) ;
-
-    m_diffSmooth *= (acc*m_wmSensitive) ;
-    m_currentPosSmooth += m_diffSmooth ;
-
-    //printf( "m_lastPosSmooth:\t%4.3f %4.3f %4.3f\n", m_lastPosSmooth[0], m_lastPosSmooth[1], m_lastPosSmooth[2] ) ;
-    //printf( "m_currentPosSmooth:\t%4.3f %4.3f %4.3f\n", m_currentPosSmooth[0], m_currentPosSmooth[1], m_lastPosSmooth[2] ) ;
-    //printf( "m_diffSmooth:\t%4.3f %4.3f %4.3f\n", m_diffSmooth[0], m_diffSmooth[1], m_diffSmooth[2] ) ;
-
-
-    // Realize movement.
-    if( ((int)floor(m_currentPosSmooth[0]+0.5)-(int)floor(m_lastPosSmooth[0]+0.5))!=0
-        || ((int)floor(m_currentPosSmooth[1]+0.5)-(int)floor(m_lastPosSmooth[1]+0.5))!=0 )
-      return true ;
-    else
-      return false ;
-*/
+    */
 
 
     m_lastPosSmooth = m_currentPosSmooth ;
@@ -604,7 +564,6 @@ bool WmAvo::wmGetSmoothedCursor()
     float acc=wmGetAcc() ;
     //printf( "acc:%1.3f, m_wmSensitive:%d, m_diffSmooth:%2.3f\n", acc, m_wmSensitive, m_diffSmooth[2] ) ;
 
-    //m_diffSmooth *= ((acc<0.04?0:acc)*m_wmSensitive) ;
     m_diffSmooth *= (acc*m_wmSensitive) ;
     m_currentPosSmooth += m_diffSmooth ;
 
@@ -628,7 +587,7 @@ bool WmAvo::wmGetSmoothedCursor()
   * to use it ...
   * <br/>This method is used to get a "jerk" (the acceleration derived) to have
   * a ratio which will be applied on the vector of movement.
-  * <br/> jerk == acceleration variation => da/dt (jerk in m/s3) http://en.wikipedia.org/wiki/Jerk_%28physics%29
+  * <br/> 
   */
 float WmAvo::wmGetAcc()
 {
@@ -652,73 +611,14 @@ float WmAvo::wmGetAcc()
     //m_wm->Accelerometer.GetAccCalZero( gForceX, gForceY, gForceZ ) ;
     //cout << "Cal zero : gForceX:" << gForceX << ", gForceY:" << gForceY << ", gForceZ:" << gForceZ ;
 
-
-    // Save the precedent values.
-    m_accPrec.gForce = m_accCur.gForce ; m_accPrec.gForceX = m_accCur.gForceX ;
-    m_accPrec.gForceY = m_accCur.gForceY ; m_accPrec.gForceZ = m_accCur.gForceZ ;
-    m_accPrec.pitch = m_accCur.pitch ; m_accPrec.roll = m_accCur.roll ;
-    m_accPrec.yaw = m_accCur.yaw ; m_accPrec.accVarX = m_accCur.accVarX ;
-    m_accPrec.accVarY = m_accCur.accVarY ; m_accPrec.accVarZ = m_accCur.accVarZ ;
-    m_accPrec.accVarNorm = m_accCur.accVarNorm ;
-    m_accPrec.velocityX = m_accCur.velocityX ; m_accPrec.velocityY = m_accCur.velocityY ;
-    m_accPrec.velocityZ = m_accCur.velocityZ ; m_accPrec.distanceX = m_accCur.distanceX ;
-    m_accPrec.distanceY = m_accCur.distanceY ; m_accPrec.distanceZ = m_accCur.distanceZ ;
-
-
-    // Get the current values.
-    m_wm->Accelerometer.GetOrientation( m_accCur.pitch, m_accCur.roll, m_accCur.yaw ) ;
-    //cout << "pitch:" << pitch << ", roll:" << roll << ", yaw:" << yaw << endl ;
-
-    // GForce == acceleration
-    // Here, GForce by axe.
-    m_wm->Accelerometer.GetGForce( m_accCur.gForceX, m_accCur.gForceY, m_accCur.gForceZ ) ;
+    //m_wm->Accelerometer.GetGForce( gForceX, gForceY, gForceZ ) ;
     //cout << "gForceX:" << gForceX << ", gForceY:" << gForceY << ", gForceZ:" << gForceZ ;
 
+    // Get the current values.
+    //m_wm->Accelerometer.GetOrientation( pitch, roll, yaw ) ;
+    //cout << "pitch:" << pitch << ", roll:" << roll << ", yaw:" << yaw << endl ;
 
-    // Calculate the acceleration takes by the Wiimote.
-    // accel == force de gravité total actuelle (demander confirmation)
-    m_accCur.gForce = sqrt( m_accCur.gForceX*m_accCur.gForceX +
-                            m_accCur.gForceY*m_accCur.gForceY +
-                            m_accCur.gForceZ*m_accCur.gForceZ ) ;
-
-    // Calculate distance between each get acceleration.
-    // Info : 1g = 9.80665m/s²
-    //v = a0 (t-t0) + v0
-    //d = 1/2 a (t-t0)² + v0 (t-t0) + d0
-    /*
-    if( m_accPrec.timeAcc == 0 )
-      m_accPrec.timeAcc = m_time.elapsed() ;
-    m_accCur.timeAcc = m_time.elapsed() ;
-    float ms2=9.80665 ;
-    float diffTime=(float)m_accCur.timeAcc - (float)m_accPrec.timeAcc ;
-    m_accCur.velocityX = (m_accCur.gForceX*ms2)*diffTime + m_accPrec.velocityX ;
-    m_accCur.velocityY = m_accCur.gForceY*diffTime + m_accPrec.velocityY ;
-    m_accCur.velocityZ = m_accCur.gForceZ*diffTime + m_accPrec.velocityZ ;
-    m_accCur.distanceX = 0.5f*m_accCur.gForceX*diffTime*diffTime + m_accCur.velocityX*diffTime + m_accPrec.velocityX ;
-    m_accCur.distanceY = 0.5f*m_accCur.gForceY*diffTime*diffTime + m_accCur.velocityY*diffTime + m_accPrec.velocityY ;
-    m_accCur.distanceZ = 0.5f*m_accCur.gForceZ*diffTime*diffTime + m_accCur.velocityZ*diffTime + m_accPrec.velocityZ ;
-
-    m_timeAcc1 = m_timeAcc2 ;
-    */
-
-
-    // Calculate the difference of the accel (jerk).
-    m_accCur.accVarX = m_accCur.gForceX - m_accPrec.gForceX ;
-    m_accCur.accVarY = m_accCur.gForceY - m_accPrec.gForceY ;
-    m_accCur.accVarZ = m_accCur.gForceZ - m_accPrec.gForceZ ;
-
-    // Calculate the jerk norm.
-    m_accCur.accVarNorm = sqrt( m_accCur.accVarX*m_accCur.accVarX +
-                                m_accCur.accVarY*m_accCur.accVarY +
-                                m_accCur.accVarZ*m_accCur.accVarZ ) ;
-
-
-    // Se baser sur le jerk de chaque axe pour les ratio à appliquer
-    // Se baser sur le jerk total pour le déplacement ou juste la norme de l'acc ?
-
-    printf( "gForce:%1.3f, by axe:\t%1.3f\t%1.3f\t%1.3f\n", m_accCur.gForce, m_accCur.gForceX, m_accCur.gForceY, m_accCur.gForceZ ) ;
-    printf( "Jerk  :%1.3f, by axe:\t%1.3f\t%1.3f\t%1.3f\n", m_accCur.accVarNorm, m_accCur.accVarX, m_accCur.accVarY, m_accCur.accVarZ ) ;
-    return m_accCur.accVarNorm ;
+    return m_wm->Accelerometer.GetJerkInGS() ;
   }
 }
 

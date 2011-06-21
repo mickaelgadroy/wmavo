@@ -4,8 +4,9 @@
  *	Written By:
  *		Michael Laforest	< para >
  *		Email: < thepara (--AT--) g m a i l [--DOT--] com >
- *
  *	Copyright 2006-2007
+ *
+ *  Copyright (c) 2010-2011 Mickael Gadroy
  *
  *	This file is part of wiiuse.
  *
@@ -259,11 +260,10 @@ struct read_req_t {
 /**
  *	@struct vec2b_t
  *	@brief Unsigned x,y byte vector.
- */
+ * @{ */
 typedef struct vec2b_t {
 	byte x, y;
 } vec2b_t;
-
 
 /**
  *	@struct vec3b_t
@@ -272,7 +272,6 @@ typedef struct vec2b_t {
 typedef struct vec3b_t {
 	byte x, y, z;
 } vec3b_t;
-
 
 /**
  *	@struct vec3f_t
@@ -628,8 +627,23 @@ typedef struct wiimote_t {
 extern "C" {
 #endif
 
+
 /* wiiuse.c */
 WIIUSE_EXPORT extern const char* wiiuse_version();
+
+WIIUSE_EXPORT extern void wiiuse_init_vec2b_t( struct vec2b_t *v ) ;
+WIIUSE_EXPORT extern void wiiuse_init_vec3b_t( struct vec3b_t *v ) ;
+WIIUSE_EXPORT extern void wiiuse_init_vec3f_t( struct vec3f_t *v ) ;
+WIIUSE_EXPORT extern void wiiuse_init_orient_t( struct orient_t *v ) ;
+WIIUSE_EXPORT extern void wiiuse_init_gforce_t( struct gforce_t *v ) ;
+WIIUSE_EXPORT extern void wiiuse_init_accel_t( struct accel_t *v ) ;
+WIIUSE_EXPORT extern void wiiuse_init_ir_dot_t( struct ir_dot_t *v ) ;
+WIIUSE_EXPORT extern void wiiuse_init_ir_t( struct ir_t *v ) ;
+WIIUSE_EXPORT extern void wiiuse_init_joystick_t( struct joystick_t *v ) ;
+WIIUSE_EXPORT extern void wiiuse_init_nunchuk_t( struct nunchuk_t *v ) ;
+WIIUSE_EXPORT extern void wiiuse_init_classic_ctrl_t( struct classic_ctrl_t *v ) ;
+WIIUSE_EXPORT extern void wiiuse_init_guitar_hero_3_t( struct guitar_hero_3_t *v ) ;
+WIIUSE_EXPORT extern void wiiuse_init_wiimote_state_t( struct wiimote_state_t *v ) ;
 
 WIIUSE_EXPORT extern struct wiimote_t** wiiuse_init(int wiimotes);
 WIIUSE_EXPORT extern void wiiuse_disconnected(struct wiimote_t* wm);

@@ -4,10 +4,9 @@
  *	Written By:
  *		Michael Laforest	< para >
  *		Email: < thepara (--AT--) g m a i l [--DOT--] com >
- *
  *	Copyright 2006-2007
  *
- *      Copyright (c) 2010 Mickael Gadroy
+ *  Copyright (c) 2010-2011 Mickael Gadroy
  *
  *	This file is part of wiiuse.
  *
@@ -84,6 +83,209 @@ void wiiuse_cleanup(struct wiimote_t** wm, int wiimotes) {
 	return;
 }
 
+/**
+ *	@brief Initiate struct.
+ * @{ */
+void wiiuse_init_vec2b_t( struct vec2b_t *v )
+{
+  if( v != NULL )
+  {
+    v->x = 0 ;
+    v->y = 0 ;
+  }
+}
+
+void wiiuse_init_vec3b_t( struct vec3b_t *v )
+{
+  if( v != NULL )
+  {
+    v->x = 0 ;
+    v->y = 0 ;
+    v->z = 0 ;
+  }
+}
+
+void wiiuse_init_vec3f_t( struct vec3f_t *v )
+{
+  if( v != NULL )
+  {
+    v->x = 0 ;
+    v->y = 0 ;
+    v->z = 0 ;
+  }
+}
+
+void wiiuse_init_orient_t( struct orient_t *v )
+{
+  if( v != NULL )
+  {
+    v->a_pitch = 0 ;
+    v->a_roll = 0 ;
+    v->pitch = 0 ;
+    v->roll = 0 ;
+    v->yaw = 0 ;
+  }
+}
+
+void wiiuse_init_gforce_t( struct gforce_t *v )
+{
+  if( v != NULL )
+  {
+    v->x = 0 ;
+    v->y = 0 ;
+    v->z = 0 ;
+  }
+}
+
+void wiiuse_init_accel_t( struct accel_t *v )
+{
+  if( v != NULL )
+  {
+    wiiuse_init_vec3b_t( &(v->cal_zero) ) ;
+    wiiuse_init_vec3b_t( &(v->cal_g) ) ;
+    v->st_alpha = 0 ;
+    v->st_pitch = 0 ;
+    v->st_roll = 0 ;
+  }
+}
+
+void wiiuse_init_ir_dot_t( struct ir_dot_t *v )
+{
+  if( v != NULL )
+  {
+    v->order = 0 ;
+    v->rx = 0 ;
+    v->ry = 0 ;
+    v->size = 0 ;
+    v->visible = 0 ;
+    v->x = 0 ;
+    v->y = 0 ;
+  }
+}
+
+void wiiuse_init_ir_t( struct ir_t *v )
+{
+  if( v != NULL )
+  {
+    int i=0 ;
+    for( i=0 ; i<4 ; i++ )
+    {
+      wiiuse_init_ir_dot_t( &(v->dot[i]) ) ;
+      v->persistanceTimer[i] = 0 ;
+      v->lastRealDot[i][0] = 0 ;
+      v->lastRealDot[i][1] = 0 ;
+    }
+    
+    for( i=0 ; i<2 ; i++ )
+    {
+      v->vres[i] = 0 ;
+      v->offset[i] = 0 ;
+      v->lastCursorRealRealReal[i] = 0 ;
+    }
+
+    v->ax = 0 ;
+    v->ay = 0 ;
+    v->x = 0 ;
+    v->y = 0 ;
+    v->z = 0 ;
+    v->distance = 0 ;
+    v->state = 0 ;
+    v->nb_source_detect = 0 ;
+    v->num_dots = 0 ;
+
+    v->szLastRealDot = 0 ;
+  }
+}
+
+void wiiuse_init_joystick_t( struct joystick_t *v )
+{
+  if( v != NULL )
+  {
+    wiiuse_init_vec2b_t( &(v->max) ) ;
+    wiiuse_init_vec2b_t( &(v->min) ) ;
+    wiiuse_init_vec2b_t( &(v->center) ) ;
+    v->ang = 0 ;
+    v->mag = 0 ;
+  }
+}
+
+void wiiuse_init_nunchuk_t( struct nunchuk_t *v )
+{
+  if( v != NULL )
+  {
+    wiiuse_init_accel_t( &(v->accel_calib) ) ;
+    wiiuse_init_joystick_t( &(v->js) ) ;
+    wiiuse_init_vec3b_t( &(v->accel) ) ;
+    wiiuse_init_orient_t( &(v->orient) ) ;
+    wiiuse_init_gforce_t( &(v->gforce) ) ;
+    v->flags = NULL ;
+    v->btns = 0 ;
+    v->btns_held = 0 ;
+    v->btns_released = 0 ;
+    v->orient_threshold = 0 ;
+    v->accel_threshold = 0 ;
+  }
+}
+
+void wiiuse_init_classic_ctrl_t( struct classic_ctrl_t *v )
+{
+  if( v != NULL )
+  {
+    wiiuse_init_joystick_t( &(v->ljs) ) ;
+    wiiuse_init_joystick_t( &(v->rjs) ) ;
+    v->btns = 0 ;
+    v->btns_held = 0 ;
+    v->btns_released = 0 ;
+    v->r_shoulder = 0 ;
+    v->l_shoulder = 0 ;
+  }
+}
+
+void wiiuse_init_guitar_hero_3_t( struct guitar_hero_3_t *v )
+{
+  if( v != NULL )
+  {
+    wiiuse_init_joystick_t( &(v->js) ) ;
+    v->btns = 0 ;
+    v->btns_held = 0 ;
+    v->btns_released = 0 ;
+    v->whammy_bar = 0 ;
+  }
+}
+
+void wiiuse_init_expansion_t( struct expansion_t *v )
+{
+  if( v != NULL )
+  {
+    v->type = 0 ;
+  }
+}
+
+void wiiuse_init_wiimote_state_t( struct wiimote_state_t *v )
+{
+  if( v != NULL )
+  {
+    wiiuse_init_orient_t( &(v->exp_orient) ) ;
+    wiiuse_init_vec3b_t( &(v->exp_accel) ) ;
+    wiiuse_init_orient_t( &(v->orient) ) ;
+    wiiuse_init_vec3b_t( &(v->accel) ) ;
+    
+    v->exp_ljs_ang = 0 ;
+    v->exp_rjs_ang = 0 ;
+    v->exp_ljs_mag = 0 ;
+    v->exp_rjs_mag = 0 ;
+    v->exp_r_shoulder = 0 ;
+    v->exp_l_shoulder = 0 ;
+    v->exp_btns = 0 ;
+
+    v->ir_ax = 0 ;
+    v->ir_ay = 0 ;
+    v->ir_distance = 0 ;
+
+    v->btns = 0 ;
+  }
+}
+//@}
 
 /**
  *	@brief Initialize an array of wiimote structures.
