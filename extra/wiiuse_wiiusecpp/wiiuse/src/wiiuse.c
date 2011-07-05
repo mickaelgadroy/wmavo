@@ -185,6 +185,8 @@ void wiiuse_init_ir_t( struct ir_t *v )
 
     v->ax = 0 ;
     v->ay = 0 ;
+    v->deltax = 0 ;
+    v->deltay = 0 ;
     v->x = 0 ;
     v->y = 0 ;
     v->z = 0 ;

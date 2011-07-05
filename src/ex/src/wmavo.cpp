@@ -79,6 +79,10 @@ WmAvo::WmAvo( int operatingMode ) :
   m_lastPosSmooth = m_refPoint0 ;
   m_currentPosSmooth = m_refPoint0 ;
 
+  m_smoothAcc = new WIWO<double>(WMAVO_SMOOTH) ;
+  m_lastAccSmooth = 0 ;
+  m_diffAccSmooth = 0 ;
+
   // Calibration & Co.
   //m_hitList.clear() ;
 
@@ -98,6 +102,11 @@ WmAvo::~WmAvo()
   {
     delete m_smoothXY ;
     m_smoothXY = NULL ;
+  }
+
+  if( m_smoothAcc != NULL )
+  {
+    delete m_smoothAcc ;
   }
 
   if( m_mutex != NULL )
@@ -296,7 +305,9 @@ bool WmAvo::wmPoll()
     }
 
     // If some action are not finished.
-    if( WMAVO_IS(WMAVO_SELECT) || WMAVO_IS(WMAVO_MENU_OK) ||m_crossReleaseEnd || m_crossRelease || m_okMenuReleaseEnd )
+    if( WMAVO_IS(WMAVO_CURSOR_MOVE) || WMAVO_IS( WMAVO_ATOM_MOVE )
+        || WMAVO_IS(WMAVO_SELECT) || WMAVO_IS(WMAVO_MENU_OK)
+        || m_crossReleaseEnd || m_crossRelease || m_okMenuReleaseEnd )
       m_wmOtherPoll = true ;
 
     // "Poll" of the Wiimote or other poll.
@@ -467,21 +478,21 @@ Vector3d WmAvo::wmGetIrCursor()
   else
   {
     // Get Values.
-    //int x=0, y=0 ;
-    //m_wm->IR.GetCursorPosition(x,y) ;
-    float x=0, y=0, z=0 ;
-    m_wm->Accelerometer.GetPosition( x, y, z ) ;
+    int x=0, y=0 ;
+    m_wm->IR.GetCursorPosition(x,y) ;
+    //double x=0, y=0, z=0 ;
+    //m_wm->Accelerometer.GetPosition( x, y, z ) ;
 
     // Save data.
     m_wmLastIrCursorPos = m_wmCurrentIrCursorPos ;
 
     // Get new value of m_wmCurrentIrCursorPos.
-    m_wmCurrentIrCursorPos[0] = (double)x * WMAVO_CURSOR_CALIBRATION_X *1000000.0;
-    m_wmCurrentIrCursorPos[1] = (double)y * WMAVO_CURSOR_CALIBRATION_Y *1000000.0;
-    m_wmCurrentIrCursorPos[2] = m_wm->IR.GetPixelDistance() * WMAVO_CURSOR_CALIBRATION_Z ;
+    m_wmCurrentIrCursorPos[0] = (double)x ; //* WMAVO_CURSOR_CALIBRATION_X ;
+    m_wmCurrentIrCursorPos[1] = (double)y ; //* WMAVO_CURSOR_CALIBRATION_Y ;
+    m_wmCurrentIrCursorPos[2] = m_wm->IR.GetPixelDistance() ; //* WMAVO_CURSOR_CALIBRATION_Z ;
 
     /*
-    cout << "         [x,y]=" << x << " " << y << endl ;
+    cout << "          [x,y]=" << x << " " << y << endl ;
     cout << "   Last:[x,y,z]=" << m_wmLastIrCursorPos[0] << " " << m_wmLastIrCursorPos[1] << " " << m_wmLastIrCursorPos[2] << endl ;
     cout << "Current:[x,y,z]=" << m_wmCurrentIrCursorPos[0] << " " << m_wmCurrentIrCursorPos[1] << " " << m_wmCurrentIrCursorPos[2] << endl ;
     */
@@ -533,24 +544,11 @@ bool WmAvo::wmGetSmoothedCursor()
   }
   else
   {
-    /*
-    float acc=wmGetAcc() ;
-    //acc = (acc<0.4?0.0:acc) ;
+    // voir pour diminuer le nombre de valeur à moyenner qd il y a trop de zero
+    // pour permet un re-demarrage plus rapide.
+    // Ajouter une moyenne pondérée comme expliqué par Mat
 
-    if( acc == 0 )
-      m_diffPos = Vector3d(0,0,0) ;
-    else
-      m_diffPos = m_wmCurrentIrCursorPos - m_wmLastIrCursorPos ;
-
-
-    voir pour diminuer le nombre de valeur à moyenner qd il y a trop de zero
-        pour permet un re-demarrage plus rapide.
-
-    Ajouter une moyenne pondérée comme expliqué par Mat
-    */
-
-
-    m_lastPosSmooth = m_currentPosSmooth ;
+    //m_lastPosSmooth = m_currentPosSmooth ;
     m_diffPos = m_wmCurrentIrCursorPos - m_wmLastIrCursorPos ;
 
     // Smooth cursor.
@@ -599,26 +597,44 @@ float WmAvo::wmGetAcc()
   }
   else
   {
-    //float pitch=0, roll=0, yaw=0 ;
-    //float gForceX=0, gForceY=0, gForceZ=0 ;
+    /* Test1.
+    double acc=fabs(m_wm->Accelerometer.GetGForceElapse()) ;
+    acc = (acc<0.01?0.001:acc) ;
 
-    //cout << "Orient threshold:" << m_wm->Accelerometer.GetOrientThreshold() << endl ;
-    //cout << "Accel threshold:" << m_wm->Accelerometer.GetAccelThreshold() << endl ;
+    // Smooth acc.
+    if( m_smoothAcc->isFull() )
+      m_lastAccSmooth -= m_smoothAcc->getQueue() ;
 
-    //m_wm->Accelerometer.GetAccCalOne( gForceX, gForceY, gForceZ ) ;
-    //cout << "Cal one : gForceX:" << gForceX << ", gForceY:" << gForceY << ", gForceZ:" << gForceZ ;
+    m_smoothAcc->pushAtBegin( acc ) ;
+    m_lastAccSmooth += acc ;
+    m_diffAccSmooth = m_lastAccSmooth/m_smoothAcc->getNbCaseUse() ;
 
-    //m_wm->Accelerometer.GetAccCalZero( gForceX, gForceY, gForceZ ) ;
-    //cout << "Cal zero : gForceX:" << gForceX << ", gForceY:" << gForceY << ", gForceZ:" << gForceZ ;
+    return m_diffAccSmooth ;
+    */
 
-    //m_wm->Accelerometer.GetGForce( gForceX, gForceY, gForceZ ) ;
-    //cout << "gForceX:" << gForceX << ", gForceY:" << gForceY << ", gForceZ:" << gForceZ ;
+    /* Test2.
+    double acc=fabs(m_wm->Accelerometer.GetGForceInMS2() - 9.81 ) ;
+    double irDiffX, irDiffY, irDiffZ ;
+    m_wm->IR.GetCursorDelta( irDiffX, irDiffY, irDiffZ ) ;
 
-    // Get the current values.
-    //m_wm->Accelerometer.GetOrientation( pitch, roll, yaw ) ;
-    //cout << "pitch:" << pitch << ", roll:" << roll << ", yaw:" << yaw << endl ;
+    irDiffX = fabs( irDiffX ) ;
+    irDiffY = fabs( irDiffY ) ;
+    irDiffZ = fabs( irDiffZ ) ;
 
-    return m_wm->Accelerometer.GetJerkInGS() ;
+    if( acc < 0.2 && irDiffX<10.0 && irDiffY<10.0  && irDiffZ<0.75 )
+    {
+      return 0.05 ;
+    }
+    else
+      return 0.1 ;    
+    */
+
+    bool isPM=m_wm->IR.IsInPrecisionMode() ;
+
+    if( isPM )
+      return 0.03 ;
+    else
+      return 0.1 ; 
   }
 }
 
@@ -905,7 +921,7 @@ void WmAvo::translateCursorToScreen()
     m_posCursor.setX( m_xWidget ) ;
   else
     m_posCursor.setX( x ) ;
-    */
+  */
 
 
   if( y >= m_YScreen )
@@ -1022,7 +1038,7 @@ bool WmAvo::transformWmAction1ToSelectOrTranslateAtom()
       m_timeFirst = 0 ;
       m_timeSecond = 0 ;
 
-      if( m_selectRelease && !/*m_isAtomTranslate*/WMAVO_IS(WMAVO_ATOM_TRANSLATE) )
+      if( m_selectRelease && !WMAVO_IS(WMAVO_ATOM_TRANSLATE) )
       { // Try to activate the selection of an atom.
 
         m_selectRelease  = false ; // Will disable the feature in the next round.
@@ -1059,7 +1075,6 @@ bool WmAvo::transformWmAction1ToCreateAtom()
     {
       m_pressedButton = true ;
       m_addRelease = true ;
-      //m_isCreateAtom = true ;
       WMAVO_SETON( WMAVO_CREATE ) ;
     }
 
@@ -1080,7 +1095,6 @@ bool WmAvo::transformWmAction1ToCreateAtom()
     {
       m_addRelease = false ;
       m_pressedButton = false ;
-      //m_isCreateAtom = false ;
       WMAVO_SETOFF( WMAVO_CREATE ) ;
 
       m_timeFirst = 0 ;

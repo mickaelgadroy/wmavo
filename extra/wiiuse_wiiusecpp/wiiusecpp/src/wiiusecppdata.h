@@ -132,6 +132,7 @@ public:
   double GetGForceInG() ; //< In g unit.
   void GetGForceInMS2(double &X, double &Y, double &Z) ; //< in m.s^-2 unit.
   double GetGForceInMS2() ; //< in m.s^-2 unit.
+  double GetGForceElapse() ; //< in m.s^-2 unit.
   // @}
 
   /*
@@ -177,6 +178,7 @@ private:
   float mpOrientThreshold ;
 
   CAccelerometer::values_t mpValues ;
+  double mpGForceElapse ;
 };
 
 class CIRDotData
@@ -215,8 +217,10 @@ public:
   int GetState();
   void GetCursorPositionAbsolute(int &X, int &Y);
   void GetCursorPosition(int &X, int &Y);
+  void GetCursorDelta(double &X, double &Y, double &Z);
   float GetPixelDistance();
   float GetDistance();
+  bool IsInPrecisionMode();
 
 private:
 

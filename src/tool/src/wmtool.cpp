@@ -349,6 +349,9 @@ namespace Avogadro
     if( m_activeRect )
       drawRect( m_rectPos1, m_rectPos2 ) ;
 
+    if( m_cursorPos.x()!=0 && m_cursorPos.y()!=0 )
+      drawCursor() ;
+
     return true ;
   }
 
@@ -580,6 +583,78 @@ namespace Avogadro
     glPopMatrix() ;
   }
 
+
+  void WmTool::drawCursor()
+  {
+    GLint viewport[4] ;       // Where The Viewport Values Will Be Stored
+    GLdouble modelview[16] ;  // Where The 16 Doubles Of The Modelview Matrix Are To Be Stored
+    GLdouble projection[16] ; // Where The 16 Doubles Of The Projection Matrix Are To Be Stored
+
+    glGetDoublev( GL_MODELVIEW_MATRIX, modelview ) ;   // Retrieve The Modelview Matrix
+    glGetDoublev( GL_PROJECTION_MATRIX, projection ) ; // Retrieve The Projection Matrix
+    glGetIntegerv( GL_VIEWPORT, viewport ) ;           // Retrieves The Viewport Values (X, Y, Width, Height)
+
+    GLdouble rightX=modelview[0] ;
+    GLdouble rightY=modelview[4] ;
+    GLdouble rightZ=modelview[8] ;
+
+    GLdouble upX=modelview[1] ;
+    GLdouble upY=modelview[5] ;
+    GLdouble upZ=modelview[9] ;
+
+    QPoint p=m_widget->mapFromGlobal(m_cursorPos) ;
+
+    GLfloat winX=(float)p.x() ;
+    GLfloat winY=(float)viewport[3] - (float)p.y() ;
+    GLfloat winZ=0 ;
+    GLdouble posX=0, posY=0, posZ=0 ;
+
+    // Get the 1st intersection with the openGL object.
+    //glReadPixels( x, int(winY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ );
+
+    // Widget position to openGL position.
+    gluUnProject( winX, winY, winZ, modelview, projection, viewport, &posX, &posY, &posZ);
+
+
+    // Draw section.
+
+    glPushMatrix() ;
+    
+    //Will be transparent
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+
+    //Draw the cursor at the current mouse pos
+    
+    glBegin( GL_TRIANGLES ) ;
+        glColor4f( 0.75, 0.75, 0.75, 0.75 ) ;
+        glVertex3f( posX, posY, posZ ) ;
+        glVertex3f( posX+0.1f*rightX, posY+0.1*rightY, posZ+0.1*rightZ ) ;
+        glVertex3f( posX+0.1f*upX, posY+0.1f*upY, posZ+0.1f*upZ ) ;
+    glEnd() ;
+
+    // avoir right et up comme pour le triangle
+    float r=0.1 ;
+    float a=0, b=0 ;
+    glBegin( GL_LINE_LOOP );
+    for( float i=0 ; i<2*M_PI ; i+=(float)M_PI/10.0f )
+    {
+        a = r * cosf(i) ;
+        b = r * sinf(i) ;
+        float xf = posX + rightX * a + upX * b ;
+        float yf = posY + rightY * a + upY * b ;
+        float zf = posZ + rightZ * a + upZ * b ;
+        glVertex3f( xf, yf, zf ) ;
+    }
+    glEnd();
+    
+    // Come back ...
+    glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+
+    glPopMatrix() ;
+  }
 
 
   /**
@@ -1072,8 +1147,9 @@ namespace Avogadro
     * @param nbSources Number of "IR dots" really used detected by the Wiimote.
     * @param distance The "distance" calculated by the Wiimote.
     */
-  void WmTool::setWmInfo( bool connect, int nbDots, int nbSources, int distance )
+  void WmTool::setWmInfo( const QPoint &cursor, bool connect, int nbDots, int nbSources, int distance )
   {
+    m_cursorPos = cursor ;
     m_wmIsConnected = connect ;
     m_wmNbDots = nbDots ;
     m_wmNbSources = nbSources ;

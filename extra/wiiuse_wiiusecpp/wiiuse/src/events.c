@@ -204,8 +204,9 @@ int wiiuse_poll(struct wiimote_t** wm, int wiimotes) {
  *
  *	@param wm		Pointer to a wiimote_t structure.
  */
-static void idle_cycle(struct wiimote_t* wm) {
-	/*
+static void idle_cycle(struct wiimote_t* wm)
+{
+  /*
 	 *	Smooth the angles.
 	 *
 	 *	This is done to make sure that on every cycle the orientation
@@ -223,6 +224,30 @@ static void idle_cycle(struct wiimote_t* wm) {
 
 	/* clear out any old read requests */
 	clear_dirty_reads(wm);
+  
+  // Clear IR data.
+  wm->ir.deltax = 0 ;
+  wm->ir.deltay = 0 ;
+  wm->ir.deltaz = 0 ;
+  wm->ir.isInPrecisionMode = 0 ;
+  wm->ir.nb_source_detect = 0 ;
+  wm->ir.num_dots = 0 ;
+  wm->ir.state = 0 ;
+  //puts( "idle_cycle" ) ;
+
+  /*
+  {
+    int i=0 ;
+    for( i=0 ; i<WM_MAX_DOTS ; i++ )
+    {
+      wm->ir.lastRealDot[i][0] = 0 ;
+      wm->ir.lastRealDot[i][1] = 0 ;
+      wm->ir.lastRealDotIsVisible[i] = 0 ;
+    }
+    for( i=0 ; i<6 ; i++ )
+      wm->ir.lastDist[i] = -1 ;
+  }
+  */
 }
 
 

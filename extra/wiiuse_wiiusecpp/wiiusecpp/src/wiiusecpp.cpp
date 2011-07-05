@@ -915,6 +915,11 @@ int CIR::GetState()
   return (mpWiimotePtr!=NULL ? mpWiimotePtr->ir.state : 0 ) ;
 }
 
+/**
+  * Average of the IR dots (0->1024, 0->768)
+  * @param X Output value on X-axe.
+  * @param Y Output value on Y-axe.
+  */
 void CIR::GetCursorPositionAbsolute(int &X, int &Y)
 {
   if( mpWiimotePtr != NULL )
@@ -929,6 +934,13 @@ void CIR::GetCursorPositionAbsolute(int &X, int &Y)
   }
 }
 
+/**
+  * The position = last ir position + delta ir.
+  * Begin from (0,0) to ((-oo,+oo),(-oo,+oo)).
+  * Tip : use GetCursorDelta() instead.
+  * @param X Output value on X-axe.
+  * @param Y Output value on Y-axe.
+  */
 void CIR::GetCursorPosition(int &X, int &Y)
 {
   if( mpWiimotePtr != NULL )
@@ -943,14 +955,59 @@ void CIR::GetCursorPosition(int &X, int &Y)
   }
 }
 
+/**
+  * Difference between the current and the last ir dots.
+  * @param X Output value on X-axe.
+  * @param Y Output value on Y-axe.
+  * @param Z Output value on Z-axe.
+  */
+void CIR::GetCursorDelta(double &X, double &Y, double &Z)
+{
+  if( mpWiimotePtr != NULL )
+  {
+    X = mpWiimotePtr->ir.deltax ;
+    Y = mpWiimotePtr->ir.deltay ;
+    Z = mpWiimotePtr->ir.deltaz ;
+  }
+  else
+  {
+    X = 0 ;
+    Y = 0 ;
+    Z = 0 ;
+  }
+}
+
+/**
+  * This is the distance between 2 points on the IR cam.
+  * Tip : use GetCursorDelta() instead.
+  * @return An unreliable data about the distance.
+  */
 float CIR::GetPixelDistance()
 {
   return (mpWiimotePtr!=NULL ? mpWiimotePtr->ir.distance : 0.0f ) ;
 }
 
+/**
+  * This is the distance between 2 points on the IR cam.
+  * Tip : use GetCursorDelta() instead.
+  * @return An unreliable data about the distance.
+  */
 float CIR::GetDistance()
 {
   return (mpWiimotePtr!=NULL ? mpWiimotePtr->ir.z : 0.0f ) ;
+}
+
+/**
+  * If the values are below at (const value in code), that can be 
+  * considered like a movement which search to be precise.
+  * @return TRUE the movement is 
+  */
+bool CIR::IsInPrecisionMode()
+{
+  if( mpWiimotePtr->ir.isInPrecisionMode == 0 )
+    return false ;
+  else
+    return true ;
 }
 
 
@@ -1542,12 +1599,14 @@ int CWii::Poll()
     return poll ;
 }
 
-void CWii::Poll( bool &updateButton_out, bool &updateAccelerometerData_out )
+void CWii::Poll( bool &updateButton_out, bool &updateAccelerometerData_out, bool &updateIRData_out )
 {
     bool isUpdated=false ;
+    double x,y, z ;
     int poll=wiiuse_poll((struct wiimote_t**) mpWiimoteArray, mpWiimoteArraySize) ;
     updateButton_out = (poll==0?false:true) ;
     updateAccelerometerData_out = false ;    
+    updateIRData_out = false ;
 
     for( int i=0 ; i<mpWiimoteArraySize ; i++ )
     {
@@ -1556,7 +1615,12 @@ void CWii::Poll( bool &updateButton_out, bool &updateAccelerometerData_out )
       else
         isUpdated = mpWiimotesVector[i]->Accelerometer.calculateValues( false ) ;
 
+      mpWiimotesVector[i]->IR.GetCursorDelta(x,y,z) ;
+
       if( isUpdated )
         updateAccelerometerData_out = true ;
+
+      if( x!=0 || y!=0 || z!=0 )
+        updateIRData_out = true ;
     }
 }

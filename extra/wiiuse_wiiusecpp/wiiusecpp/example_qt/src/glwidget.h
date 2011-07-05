@@ -18,21 +18,23 @@
  */
 
 
- #ifndef GLWIDGET_H
- #define GLWIDGET_H
+#ifndef GLWIDGET_H
+#define GLWIDGET_H
 
- #define SLIDER_ROT_CONST 16.0
- #define SLIDER_TRANS_CONST 100.0
- #define SLIDER_TRANS_MAX 30.0
+#define SLIDER_ROT_CONST 16.0
+#define SLIDER_TRANS_CONST 100.0
+#define SLIDER_TRANS_MAX 30.0
 
- #include <QGLWidget>
+#include <QGLWidget>
+
+class Window ;
 
  class GLWidget : public QGLWidget
  {
      Q_OBJECT
 
  public:
-     GLWidget(QWidget *parent = 0);
+     GLWidget(Window *parent = 0);
      ~GLWidget();
 
      QSize minimumSizeHint() const;
@@ -55,6 +57,8 @@
      void yTranslationChanged( int distance ) ;
      void zTranslationChanged( int distance ) ;
 
+     void xyzPositionsChanged( double x, double y, double z, double x1, double y1, double z1, double x2, double y2, double z2 ) ;
+
  protected:
      void initializeGL();
      void paintGL();
@@ -63,15 +67,20 @@
      void mouseMoveEvent(QMouseEvent *event);
 
      void drawSphere( float radius, float r, float v, float b ) ;
+     void drawCursor( float x, float y, float z ) ;
+
+     void calculateOpenGLPositionFromScreenCoordinate( const QPoint &pos_in, double &x_out, double &y_out, double &z_out ) ;
 
  private:
-     //QtLogo *m_logo;
+
+     Window *m_window ; //< Shortcut.
 
      int m_xRot, m_yRot, m_zRot ;
      float m_xTransl, m_yTransl, m_zTransl ;
 
-     QPoint lastPos;
-     QColor qtGreen, qtPurple ;
+     QPoint m_lastPosRotation ;
+     float m_xCursor, m_yCursor, m_zCursor ;
+     QColor m_purple ;
 
      GLUquadric* m_gluQuadricParams1 ;
  };

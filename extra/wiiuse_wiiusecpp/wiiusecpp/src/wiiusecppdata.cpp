@@ -111,6 +111,7 @@ CAccelerometerData::CAccelerometerData( const CAccelerometer &ca )
     mpOrientThreshold = 0 ;
 
   mpValues = ca.mpValuesInTime[0] ;
+  mpGForceElapse = ca.mpValuesInTime[0].gForce-ca.mpValuesInTime[1].gForce ;
 }
 
 CAccelerometerData::~CAccelerometerData(){}
@@ -144,13 +145,14 @@ void CAccelerometerData::GetAccCalZero(float &X, float &Y, float &Z)
   Z = (float)mpAccelCalib.cal_zero.z ;
 }
 
-double CAccelerometerData::GetGForceInG(){ return mpValues.gForce/WIIUSECPP_GUNIT_TO_MS2UNIT  ; }
+double CAccelerometerData::GetGForceElapse(){ return mpGForceElapse ; }
+double CAccelerometerData::GetGForceInG(){ return mpValues.gForce/WIIUSECPP_GUNIT_TO_MS2UNIT ; }
 double CAccelerometerData::GetGForceInMS2(){ return mpValues.gForce; }
 void CAccelerometerData::GetGForceInG(double &X, double &Y, double &Z)
 {
   X = mpValues.gForceX/WIIUSECPP_GUNIT_TO_MS2UNIT ;
-  Y = mpValues.gForceY/WIIUSECPP_GUNIT_TO_MS2UNIT  ;
-  Z = mpValues.gForceZ/WIIUSECPP_GUNIT_TO_MS2UNIT  ;
+  Y = mpValues.gForceY/WIIUSECPP_GUNIT_TO_MS2UNIT ;
+  Z = mpValues.gForceZ/WIIUSECPP_GUNIT_TO_MS2UNIT ;
 }
 void CAccelerometerData::GetGForceInMS2(double &X, double &Y, double &Z)
 {
@@ -239,17 +241,11 @@ CIR::AspectRatioSelections CIRData::GetAspectRatioSetting(){ return (CIR::Aspect
 int CIRData::GetSensitivity()
 { 
   int level=0 ;
-
-  if( mpState & 0x0200 )
-    level = 1;
-  else if( mpState & 0x0400 )
-    level = 2;
-  else if( mpState & 0x0800 )
-    level = 3;
-  else if( mpState & 0x1000 )
-    level = 4;
-  else if( mpState & 0x2000 )
-    level = 5;
+  if( mpState & 0x0200 )      level = 1;
+  else if( mpState & 0x0400 ) level = 2;
+  else if( mpState & 0x0800 ) level = 3;
+  else if( mpState & 0x1000 ) level = 4;
+  else if( mpState & 0x2000 ) level = 5;
   
   return level;
 }
@@ -272,8 +268,16 @@ void CIRData::GetCursorPosition(int &X, int &Y)
   X = mpIr.x ;
   Y = mpIr.y ;
 }
+void CIRData::GetCursorDelta(double &X, double &Y, double &Z)
+{
+  X = mpIr.deltax ;
+  Y = mpIr.deltay ;
+  Z = mpIr.deltaz ;
+}
+
 float CIRData::GetPixelDistance(){ return mpIr.distance ; }
 float CIRData::GetDistance(){ return mpIr.z ; }
+bool CIRData::IsInPrecisionMode(){ return (mpIr.isInPrecisionMode==0?false:true) ; }
 
 
 CNunchukData::CNunchukData(){}

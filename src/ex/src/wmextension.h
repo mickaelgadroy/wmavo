@@ -165,7 +165,7 @@ namespace Avogadro
         void renderedAtomBond( const Vector3d& beginAtom, const Vector3d& endAtom, bool drawBeginAtom, bool drawEndAtom, bool drawBond ) ;
 
         void displayedMsg( QList<QString> strList, QPoint pos ) ;
-        void displayedWmInfo( bool connect, int nbDots, int nbSources, int distance ) ;
+        void displayedWmInfo( const QPoint &cursor, bool connect, int nbDots, int nbSources, int distance ) ;
         void displayedAtomicNumberCurrent( int atomicNumber ) ;
         //@}
 
@@ -182,8 +182,7 @@ namespace Avogadro
         /**
           * @name For the distance calcul feature.
           * Send to the WmTool class some informations for the distance calculation.
-          * @{
-          */
+          * @{ */
         void initiatedCalculDistDiedre( int what ) ;
         void setCalculDistDiedre( Atom *anAtom ) ;
         //@}
@@ -286,7 +285,7 @@ namespace Avogadro
       void initAndActiveForWmToolMenu() ;
           ///< To activate the tool menu of the Wiimote tool plugin in Avogadro, and initiate some data for the use of WmTool class.
       bool initSignalBetweenWmExtWmTool() ;
-      void sendWmInfoToWmTool( bool connect, int nbDots, int nbSources, int distance ) ;
+      void sendWmInfoToWmTool( const QPoint &cursor, bool connect, int nbDots, int nbSources, int distance ) ;
       // @}
 
 

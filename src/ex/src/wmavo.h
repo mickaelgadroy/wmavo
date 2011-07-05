@@ -322,6 +322,9 @@ class WmAvo
     WIWO<Vector3d> *m_smoothXY ;
     Vector3d m_lastSmooth, m_diffSmooth, m_diffPos ;
     Vector3d m_lastPosSmooth, m_currentPosSmooth ;
+
+    WIWO<double> *m_smoothAcc ;
+    double m_lastAccSmooth, m_diffAccSmooth ;
     // @}
 
     /**

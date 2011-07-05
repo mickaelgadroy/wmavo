@@ -104,6 +104,7 @@ public :
     return file[(tete+n)%tailleWIWO] ;
   };
 
+  /*
   template<class TT> friend ostream& operator << ( ostream &o, const WIWO<TT> &f )
   {
     for( int i=0 ; i<f.nbCaseUse ; i++ )
@@ -112,6 +113,7 @@ public :
 
     return o ;
   } ;
+  */
 };
 
 #endif

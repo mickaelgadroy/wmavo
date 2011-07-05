@@ -101,8 +101,8 @@ int Wiimote::runDevice()
         //Sleep(12);
         #endif
 
-        bool updateButton, updateAcc ;
-        m_wii.Poll( updateButton, updateAcc ) ;
+        bool updateButton, updateAcc, updateIR ;
+        m_wii.Poll( updateButton, updateAcc, updateIR ) ;
 
         //Poll the wiimotes to get the status like pitch or roll
         if( updateButton )
@@ -129,7 +129,7 @@ int Wiimote::runDevice()
             }
         }
 
-        if( updateButton || updateAcc )
+        if( updateButton || updateAcc || updateIR )
         {
             // Copy all time for the acceleration values for test!
             for( size_t i = 0; i < m_wiimotes->size() ; ++i )

@@ -26,19 +26,29 @@
  #include "glwidget.h"
  #include "qtlogo.h"
 
+#include "window.h"
+
  #ifndef GL_MULTISAMPLE
  #define GL_MULTISAMPLE  0x809D
  #endif
 
- GLWidget::GLWidget(QWidget *parent)
+
+ GLWidget::GLWidget(Window *parent)
      : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
-       /*m_logo(0),*/ m_xRot(0), m_yRot(0), m_zRot(0)
+       m_window(parent),
+       m_xRot(0), m_yRot(0), m_zRot(0),
+       m_xTransl(0), m_yTransl(0), m_zTransl(0),
+       m_xCursor(0),  m_yCursor(0), m_zCursor(0)
  {
-     qtGreen = QColor::fromCmykF(0.40, 0.0, 1.0, 0.0);
-     qtPurple = QColor::fromCmykF(0.39, 0.39, 0.0, 0.0);
+     m_purple = QColor::fromCmykF(0.39, 0.39, 0.0, 0.0);
 
      m_gluQuadricParams1 = gluNewQuadric() ;
      gluQuadricDrawStyle( m_gluQuadricParams1, GLU_FILL ) ;
+
+     this->setMouseTracking( true ) ;
+
+     connect( this, SIGNAL(xyzPositionsChanged(double,double,double,double,double,double,double,double,double)),
+              m_window, SLOT(setWmTable(double,double,double,double,double,double,double,double,double)) ) ;
  }
 
  GLWidget::~GLWidget()
@@ -150,10 +160,7 @@
 
  void GLWidget::initializeGL()
  {
-     qglClearColor(qtPurple.dark());
-
-     //m_logo = new QtLogo(this, 64);
-     //m_logo->setColor(qtGreen.dark());
+     qglClearColor(m_purple.dark());
 
      glEnable(GL_DEPTH_TEST);
      glEnable(GL_CULL_FACE);
@@ -164,93 +171,128 @@
      static GLfloat lightPosition[4] = { 0.5, 5.0, 7.0, 1.0 };
      glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
 
-     glMatrixMode( GL_PROJECTION ) ;
-
      // PI/2
-     gluPerspective( 3.14*0.50, width()/height(), 1, 1000 );
-     glMatrixMode( GL_MODELVIEW ) ;
+     glViewport(0, 0, width(), height()) ;
+
+     glMatrixMode( GL_PROJECTION ) ;
+     glLoadIdentity() ;
+
+     GLdouble aspect=(double)width()/(double)height() ;
+     GLdouble fov=3.14*0.50 ;
+     gluPerspective( fov, aspect, 1, 1000 );
  }
 
  void GLWidget::paintGL()
  {
      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-     glLoadIdentity();
+     glMatrixMode( GL_MODELVIEW ) ;
+     glLoadIdentity() ;
 
      // fonction pour fixer la matrice de vue
      // prend en paramètre les coordonnées de la position de la "caméra"
      // les coordonnées du point visé et le vecteur haut de la caméra
-     //gluLookAt( 10, 0, 10, 0, 0, 0, 0, 1, 0 );
-     gluLookAt( 2, 0, 10, 0, 0, 0, 0, 1, 0 );
+     gluLookAt( 10, 0, 10, 0, 0, 0, 0, 1, 0 );
 
-     // sauvegarde de la matrice courante
-     glPushMatrix();
-
-     //glTranslatef(0.0f, 0.0f, -8.0f);
-
-
-     // ->
-     // Traitement lié à mon extension.
-
+     // Movement feature.
+     /*
+     glPushMatrix() ;
      //if( m_extension != NULL )
-        //m_extension->translateObject() ;
-
+        //m_extension->translateObject() ; // Traitement lié à mon extension.
      glTranslatef(m_xTransl, m_yTransl, m_zTransl) ;
-
-     // Fin de traitement des données liées à mon extension.
-     // <-
-
      glRotatef(m_xRot / SLIDER_ROT_CONST, 1.0, 0.0, 0.0) ;
      glRotatef(m_yRot / SLIDER_ROT_CONST, 0.0, 1.0, 0.0) ;
      glRotatef(m_zRot / SLIDER_ROT_CONST, 0.0, 0.0, 1.0) ;
 
-
-     //m_logo->draw();
      drawSphere( 0.1f, 0.8f, 0.8f, 0.8f ) ;
-
-     // restauration de la matrice précédemment sauvée
      glPopMatrix();
+     */
 
-     // ne pas oublier de re push la matrice si on a encore d'autres objets à
-     // dessiner ensuite
+     // Constant sphere.
+     /*
+     glPushMatrix() ;
+     drawSphere( 0.09f, 0.8f, 0.8f, 0.8f ) ;
+     glPopMatrix();
+     */
 
-     //glLoadIdentity();
-     //glTranslatef(0.1f, 0.0f, -8.0f);
-     drawSphere( 0.1f, 0.8f, 0.8f, 0.8f ) ;
+     // Cursor
+     // Draw in ortho projection.
+     glPushMatrix() ;
+     drawCursor( m_xCursor, m_yCursor, m_zCursor ) ;
+     glPopMatrix() ;
  }
 
  void GLWidget::resizeGL(int width, int height)
  {
-     int side = qMin(width, height);
-     glViewport((width - side) / 2, (height - side) / 2, side, side);
+     glViewport(0, 0, width, height) ;
 
-     glMatrixMode(GL_PROJECTION);
+     glMatrixMode( GL_PROJECTION ) ;
      glLoadIdentity();
- #ifdef QT_OPENGL_ES_1
-     glOrthof(-0.5, +0.5, -0.5, +0.5, 4.0, 15.0);
- #else
-     glOrtho(-0.5, +0.5, -0.5, +0.5, 4.0, 15.0);
- #endif
-     glMatrixMode(GL_MODELVIEW);
+
+     GLdouble aspect=(double)width/(double)height ;
+     GLdouble fov=3.14*0.50 ;
+     gluPerspective( fov, aspect, 1, 1000 );
+
+     emit xyzPositionsChanged( width, height, this->width(), this->height(), 0, 0, 0, 0, 0 ) ;
  }
 
  void GLWidget::mousePressEvent(QMouseEvent *event)
  {
-     lastPos = event->pos();
+     // Dedicated to the rotation.
+     m_lastPosRotation = event->pos();
  }
 
  void GLWidget::mouseMoveEvent(QMouseEvent *event)
  {
-     int dx = event->x() - lastPos.x();
-     int dy = event->y() - lastPos.y();
+     // Dedicated to the rotation.
+     int dx = event->x() - m_lastPosRotation.x() ;
+     int dy = event->y() - m_lastPosRotation.y() ;
 
-     if (event->buttons() & Qt::LeftButton) {
-         setXRotation(m_xRot + 8 * dy);
-         setYRotation(m_yRot + 8 * dx);
-     } else if (event->buttons() & Qt::RightButton) {
-         setXRotation(m_xRot + 8 * dy);
-         setZRotation(m_zRot + 8 * dx);
+     if (event->buttons() & Qt::LeftButton)
+     {
+         setXRotation(m_xRot + 8 * dy) ;
+         setYRotation(m_yRot + 8 * dx) ;
      }
-     lastPos = event->pos();
+     else if (event->buttons() & Qt::RightButton)
+     {
+         setXRotation(m_xRot + 8 * dy) ;
+         setZRotation(m_zRot + 8 * dx) ;
+     }
+     m_lastPosRotation = event->pos() ;
+
+     // Dedicated to the cursor.
+     double xOpenGL=0, yOpenGL=0, zOpenGL=0 ;
+     calculateOpenGLPositionFromScreenCoordinate( event->pos(), xOpenGL, yOpenGL, zOpenGL ) ;
+     m_xCursor = xOpenGL ;
+     m_yCursor = yOpenGL ;
+     m_zCursor = zOpenGL ;
+
+     updateGL() ;
+ }
+
+ void GLWidget::calculateOpenGLPositionFromScreenCoordinate( const QPoint &pos_in, double &x_out, double &y_out, double &z_out )
+ {
+     GLint viewport[4] ;       // Where The Viewport Values Will Be Stored
+     GLdouble modelview[16] ;  // Where The 16 Doubles Of The Modelview Matrix Are To Be Stored
+     GLdouble projection[16] ; // Where The 16 Doubles Of The Projection Matrix Are To Be Stored
+     GLfloat winX=0, winY=0, winZ=0 ;
+     GLdouble posX, posY, posZ ;
+
+     glGetDoublev( GL_MODELVIEW_MATRIX, modelview ) ;   // Retrieve The Modelview Matrix
+     glGetDoublev( GL_PROJECTION_MATRIX, projection ) ; // Retrieve The Projection Matrix
+     glGetIntegerv( GL_VIEWPORT, viewport ) ;           // Retrieves The Viewport Values (X, Y, Width, Height)
+
+     winX = (float)pos_in.x() ;
+     winY = (float)viewport[3] - (float)pos_in.y() ;
+
+     // Get the 1st intersection with the openGL object.
+     //glReadPixels( x, int(winY), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ );
+
+     // Widget position to openGL position.
+     gluUnProject( winX, winY, winZ, modelview, projection, viewport, &posX, &posY, &posZ);
+
+     x_out = posX ;
+     y_out = posY ;
+     z_out = posZ ;
  }
 
  void GLWidget::drawSphere( float radius, float r, float v, float b  )
@@ -266,4 +308,54 @@
      // 20 : stacks : latitudes.
 
      glPopAttrib();
+ }
+
+ void GLWidget::drawCursor( float x, float y, float z )
+ {
+     GLdouble modelview[16] ;  // Where The 16 Doubles Of The Modelview Matrix Are To Be Stored
+     glGetDoublev( GL_MODELVIEW_MATRIX, modelview ) ;   // Retrieve The Modelview Matrix
+
+     GLdouble rightX=modelview[0] ;
+     GLdouble rightY=modelview[4] ;
+     GLdouble rightZ=modelview[8] ;
+
+     GLdouble upX=modelview[1] ;
+     GLdouble upY=modelview[5] ;
+     GLdouble upZ=modelview[9] ;
+
+     //emit xyzPositionsChanged( rightX, rightY, rightZ, upX, upY, upZ, x, y, z ) ;
+
+     //glTranslatef( 0.0f, 0.0f, 0.0f ) ;
+
+    // Will be transparent
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+
+    // Draw the cursor at the current mouse pos
+
+    glBegin( GL_TRIANGLES ) ;
+        glColor4f( 0.75, 0.75, 0.75, 0.75 ) ;
+        glVertex3f( x, y, z ) ;
+        glVertex3f( x+0.001f*rightX, y+0.001*rightY, z+0.001*rightZ ) ;
+        glVertex3f( x+0.001f*upX, y+0.001f*upY, z+0.001f*upZ ) ;
+    glEnd() ;
+
+    // avoir right et up comme pour le triangle
+    float r=0.001 ;
+    float a=0, b=0 ;
+    glBegin( GL_LINE_LOOP );
+    for( float i=0 ; i<2*M_PI ; i+=(float)M_PI/10.0f )
+    {
+        a = r * cosf(i) ;
+        b = r * sin(i) ;
+        float xf = x + rightX * a + upX * b ;
+        float yf = y + rightY * a + upY * b ;
+        float zf = z + rightZ * a + upZ * b ;
+        glVertex3f( xf, yf, zf ) ;
+    }
+    glEnd();
+
+    glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
  }

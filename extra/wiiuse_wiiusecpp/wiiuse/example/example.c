@@ -44,7 +44,7 @@
 #include "wiiuse.h"
 
 
-#define MAX_WIIMOTES				4
+#define MAX_WIIMOTES 1
 
 
 /**
@@ -110,20 +110,42 @@ void handle_event(struct wiimote_t* wm) {
 	 *
 	 *	Also make sure that we see at least 1 dot.
 	 */
-	if (WIIUSE_USING_IR(wm)) {
+	if (WIIUSE_USING_IR(wm))
+  {
 		int i = 0;
 
 		/* go through each of the 4 possible IR sources */
-		for (; i < 4; ++i) {
-			/* check if the source is visible */
+		for (; i < 4; ++i)
+    {
+			// check if the source is visible
 			if (wm->ir.dot[i].visible)
-				printf("IR source %i: (%u, %u)\n", i, wm->ir.dot[i].x, wm->ir.dot[i].y);
+				printf("IR source %i: (%d, %d)\n", i, wm->ir.dot[i].x, wm->ir.dot[i].y);
+      //else
+      //  printf("IR source %i: (%d, %d)\n", i, 0, 0);
+
+      /*
+      if (wm->ir.dot[i].visible)
+        printf("IR PosDiff: %d (%+lf, %+lf), delta calc?%1.1lf, aberrant coef:%1.1lf\n", 
+                wm->ir.dot[i].visible, wm->ir.delta[i][0], wm->ir.delta[i][1], wm->ir.tmp[0][2][i], wm->ir.tmp[0][1][i] );
+      else
+        printf("IR PosDiff: %d (%+lf, %+lf), delta calc?%1.1lf, aberrant coef:%1.1lf\n", 
+                wm->ir.dot[i].visible, 0.0, 1023.0, wm->ir.tmp[0][2][i], wm->ir.tmp[0][1][i] );
+
+      if( wm->ir.nb_source_detect>1 && wm->ir.tmp[0][0][0]>-1 && wm->ir.tmp[0][0][0]==i )
+        printf( "IR BOOOOOM !!!\n" ) ;
+      else if( wm->ir.nb_source_detect>1 && wm->ir.tmp[0][0][0]==-2 )
+        printf( "IR BOOOOOM BOOOOOM !!!\n" ) ;
+      else if( wm->ir.nb_source_detect>1 && wm->ir.tmp[0][0][0]==-3 )
+        printf( "IR BOOOOOM ????????\n" ) ;
+        */
 		}
 
-		printf("IR cursor: (%u, %u)\n", wm->ir.x, wm->ir.y);
+    //printf("IR cursor: (%d, %d) d(%d, %d, %lf), precision mode:%d\n", wm->ir.x, wm->ir.y, wm->ir.deltax, wm->ir.deltay, wm->ir.deltaz, wm->ir.isInPrecisionMode ) ;
+    
 		printf("IR abs cursor: (%u, %u)\n", wm->ir.ax, wm->ir.ay);
 		printf("IR z distance: %f\n", wm->ir.z);
 		printf("IR pixel distance: %f\n", wm->ir.distance);
+    
 	}
 
 	/* show events specific to supported expansions */
@@ -275,6 +297,8 @@ void test(struct wiimote_t* wm, byte* data, unsigned short len) {
 int main(int argc, char** argv) {
 	wiimote** wiimotes;
 	int found, connected;
+  int nbWiimote=MAX_WIIMOTES ;
+  int i=0 ;
 
 	/*
 	 *	Initialize an array of wiimote objects.
@@ -312,7 +336,8 @@ int main(int argc, char** argv) {
 	connected = wiiuse_connect(wiimotes, MAX_WIIMOTES);
 	if (connected)
 		printf("Connected to %i wiimotes (of %i found).\n", connected, found);
-	else {
+	else 
+  {
 		printf("Failed to connect to any wiimote.\n");
 		return 0;
 	}
@@ -321,21 +346,31 @@ int main(int argc, char** argv) {
 	 *	Now set the LEDs and rumble for a second so it's easy
 	 *	to tell which wiimotes are connected (just like the wii does).
 	 */
-	wiiuse_set_leds(wiimotes[0], WIIMOTE_LED_1);
-	wiiuse_set_leds(wiimotes[1], WIIMOTE_LED_2);
-	wiiuse_set_leds(wiimotes[2], WIIMOTE_LED_3);
-	wiiuse_set_leds(wiimotes[3], WIIMOTE_LED_4);
-	wiiuse_rumble(wiimotes[0], 1);
-	wiiuse_rumble(wiimotes[1], 1);
+  for( i=0 ; i<connected ; i++ )
+  {
+    switch( i )
+    {
+    case 0 :
+      wiiuse_set_leds(wiimotes[i], WIIMOTE_LED_1) ; break ;
+    case 1 :
+      wiiuse_set_leds(wiimotes[i], WIIMOTE_LED_2) ; break ;
+    case 2 :
+      wiiuse_set_leds(wiimotes[i], WIIMOTE_LED_3) ; break ;
+    case 3 :
+      wiiuse_set_leds(wiimotes[i], WIIMOTE_LED_4) ; break ;
+    }
 
+    wiiuse_rumble(wiimotes[i], 1) ;
+  }
+	
 	#ifndef WIN32
 		usleep(200000);
 	#else
 		Sleep(200);
 	#endif
 
-	wiiuse_rumble(wiimotes[0], 0);
-	wiiuse_rumble(wiimotes[1], 0);
+	for( i=0 ; i<connected ; i++ )
+    wiiuse_rumble( wiimotes[i], 0 ) ;
 
 	/*
 	 *	Maybe I'm interested in the battery power of the 0th
@@ -360,20 +395,23 @@ int main(int argc, char** argv) {
 	 *	This function will set the event flag for each wiimote
 	 *	when the wiimote has things to report.
 	 */
-	while (1) {
-
-		if (wiiuse_poll(wiimotes, MAX_WIIMOTES)) {
+	while (1)
+  {
+		if( wiiuse_poll(wiimotes, nbWiimote) )
+    {
 
 			/*
 			 *	This happens if something happened on any wiimote.
 			 *	So go through each one and check if anything happened.
 			 */
 			int i = 0;
-			for (; i < MAX_WIIMOTES; ++i) {
+			for (; i <nbWiimote ; ++i)
+      {
+        //handle_event(wiimotes[i]);
 				switch (wiimotes[i]->event) {
 					case WIIUSE_EVENT:
 						/* a generic event occured */
-						handle_event(wiimotes[i]);
+						//handle_event(wiimotes[i]);
 						break;
 
 					case WIIUSE_STATUS:

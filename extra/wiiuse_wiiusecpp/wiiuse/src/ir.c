@@ -36,7 +36,11 @@
 #define bool int
 #define true 1
 #define false 0
-
+#define _X_ 0
+#define _Y_ 1
+#define NBAXE 2
+#define NBPAIR 6
+  
 #include <stdio.h>
 #include <math.h>
 
@@ -57,7 +61,14 @@ static float ir_distance(struct ir_dot_t* dot);
 static int ir_correct_for_bounds(int* x, int* y, enum aspect_t aspect, int offset_x, int offset_y);
 static void ir_convert_to_vres(int* x, int* y, enum aspect_t aspect, int vx, int vy);
 
+static void calculateAverage( int *nbDistCalculated_in, int *distIsCalculated_in, double **dist_in, double *averageX_out, double *averageY_out ) ;
+static void calculateStdDeviation( int *nbDistCalculated_in, int *distIsCalculated_in, double **dist_in, double *averageX_int, double *averageY_in, double *stdDeviationX_out, double *stdDeviationY_out ) ;
+static void calculateStdDeviationPredited( double *averageX_in, double *averageY_in, double *stdDevPreditedX_out, double *stdDevPredictedY_out ) ;
+static int searchAberrantValue1( struct wiimote_t* wm, int *nbDistCalculated_in, int *distIsCalculated_in, double** dist_in, int *whichAberrantValue_out, int *ignoreAberrantDist_out ) ;
+static void searchAberrantValue2( struct wiimote_t* wm, int *nbDistCalculated_in, int *distIsCalculated_in, double** dist_in ) ;
+
 static void interpret_ir_data2(struct wiimote_t* wm) ;
+static void interpret_ir_data3(struct wiimote_t* wm) ;
 
 /**
  *	@brief	Set if the wiimote should track IR targets.
@@ -206,23 +217,37 @@ void wiiuse_set_ir_position(struct wiimote_t* wm, enum ir_position_t pos) {
   //-> Initialisation for interpret_ir2
   puts( "wiiuse_set_ir_position() -> init var for interpret_ir_data2" ) ;
 
-  for( i=0 ; i<4 ; i++ )
+  for( i=0 ; i<WM_MAX_DOTS ; i++ )
   {
     wm->ir.lastRealDot[i][0] = -1 ;
     wm->ir.lastRealDot[i][1] = -1 ;
+    wm->ir.lastRealDotIsVisible[i] = false ;
+    //wm->ir.lastRealRealDot[i][0] = -1 ;
+    //wm->ir.lastRealRealDot[i][1] = -1 ;
     wm->ir.persistanceTimer[i] = 0 ;
   }
 
+  for( i=0 ; i<6 ; i++ )
+    wm->ir.lastDist[i] = -1 ;
+
   wm->ir.szLastRealDot=0 ;
   wm->ir.szLastRealRealDot=0 ;
+  wm->ir.szLastRealRealDot2=0 ;
   wm->ir.lastCursorRealRealReal[0]=-1 ;
   wm->ir.lastCursorRealRealReal[1]=-1 ;
+  wm->ir.deltax = 0 ;
+  wm->ir.deltay = 0 ;
+  wm->ir.deltaz = 0 ;
+  wm->ir.isInPrecisionMode = 0 ;
   wm->ir.x = 0 ;
   wm->ir.y = 0 ;
-  wm->ir.distance = 0 ;
   wm->ir.z = 0 ;
+  wm->ir.ax = 0 ;
+  wm->ir.ay = 0 ;
+  wm->ir.distance = 0 ;
   wm->orient.yaw = 0 ;
   //<-
+
 
 	wm->ir.pos = pos;
 
@@ -365,7 +390,8 @@ void calculate_basic_ir(struct wiimote_t* wm, byte* data) {
 	}
 
 	//interpret_ir_data(wm) ;
-	interpret_ir_data2(wm) ;
+	//interpret_ir_data2(wm) ;
+  interpret_ir_data3(wm) ;
 }
 
 
@@ -393,7 +419,8 @@ void calculate_extended_ir(struct wiimote_t* wm, byte* data) {
 	}
 
 	//interpret_ir_data(wm) ;
-	interpret_ir_data2(wm) ;
+	//interpret_ir_data2(wm) ;
+  interpret_ir_data3(wm) ;
 }
 
 
@@ -571,7 +598,7 @@ static void interpret_ir_data2(struct wiimote_t* wm)
   bool isUpdate[WM_MAX_DOTS]={false,false,false,false} ;
 
   // 3. Etap to get cursor position.
-  int realRealDot[WM_MAX_DOTS][2]={{0,0},{0,0},{0,0},{0,0}} ;
+  int realRealDot[WM_MAX_DOTS][2]={{-1,-1},{-1,-1},{-1,-1},{-1,-1}} ;
   int szRealRealDot=0 ; // Nb boxes actually used at the end.
   int cursorRealReal[2]={-1,-1} ;
 
@@ -722,8 +749,8 @@ static void interpret_ir_data2(struct wiimote_t* wm)
     {
       if( wm->ir.persistanceTimer[i] > 0 )
       {
-
-        //printf( "2 %d wm->ir.lastRealDot x:%d y:%d\n", i, wm->ir.lastRealDot[i][0], wm->ir.lastRealDot[i][1] ) ;
+        //printf( "2 %d wm->ir.lastRealDot x:%d y:%d\n", 
+        //          i, wm->ir.lastRealDot[i][0], wm->ir.lastRealDot[i][1] ) ;
 
         if( i > wm->ir.szLastRealDot )
         {
@@ -743,7 +770,8 @@ static void interpret_ir_data2(struct wiimote_t* wm)
 
   
   //for( i=0 ; i<wm->ir.szLastRealDot ; i++ )
-  //  printf( "      Persistent points x:%d y:%d \n", wm->ir.lastRealDot[i][0], wm->ir.lastRealDot[i][1] ) ;
+  //  printf( "      Persistent points x:%d y:%d \n", 
+  //            wm->ir.lastRealDot[i][0], wm->ir.lastRealDot[i][1] ) ;
 
   /// 3. Etap to get cursor position.
 
@@ -759,6 +787,8 @@ static void interpret_ir_data2(struct wiimote_t* wm)
     }
   }
 
+  // Method : Average all dot.
+  // Problem of this method when there is a lost/added dot.
   if( szRealRealDot > 0 )
   {
     cursorRealReal[0] = 0 ;
@@ -804,7 +834,7 @@ static void interpret_ir_data2(struct wiimote_t* wm)
 
     //printf( "  lastCursorRealRealReal x:%d y:%d \n", wm->ir.lastCursorRealRealReal[0], wm->ir.lastCursorRealRealReal[1] ) ;
 
-    if( szRealRealDot==wm->ir.szLastRealRealDot )
+    if( szRealRealDot==wm->ir.szLastRealRealDot2 )
     {
       cursorRealRealReal[0] = cursorRealReal[0] ;
       cursorRealRealReal[1] = cursorRealReal[1] ;
@@ -827,7 +857,7 @@ static void interpret_ir_data2(struct wiimote_t* wm)
         && (wm->ir.lastCursorRealRealReal[1]>(cursorRealRealReal[1]-ERROR_BETWEEN_LAST_NEW_CURSOR)) )
     { // The transition is no longer necessary.
 
-       wm->ir.szLastRealRealDot = szRealRealDot ;
+       wm->ir.szLastRealRealDot2 = szRealRealDot ;
     }
 
     wm->ir.lastCursorRealRealReal[0] = cursorRealRealReal[0] ;
@@ -964,6 +994,635 @@ static void interpret_ir_data2(struct wiimote_t* wm)
 	  a = (wm->ir.ax-512) * (wm->ir.z/1024.0f) ;
     wm->orient.yaw = RAD_TO_DEGREE( atanf(a/wm->ir.z) ) ;
   }
+}
+
+/**
+ *	@brief Another method to interpret IR data which base on the distance.
+ *
+ *	@param wm		Pointer to a wiimote_t structure.
+ */
+static void interpret_ir_data3(struct wiimote_t* wm)
+{
+  double realDot[WM_MAX_DOTS][NBAXE]={{0,0},{0,0},{0,0},{0,0}} ;
+  bool realDotIsVisible[WM_MAX_DOTS]={false,false,false,false} ;
+
+  double **delta ; //[WM_MAX_DOTS][NBAXE]={{0,0},{0,0},{0,0},{0,0}} ;
+  bool *deltaIsCalculated ; //[WM_MAX_DOTS]={false,false,false,false} ;
+  double deltaFinal[NBAXE]={0,0} ;
+  int nbDelta=0 ;
+  int whichAberrantDelta=0 ;
+  bool ignoreAberrantDelta=true ;
+
+  double dist[NBPAIR]={-1,-1,-1,-1,-1,-1} ;
+  double deltaDist[NBPAIR]={-1,-1,-1,-1,-1,-1} ;
+  bool deltaDistIsVisible[NBPAIR]={false,false,false,false,false,false} ;
+  double deltaDistFinal=0 ;
+  int nbd=0 ;
+
+  int i=0, j=0, k=0 ;
+  double a=0, b=0 ;
+
+  struct ir_dot_t* dot=wm->ir.dot ;
+  wm->ir.num_dots = 0 ;
+  wm->ir.ax = 0 ;
+  wm->ir.ay = 0 ;
+
+  // Allocate & init values.
+  delta = (double**) malloc( sizeof(double*) * WM_MAX_DOTS ) ;
+  deltaIsCalculated = (int*) malloc( sizeof(int) * WM_MAX_DOTS ) ;
+
+  for( i=0 ; i<WM_MAX_DOTS ; i++ )
+  {
+    delta[i] = (double*) malloc( sizeof(double) * NBAXE ) ;
+    delta[i][_X_] = 0 ;
+    delta[i][_Y_] = 0 ;
+
+    deltaIsCalculated[i] = 0 ;
+  }
+
+  // Get raw values.
+	for( i=0 ; i<WM_MAX_DOTS; i++ )
+	{
+		if( dot[i].visible )
+		{
+      wm->ir.num_dots++ ;
+
+      realDot[i][_X_] = dot[i].rx ;
+      realDot[i][_Y_] = dot[i].ry ;
+      realDotIsVisible[i] = true ;
+
+      // Update absolute values.
+      wm->ir.ax += dot[i].rx ;
+      wm->ir.ay += dot[i].ry ;
+      wm->ir.dot[i].x = dot[i].rx ;
+      wm->ir.dot[i].y = dot[i].ry ;
+		}
+    else
+    {
+      wm->ir.dot[i].x = 0 ;
+      wm->ir.dot[i].y = 0 ;
+    }
+	}
+
+  if( wm->ir.num_dots > 0 )
+  {
+    wm->ir.ax = (float)wm->ir.ax / (float)wm->ir.num_dots ;
+    wm->ir.ay = (float)wm->ir.ay / (float)wm->ir.num_dots ;
+  }
+
+  // Calculate distances (delta) between current and last dot.
+  for( i=0 ; i<WM_MAX_DOTS ; i++ )
+  {
+    if( wm->ir.lastRealDotIsVisible[i]==true && realDotIsVisible[i]==true )
+    {
+      delta[i][_X_] = realDot[i][_X_] - wm->ir.lastRealDot[i][_X_] ;
+      delta[i][_Y_] = realDot[i][_Y_] - wm->ir.lastRealDot[i][_Y_] ;
+      deltaIsCalculated[i] = true ;
+      nbDelta++ ;
+
+      // Save data to watch it in an extern application.
+      wm->ir.delta[i][_X_] = delta[i][_X_] ;
+      wm->ir.delta[i][_Y_] = delta[i][_Y_] ;
+    }
+    else
+    {
+      deltaIsCalculated[i] = false ;
+
+      // Save data to watch it in an extern application.
+      wm->ir.delta[i][_X_] = 0 ;
+      wm->ir.delta[i][_Y_] = 0 ;
+    }
+  }
+
+  // Transfert the dot positions from the current variable to the last variable.
+  for( i=0 ; i<WM_MAX_DOTS ; i++ )
+  {
+    if( realDotIsVisible[i] == true )
+    {
+      wm->ir.lastRealDot[i][_X_] = realDot[i][_X_] ;
+      wm->ir.lastRealDot[i][_Y_] = realDot[i][_Y_] ;
+      wm->ir.lastRealDotIsVisible[i] = true ;
+    }
+    else
+    {
+      wm->ir.lastRealDot[i][_X_] = 0 ;
+      wm->ir.lastRealDot[i][_Y_] = 0 ;
+      wm->ir.lastRealDotIsVisible[i] = false ;
+    }
+  }
+  
+  //searchAberrantValue1( wm, &nbDelta, deltaIsCalculated, delta, &whichAberrantDelta, &ignoreAberrantDelta ) ;
+  searchAberrantValue2( wm, &nbDelta, deltaIsCalculated, delta ) ;
+
+  // Save data to watch in an extern application.
+  for( i=0 ; i<WM_MAX_DOTS ; i++ )
+    wm->ir.tmp[0][2][i] = (double)deltaIsCalculated[i] ;
+
+
+  // Calculate average of all validated delta.
+  nbDelta=0 ;
+  for( i=0 ; i<WM_MAX_DOTS ; i++ )
+  {
+    if( deltaIsCalculated[i] == true )
+    {
+      //if( !ignoreAberrantDelta 
+      //    || (ignoreAberrantDelta && i!=whichAberrantDelta) )
+      {
+        deltaFinal[_X_] += delta[i][_X_] ;
+        deltaFinal[_Y_] += delta[i][_Y_] ;
+        nbDelta ++ ;
+      }
+    }
+  }
+
+  if( nbDelta != 0 )
+  {
+    deltaFinal[_X_] /= (double)nbDelta ;
+    deltaFinal[_Y_] /= (double)nbDelta ;
+  }
+  else
+  {
+    deltaFinal[0] = 0 ;
+    deltaFinal[1] = 0 ;
+  }
+
+  wm->ir.deltax = deltaFinal[_X_] ;
+  wm->ir.deltay = deltaFinal[_Y_] ;
+
+  wm->ir.x += deltaFinal[_X_] ;
+  wm->ir.y += deltaFinal[_Y_] ;
+
+
+  /// Distance & Yaw.
+
+  // Calculate distance. d01, d02, d03, d12, d13, d23
+  a = 0 ;
+  b = 0 ;
+  for( i=0, k=0 ; i<4 ; i++ )
+  {
+    for( j=i+1 ; j<4 ; j++ )
+    {
+      if( deltaIsCalculated[i]==true && deltaIsCalculated[j]==true )
+      {
+        a = (realDot[j][_X_]-realDot[i][_X_]) * (realDot[j][_X_]-realDot[i][_X_]) ;
+        b = (realDot[j][_Y_]-realDot[i][_Y_]) * (realDot[j][_Y_]-realDot[i][_Y_]) ;
+        dist[k] = sqrt( a+b ) ;
+      }
+      else
+        dist[k] = -1 ;
+
+      k++ ;
+    }
+  }
+  
+  // Calculate each delta, for each pair of atoms.
+  for( i=0 ; i<6 ; i++ )
+  {
+    if( dist[i]>0 && wm->ir.lastDist[i]>0 )
+    {
+      deltaDist[i] = dist[i] - wm->ir.lastDist[i] ;
+      deltaDistIsVisible[i] = true ;
+    }
+    else
+      deltaDistIsVisible[i] = false ;
+
+    wm->ir.lastDist[i] = dist[i] ;
+  }
+
+  // Calculate an average delta.
+  for( i=0 ; i<6 ; i++ )
+  {
+    if( deltaDistIsVisible[i] )
+    { 
+      deltaDistFinal += deltaDist[i] ;
+      nbd++ ;
+    }
+  }
+
+  if( nbd > 0 )
+    deltaDistFinal /= (double)nbd ;
+  else
+    deltaDistFinal = 0 ;
+
+  wm->ir.deltaz = deltaDistFinal ;
+  wm->ir.distance += wm->ir.deltaz ; //sqrt(a*a + b*b) ;
+  wm->ir.z = 0 ;//1023.0f - wm->ir.distance ;
+
+  // Update yaw.
+  if( wm->ir.distance != 0 )
+  {
+	  float a = (float)(wm->ir.ax-512) * (wm->ir.z/1024.0f) ;
+    wm->orient.yaw = RAD_TO_DEGREE( atanf(a/wm->ir.z) ) ;
+  }
+
+
+  /// Init some variable.
+
+  // ir.state.
+  if( wm->ir.num_dots >= 2 )
+    wm->ir.state = 2 ;
+  else
+    wm->ir.state = 0 ;
+  
+  // Nb source detected.
+  wm->ir.nb_source_detect = wm->ir.num_dots ;
+
+
+  // Desalocate data.
+  if( delta != NULL )
+  {
+    for( i=0 ; i<WM_MAX_DOTS ; i++ )
+    {
+      if( delta[i] != NULL )
+        free( delta[i] ) ;
+    }
+    free( delta ) ;
+    delta = NULL ;
+  }
+
+  if( deltaIsCalculated != NULL )
+  {
+    free( deltaIsCalculated ) ;
+    deltaIsCalculated = NULL ;
+  }
+}
+
+/**
+ *  @brief Search aberrant values in the IR dot (v1).
+ *
+ *	@param nbDistCalculated_in        Number of distance between the current and last dot have been calculated.
+ *	@param distIsCalculated_in        Array[WM_MAX_DOT] : The distances between the current and last dot, is it calculated ?
+ *	@param dist_in                    Array[WM_MAX_DOT] : The calculated distances between the current and last dot.
+ *	@param whichAberrantValue_out     The dot which is estimated aberrant.
+ *	@param ignoreAberrantDist_out     Is there only one value which is estimated aberrant ?
+ *
+ *  To detect an aberrant value, an elapse is calculated with each dot and is compared with other.
+ *  If a value is out the limit, it is evaluated aberrant+1. At the end, the value the "most aberrant"
+ *  is qualified aberrant.
+ */
+int searchAberrantValue1( struct wiimote_t* wm,
+                           int *nbDistCalculated_in, int *distIsCalculated_in, double **dist_in, 
+                           int *whichAberrantValue_out, int *ignoreAberrantDist_out )
+{
+  double a=0, b=0 ;
+  int i=0, j=0, k=0 ;
+  int nbAberrantDist=0 ;
+  int coeffAberrantDist[WM_MAX_DOTS]={0,0,0,0} ;
+  
+  // Calculate the deviation between each delta to detect an aberrant value.
+  *whichAberrantValue_out = -1 ;
+  *ignoreAberrantDist_out = false ;
+
+  if( wm->ir.num_dots>=2 && *nbDistCalculated_in>=2 )
+  {
+    for( i=0 ; i<WM_MAX_DOTS ; i++ )
+    {
+      if( distIsCalculated_in[i] == true )
+      {
+        // Get the authorized elapse.
+        if( fabs(dist_in[i][_X_]) > 20 )
+          a = fabs( dist_in[i][_X_]*0.5 ) ;
+        else
+          a = 10 ;
+
+        if( fabs(dist_in[i][_Y_]) > 15 )
+          b = fabs( dist_in[i][_Y_]*0.5 ) ;
+        else
+          b = 10 ;
+
+        // Search aberrant values.
+        for( j=0 ; j<WM_MAX_DOTS ; j++ )
+        {
+          if( i!=j && distIsCalculated_in[j]==true )
+          {
+            // Is'nt it authorized ?
+            if( !( 
+                  ((dist_in[i][_X_]-a) < dist_in[j][_X_] && dist_in[j][_X_] < (dist_in[i][_X_]+a))
+                  && ((dist_in[i][_Y_]-b) < dist_in[j][_Y_] && dist_in[j][_Y_] < (dist_in[i][_Y_]+b))
+                  ))
+            {
+              coeffAberrantDist[j] ++ ;
+              k++ ;
+            }
+          }
+        }
+      
+        // If all other values are aberrant, I am aberrant!
+        // Only if the 3-4 dots are visible.
+        if( k == (wm->ir.nb_source_detect-1) )
+        {
+          // I am aberrant.
+          coeffAberrantDist[i]++ ;
+
+          // Not others.
+          for( j=0 ; j<WM_MAX_DOTS ; j++ )
+          {
+            if( j != i )
+              coeffAberrantDist[j]-- ;
+          }
+        }
+
+        k = 0 ;
+      }
+    }
+  
+    // Get the 1st aberrant value.
+    *whichAberrantValue_out = -1 ;
+    nbAberrantDist = 0 ;
+    i=0 ; k=0 ;
+    while( i<WM_MAX_DOTS && k==0 )
+    {
+      if( coeffAberrantDist[i] > 0 )
+      {
+        *whichAberrantValue_out = i ;
+        nbAberrantDist = 1 ;
+        k = 1 ;
+      }
+      i++ ;
+    }
+
+    // Get the aberrant value.
+    if( nbAberrantDist > 0 )
+    {      
+      for( i=*whichAberrantValue_out+1 ; i<WM_MAX_DOTS ; i++ )
+      {
+        if( coeffAberrantDist[*whichAberrantValue_out] <= coeffAberrantDist[i] )
+        {
+          if( coeffAberrantDist[*whichAberrantValue_out] == coeffAberrantDist[i] )
+          {
+            (nbAberrantDist)++ ;
+          }
+          else
+          {
+            *whichAberrantValue_out = i ;
+            nbAberrantDist = 1 ;
+          }
+        }
+      }
+    }
+
+    // If all aberrant values are egual, there are no aberrant.
+    //if( nbAberrantDist == wm->ir.nb_source_detect )
+      //nbAberrantDist = 0 ;
+  }
+
+  // Save data to watch in an extern application.
+  for( i=0 ; i<WM_MAX_DOTS ; i++ )
+    wm->ir.tmp[0][1][i] = (double)coeffAberrantDist[i] ;
+
+  // What strategie for the aberrant value.
+  if( nbAberrantDist == 0 )
+  { // No abberant value, so no problem.
+
+    *whichAberrantValue_out = -1 ;
+    *ignoreAberrantDist_out = false ;
+    wm->ir.tmp[0][0][0] = -1 ;
+  }
+  else if( nbAberrantDist == 1 )
+  { // Ignore the only aberrant value.
+
+    *ignoreAberrantDist_out = true ;
+    wm->ir.tmp[0][0][0] = *whichAberrantValue_out ;
+  }
+  else if( nbAberrantDist > 1 )
+  { // Too many aberrant value, do nothing.
+
+    *whichAberrantValue_out = -1 ;
+    *ignoreAberrantDist_out = false ;
+    wm->ir.tmp[0][0][0] = -2 ;
+  }
+  else
+  { // No sé. Impossible case.
+
+    *whichAberrantValue_out = -1 ;
+    *ignoreAberrantDist_out = false ;
+    wm->ir.tmp[0][0][0] = -3 ;
+  }
+
+  return nbAberrantDist ;
+}
+
+
+/**
+ *  @brief Search aberrant values in the IR dot (v2).
+ *
+ *	@param nbDistCalculated_in   Number of distance between the current and last dot have been calculated.
+ *	@param distIsCalculated_in   Array[WM_MAX_DOT] : The distances between the current and last dot, is it calculated ?
+ *	@param dist_in               Array[WM_MAX_DOT] : The calculated distances between the current and last dot.
+ *
+ *  To detect an aberrant value, a standard deviation is calculated, then other data are filtered
+ *  from this std deviation.
+ *  (distIsCalculated_in) variable is directly changed to avoid the final average calcul.
+ */
+void searchAberrantValue2( struct wiimote_t* wm,
+                           int *nbDistCalculated_in, int *distIsCalculated_in, double **dist_in )
+{
+  const int LIMITZP=3 ; // Limit to detect a zone precision.
+  bool datasetAberrant=false ;
+  bool valueAberrant=false ;
+
+  double stdDeviationX=0, stdDeviationY=0 ;
+  double stdDeviationRoundX=0, stdDeviationRoundY=0 ;
+  double predictedStdDeviationX=0, predictedStdDeviationY=0 ;
+  double averageX=0, averageY=0 ;
+
+  double a=0, b=0 ;
+  int i=0 ;
+
+  if( (*nbDistCalculated_in) == 0 )
+  {
+    wm->ir.isInPrecisionMode = 0 ;
+  }
+  else if( (*nbDistCalculated_in)==1 || (*nbDistCalculated_in)==2 )
+  {
+    calculateAverage( nbDistCalculated_in, distIsCalculated_in, dist_in, &averageX, &averageY ) ;
+
+    if( fabs(averageX)<LIMITZP && fabs(averageY)<LIMITZP )
+      wm->ir.isInPrecisionMode = 1 ;
+    else
+      wm->ir.isInPrecisionMode = 0 ;
+  }
+  else if( (*nbDistCalculated_in) > 2 )
+  {
+    int repeat1=1 ;
+
+    do
+    {
+      repeat1-- ;
+      valueAberrant = false ;
+
+      calculateAverage( nbDistCalculated_in, distIsCalculated_in, dist_in, &averageX, &averageY ) ;
+      calculateStdDeviation( nbDistCalculated_in, distIsCalculated_in, dist_in, &averageX, &averageY, &stdDeviationX, &stdDeviationY ) ;
+
+      if( fabs(averageX)<=LIMITZP && fabs(averageY)<=LIMITZP
+          && stdDeviationX<=LIMITZP && stdDeviationY<=LIMITZP )
+      { // If precision zone (std deviation < 3) (3 : experimental value)
+
+        // Just go to the next calculation "Search aberrant value".
+        wm->ir.isInPrecisionMode = 1 ;
+      }
+      else if( repeat1 >= 0 )
+      { // In this case, a prediction of the std deviation is realized to detect 
+        // if the dataset is aberrant.
+
+        wm->ir.isInPrecisionMode = 0 ;
+        calculateStdDeviationPredited( &averageX, &averageY, &predictedStdDeviationX, &predictedStdDeviationY ) ;
+
+        // Compared (%) with the calculated std dev.
+        if( stdDeviationX!=0 && stdDeviationY!=0 )
+        {
+          a = fabs(predictedStdDeviationX-stdDeviationX) / stdDeviationX ;
+          b = fabs(predictedStdDeviationY-stdDeviationY) / stdDeviationY ;
+        }
+        else
+        {
+          a = 0 ;
+          b = 0 ;
+        }
+        
+        if( a>50.0 || b>50.0 )
+        { // If the calculated std deviation is greater than 50% of the predicted std deviation,
+          // the data is "deleted".
+          datasetAberrant = true ;
+        }
+      }
+
+      // Update (distIsCalculated_in), if the distance can be used to calculated the final average.
+      if( datasetAberrant == true )
+      { // "Delete" the dataset.
+
+        for( i=0 ; i<WM_MAX_DOTS ; i++ )
+        {
+          if( distIsCalculated_in[i] == true )
+          {
+            distIsCalculated_in[i] = false ;
+            (*nbDistCalculated_in) -- ;
+          }
+        }
+      }
+      else
+      { // Search aberrant value.
+
+        // Round Up the std deviation.
+        stdDeviationRoundX = ceil(stdDeviationX) + 3.0 ;
+        stdDeviationRoundY = ceil(stdDeviationY) + 3.0 ;
+
+        for( i=0 ; i<WM_MAX_DOTS ; i++ )
+        {
+          if( distIsCalculated_in[i] == true )
+          {
+            a = fabs( fabs(dist_in[i][_X_]) - fabs(averageX) ) ;
+            b = fabs( fabs(dist_in[i][_Y_]) - fabs(averageY) ) ;
+
+            // If aberrant value, do not take it in the final average.
+            if( !( a<=stdDeviationRoundX && b<=stdDeviationRoundY ) )
+            {
+              valueAberrant = true ;
+
+              distIsCalculated_in[i] = false ;
+              (*nbDistCalculated_in) -- ;
+              
+              wm->ir.tmp[0][0][0] = i ;
+            }
+          }
+        }
+      }
+    }while( repeat1>=0 && valueAberrant==true ) ;
+  }
+  
+  if( datasetAberrant == true )
+    wm->ir.tmp[0][0][0] = -2 ;
+  if( valueAberrant == true )
+  {
+    // wm->ir.tmp[0][0][0] >= 0
+  }
+  else
+    wm->ir.tmp[0][0][0] = -1 ;
+}
+
+/**
+ *	@brief Calculate the average of the ir dot position.
+ *
+ *	@param nbDistCalculated_in   Number of distance between the current and last dot have been calculated.
+ *	@param distIsCalculated_in   Array[WM_MAX_DOT] : The distances between the current and last dot, is it calculated ?
+ *	@param dist_in               Array[WM_MAX_DOT] : The calculated distances between the current and last dot.
+ *	@param averageX_out		       Average in X-axis.
+ *	@param averageY_out		       Average in Y-axis.
+ */
+void calculateAverage( int *nbDistCalculated_in, int *distIsCalculated_in, double **dist_in,
+                       double *averageX_out, double *averageY_out )
+{
+  int i=0 ;
+  (*averageX_out) = 0 ;
+  (*averageY_out) = 0 ;
+  
+  // Calculated the average.
+  for( i=0 ; i<WM_MAX_DOTS ; i++ )
+  {
+    if( distIsCalculated_in[i] == true )
+    {
+      (*averageX_out) += dist_in[i][_X_] ;
+      (*averageY_out) += dist_in[i][_Y_] ;
+    }
+  }
+  (*averageX_out) /= (double)(*nbDistCalculated_in) ;
+  (*averageY_out) /= (double)(*nbDistCalculated_in) ;
+}
+
+
+/**
+ *	@brief Calculate the standard deviation ((fr:)ecart type) of the ir dot position.
+ *
+ *	@param nbDistCalculated_in   Number of distance between the current and last dot have been calculated.
+ *	@param distIsCalculated_in   Array[WM_MAX_DOT] : The distances between the current and last dot, is it calculated ?
+ *	@param dist_in               Array[WM_MAX_DOT] : The calculated distances between the current and last dot.
+ *	@param averageX_in		       Average on X-axis.
+ *	@param averageY_in		       Average on Y-axis.
+ *	@param averageX_out		       Standard deviation on X-axis.
+ *	@param averageY_out		       Standard deviation on Y-axis.
+ */
+void calculateStdDeviation( int *nbDistCalculated_in, int *distIsCalculated_in, double **dist_in, double *averageX_in, double *averageY_in,
+                            double *stdDeviationX_out, double *stdDeviationY_out )
+{
+  int i=0 ;
+  (*stdDeviationX_out) = 0 ;
+  (*stdDeviationY_out) = 0 ;
+  
+  // Calculated standard deviation.
+  for( i=0 ; i<WM_MAX_DOTS ; i++ )
+  {
+    if( distIsCalculated_in[i] == true )
+    {
+      (*stdDeviationX_out) += ((dist_in[i][_X_] - (*averageX_in)) * (dist_in[i][_X_] - (*averageX_in))) ;
+      (*stdDeviationY_out) += ((dist_in[i][_Y_] - (*averageY_in)) * (dist_in[i][_Y_] - (*averageY_in))) ;
+    }
+  }
+
+  (*stdDeviationX_out) *= (1.0 / (double)(*nbDistCalculated_in)) ;
+  (*stdDeviationY_out) *= (1.0 / (double)(*nbDistCalculated_in)) ;
+  (*stdDeviationX_out) = sqrt((*stdDeviationX_out)) ;
+  (*stdDeviationY_out) = sqrt((*stdDeviationY_out)) ;
+}
+
+
+/**
+ *	@brief Calculate the predicted standard deviation of the ir dot position.
+ *
+ *	@param averageX_in		       Average on X-axis.
+ *	@param averageY_in		       Average on Y-axis.
+ *	@param stdDevPredictedX_out	 Predicted standard deviation on X-axis.
+ *	@param stdDevPredictedY_out  Predicted standard deviation on Y-axis.
+ *
+ * Experimentally, a linear regression has been calculated with a dataset : std dev / |avg| .
+ * The calculated linear regression is : (predicted std dev) = 0.07333454 . (avg) + 1.60458
+ * ((fr:)regression lineaire : droite "moyennant" toutes les valeurs sur une droite de la forme a.x+b).
+ */
+void calculateStdDeviationPredited( double *averageX_in, double *averageY_in, 
+                                    double *stdDevPredictedX_out, double *stdDevPredictedY_out )
+{
+  // Predicted std dev.
+  (*stdDevPredictedX_out) = 0.07333154 * (*averageX_in) + 1.60458 ;
+  (*stdDevPredictedY_out) = 0.07333154 * (*averageY_in) + 1.60458 ;
 }
 
 

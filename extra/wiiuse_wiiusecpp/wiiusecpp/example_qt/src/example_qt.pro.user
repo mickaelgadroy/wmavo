@@ -132,7 +132,7 @@
     <value key="ProjectExplorer.ProjectConfiguration.DisplayName" type="QString"></value>
     <value key="ProjectExplorer.ProjectConfiguration.Id" type="QString">Qt4ProjectManager.Qt4BuildConfiguration</value>
     <value key="Qt4ProjectManager.Qt4BuildConfiguration.BuildConfiguration" type="int">0</value>
-    <value key="Qt4ProjectManager.Qt4BuildConfiguration.BuildDirectory" type="QString">D:/Dropbox/Public/projet_wm/scr/avo_plugin_c++/wmavo/extra/wiiuse_wiiusecpp/wiiusecpp/example_qt-build-desktop</value>
+    <value key="Qt4ProjectManager.Qt4BuildConfiguration.BuildDirectory" type="QString">D:/Dropbox/Public/projet_wm/scr/avo_plugin_c++/wmavo/extra/wiiuse_wiiusecpp/wiiusecpp/example_qt/build</value>
     <value key="Qt4ProjectManager.Qt4BuildConfiguration.QtVersionId" type="int">2</value>
     <value key="Qt4ProjectManager.Qt4BuildConfiguration.ToolChain" type="QString">ProjectExplorer.ToolChain.Msvc:C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars32.bat..</value>
     <value key="Qt4ProjectManager.Qt4BuildConfiguration.UseShadowBuild" type="bool">true</value>

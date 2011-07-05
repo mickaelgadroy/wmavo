@@ -334,7 +334,7 @@ namespace Avogadro
       }
 
       // Here, because the m_wmTool must be initiated before.
-      sendWmInfoToWmTool( m_wmIsConnected, nbDotsDetected, nbSourcesDetected, distBetweenSource ) ;
+      sendWmInfoToWmTool( posCursor, m_wmIsConnected, nbDotsDetected, nbSourcesDetected, distBetweenSource ) ;
 
       //
       // Avogadro actions.
@@ -375,7 +375,7 @@ namespace Avogadro
       int nbDotsDetected=wmData.nbDotsDetected ;
       int nbSourcesDetected=wmData.nbSourcesDetected ;
       int distBetweenSource=wmData.distBetweenSources ;
-      sendWmInfoToWmTool( m_wmIsConnected, nbDotsDetected, nbSourcesDetected, distBetweenSource ) ;
+      sendWmInfoToWmTool( posCursor, m_wmIsConnected, nbDotsDetected, nbSourcesDetected, distBetweenSource ) ;
     }
 
     //cout << "WmExtension::wmActions : FIN" << endl ;
@@ -507,14 +507,14 @@ namespace Avogadro
     * @param nbSources The number of "final LEDs" really used
     * @param distance The "Wiimote distance"
     */
-  void WmExtension::sendWmInfoToWmTool( bool connect, int nbDots, int nbSources, int distance )
+  void WmExtension::sendWmInfoToWmTool( const QPoint &cursor, bool connect, int nbDots, int nbSources, int distance )
   {
     if( m_wmTool != NULL )
     {
       if( connect != m_wmIsAlreadyConnected )
         m_wmIsAlreadyConnected = connect ; // Not use ...
 
-      emit displayedWmInfo( connect, nbDots, nbSources, distance ) ;
+      emit displayedWmInfo( cursor, connect, nbDots, nbSources, distance ) ;
     }
     else
     {
@@ -537,7 +537,7 @@ namespace Avogadro
       emit message( ossWm.str().c_str() ) ;
       qDebug() << ossWm ;
 
-      emit displayedWmInfo( false, 0, 0, 0 ) ;
+      emit displayedWmInfo( QPoint(0,0), false, 0, 0, 0 ) ;
     }
     else
       qDebug() << "The Wiimote is not connected, so it can not be disconnected ..." ;
@@ -718,8 +718,8 @@ namespace Avogadro
         ok = false ;
       }
 
-      isConnect = connect( this, SIGNAL(displayedWmInfo(bool, int, int, int)),
-                           m_wmTool, SLOT(setWmInfo(bool, int, int, int)) ) ;
+      isConnect = connect( this, SIGNAL(displayedWmInfo(const QPoint&, bool, int, int, int)),
+                           m_wmTool, SLOT(setWmInfo(const QPoint&,bool, int, int, int)) ) ;
       if( !isConnect )
       {
         qDebug() << "Problem connection signal : m_wmextension.displayedWmInfo() -> m_wmTool.setWmInfo() !!" ;

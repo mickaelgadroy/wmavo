@@ -133,6 +133,7 @@
 // Add for interpret_ir_data2().
 #define WM_MAX_DOTS 4 // The max number of dots that the Wiimote can detect.
 #define ERROR_BETWEEN_DOTS 160 // Area which includes dots thast become points.
+#define ERROR_BETWEEN_DOTS2 5 // Area which includes dots thast become points.
 #define ERROR_BETWEEN_LAST_NEW_CURSOR 50 // For smooth movement between 2 cursor too far.
 #define PERSISTENCE_CYCLE 50 // Initial value : 50. "Time" necessary to accept a new point.
 #define ERROR_PERS_CYCLE 10 // Margin of error 10 of 50 (persistence cycle).
@@ -354,44 +355,60 @@ typedef enum aspect_t {
  *	@struct ir_t
  *	@brief IR struct. Hold all data related to the IR tracking.
  */
-typedef struct ir_t {
-	struct ir_dot_t dot[4];			/**< IR dots							*/
-	byte num_dots;					/**< number of dots at this time		*/
+typedef struct ir_t 
+{
+	struct ir_dot_t dot[4]; /**< IR dots                        */
+	byte num_dots;          /**< number of dots at this time    */
 
-	enum aspect_t aspect;			/**< aspect ratio of the screen			*/
+	enum aspect_t aspect;   /**< aspect ratio of the screen     */
 
-	enum ir_position_t pos;			/**< IR sensor bar position				*/
+	enum ir_position_t pos; /**< IR sensor bar position         */
 
-	unsigned int vres[2];			/**< IR virtual screen resolution		*/
-	int offset[2];					/**< IR XY correction offset			*/
-	int state;						/**< keeps track of the IR state		*/
+	unsigned int vres[2];   /**< IR virtual screen resolution   */
+	int offset[2];          /**< IR XY correction offset        */
+	int state;              /**< keeps track of the IR state    */
 
-	int ax;							/**< absolute X coordinate				*/
-	int ay;							/**< absolute Y coordinate				*/
+	int ax, ay ;            /**< absolute X,Y coordinate        */
+	int x, y ;               /**< calculated X, Y coordinate    */
 
-	int x;							/**< calculated X coordinate			*/
-	int y;							/**< calculated Y coordinate			*/
+  int deltax;             /**< calculated delta X coordinate  */
+	int deltay;             /**< calculated delta Y coordinate  */
+  int isInPrecisionMode;  /**< If the delta values are little, this flag go to 1. */
 
-	float distance;					/**< pixel distance between first 2 dots*/
-	float z;						/**< calculated distance				*/
+	float distance;         /**< pixel distance between first 2 dots                */
+	float z;                /**< calculated distance            */
+  double deltaz;          /**< calculated delta Z coordinate  */
   
   
   // Additional informations for interpret_ir_data2 method,
   // they must be memorized.
-  // dots = LEDs
-  // points = groups of dots
-  // the number of "real" is a personal indication to know what is "transformation etap".
+  // The number of "real" is a personal indication to know what is "transformation etap".
+  
+  // Some variable are init in idle_cycle() and wiiuse_set_ir_position() methods.
 
   int nb_source_detect ; /**< Number of source staying at the end of interpret_ir2() method. */
 
-  // For persistence (2nd etap).
-  int lastRealDot[WM_MAX_DOTS][2] ; // This memerorizes the 1st etap : the identification of dots. Then for know the persistence of dots.
-  int persistanceTimer[WM_MAX_DOTS] ; // Informations to know how many time the dots exist.
-  int szLastRealDot ; // How many dots exist.
+  // For persistence(2nd etap), and interpret_ir3().
+  int lastRealDotIsVisible[WM_MAX_DOTS] ;
+  int lastRealDot[WM_MAX_DOTS][2] ; 
+  //< This memorizes the 1st etap : the identification of dots. Then for know the persistence of dots.
+
+  double lastDist[6] ; // d01, d02, d03, d12, d13, d23 : distance between dots.
+  double delta[4][2] ;
+
+  
+  int szLastRealDot ; //< How many dots exist.
+  int persistanceTimer[WM_MAX_DOTS] ; //< Informations to know how many time the dots exist.
+  
+  // For calculate a position.
+  //int lastRealRealDot[WM_MAX_DOTS][2] ;
+  int szLastRealRealDot ;
 
   // For transition (last etap) : when there is a "jump" between 2 points.
-  int szLastRealRealDot ; // How many points get last time. To know the change of points number.
-  int lastCursorRealRealReal[2] ; // The last cursor position.
+  int szLastRealRealDot2 ; //< How many points get last time. To know the change of points number.
+  int lastCursorRealRealReal[2] ; //< The last cursor position.
+
+  double tmp[10][10][10] ;
   
 } ir_t;
 

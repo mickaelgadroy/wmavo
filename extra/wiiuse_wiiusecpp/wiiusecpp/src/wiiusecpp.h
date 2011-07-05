@@ -479,8 +479,12 @@ public:
     int GetState();
     void GetCursorPositionAbsolute(int &X, int &Y);
     void GetCursorPosition(int &X, int &Y);
+    void GetCursorDelta(double &X, double &Y, double &Z);
     float GetPixelDistance();
     float GetDistance();
+
+    // If the delta are 
+    bool IsInPrecisionMode() ;
 
 //private:
 public :
@@ -720,8 +724,8 @@ public:
     std::vector<CWiimote*>& Connect() ;
 
     int Poll() ; //< Return if a button has been pressed.
-    void Poll( bool &updateButton_out, bool &updateAccelerometerData_out ) ;
-      //< "Return" if buttons has been pressed, and if accelemeter data have changed.
+    void Poll( bool &updateButton_out, bool &updateAccelerometerData_out, bool &updateIRData_out ) ;
+      //< "Return" if buttons has been pressed, if accelemeter/ir data have changed.
 
 private:
     CWii( const CWii& cw ) ;

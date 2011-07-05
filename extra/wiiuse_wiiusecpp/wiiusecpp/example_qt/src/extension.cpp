@@ -171,86 +171,56 @@ void Extension::updateWindow()
 
         bool ok = m_window->isCheckFile() ;
         double a ;
-        double x,y,z ;
-        //wm0->Accelerometer.GetGForceInG(x,y,z) ;
+        double x,y,z=0 ;
         wm0->Accelerometer.GetTime( x, a ) ;
-        //wm1->Accelerometer.GetTime( y, a ) ;
-        //wm2->Accelerometer.GetTime( z, a ) ;
+        wm1->Accelerometer.GetTime( y, a ) ;
+        //y = wm2->Accelerometer.GetGForceElapse() ;
+        //z = (wm0->Accelerometer.GetGForceInG()-1.0)*9.81 ;
+
+
+        /*
         wm1->Accelerometer.GetVelocity( y, a, a);
         wm1->Accelerometer.GetGForceInMS2( z, a, a );
-
-        double x1,y1,z1 ;
-        wm0->Accelerometer.GetGForceInG( x1, y1, z1 ) ;
-
-        double x2,y2,z2 ;
-        wm0->Accelerometer.GetJerkInMS3(x2,y2,z2) ;
-
-        double x3,y3,z3 ;
-        wm0->Accelerometer.GetAcceleration(x3,y3,z3) ;
-
-        double x4,y4,z4 ;
-        wm1->Accelerometer.GetVelocity(x4,y4,z4) ;
-
-        double x5,y5,z5 ;
-        wm0->Accelerometer.GetPosition(x5,y5,z5) ;
-        double x6,y6,z6 ;
-        wm1->Accelerometer.GetPosition(x6,y6,z6) ;
-
-        double x7, y7, z7 ;
-        wm0->Accelerometer.GetTmp(x7, y7, z7);
-
+        double x1,y1,z1 ; wm0->Accelerometer.GetGForceInG( x1, y1, z1 ) ;
+        double x2,y2,z2 ; wm0->Accelerometer.GetJerkInMS3(x2,y2,z2) ;
+        double x3,y3,z3 ; wm0->Accelerometer.GetAcceleration(x3,y3,z3) ;
+        double x4,y4,z4 ; wm1->Accelerometer.GetVelocity(x4,y4,z4) ;
+        double x5,y5,z5 ; wm0->Accelerometer.GetPosition(x5,y5,z5) ;
+        double x6,y6,z6 ; wm1->Accelerometer.GetPosition(x6,y6,z6) ;
+        double x7,y7,z7 ; wm0->Accelerometer.GetTmp(x7, y7, z7);
         m_distanceCum += fabs(x5-x6) ;
+        */
 
-        // temps, GForceX, JerkX, AccX, VelocitéX, posX
+        double x1,y1,z1 ; wm0->IR.GetCursorDelta( x1, y1, z1 ) ;
+        int x2,y2 ; wm0->IR.GetCursorPosition( x2, y2 ) ;
+        double x3=(double)wm0->IR.IsInPrecisionMode() ;
 
-        double t0=0 ;
-        wm0->Accelerometer.GetTime(t0,a) ;
-        double dt1=0 ;
-        wm1->Accelerometer.GetTime(a,dt1) ;
-        double adt0=wm0->Accelerometer.GetGForceInMS2() ;
-        double dt0dt2=0,b ;
-        wm0->Accelerometer.GetTime(a,dt0dt2) ;
-        wm2->Accelerometer.GetTime(a,b) ;
-        dt0dt2 -= b ;
-        double v1=wm1->Accelerometer.GetVelocity() ;
-        double dt0LessDt2FoisV1 = dt0dt2 * v1 ;
+        // To let to get value if one of it bug
+        if( ok )
+        {
+            if( !file.isOpen() )
+                if( !file.open( QIODevice::WriteOnly | QIODevice::Text) )
+                    QMessageBox( QMessageBox::Critical, QString("ERROR"), QString("POWNED2, File not created") ) ;
 
-        //if( m_posGaus.x!=m_accXOld || m_posGaus.y!=m_accYOld || m_posGaus.z!=m_accZOld )
-        //{
-            // To let to get value if one of it bug
-            if( ok )
-            {
-                if( !file.isOpen() )
-                    if( !file.open( QIODevice::WriteOnly | QIODevice::Text) )
-                        QMessageBox( QMessageBox::Critical, QString("ERROR"), QString("POWNED2, File not created") ) ;
+            QTextStream out( &file ) ;
+            char str[150] ;
+            //sprintf( str,
+            //         "%+.8lf : %+.8lf : %+.8lf || %+.8lf : %+.8lf : %+.8lf || %+.8lf : %+.8lf : %+.8lf\n",
+            //         x, y, z, t0, dt1, adt0, dt0dt2, v1, dt0LessDt2FoisV1 ) ;
 
-                QTextStream out( &file ) ;
-                char str[150] ;
-                //sprintf( str,
-                //         "%+.8lf : %+.8lf : %+.8lf || %+.8lf : %+.8lf : %+.8lf || %+.8lf : %+.8lf : %+.8lf\n",
-                //         x, y, z, t0, dt1, adt0, dt0dt2, v1, dt0LessDt2FoisV1 ) ;
+            //sprintf( str,
+            //         "%+.8lf;%+.8lf;%+.8lf;%+.8lf;%+.8lf;%+.8lf\n",
+            //         x, x1, x2, x3, x4, x5 ) ;
+            out << QString(str) ;
+        }
+        else
+        {
+            if( file.isOpen() )
+                file.close() ;
 
-                sprintf( str,
-                         "%+.8lf;%+.8lf;%+.8lf;%+.8lf;%+.8lf;%+.8lf\n",
-                         x, x1, x2, x3, x4, x5 ) ;
-                out << QString(str) ;
-            }
-            else
-            {
-                if( file.isOpen() )
-                    file.close() ;
-
-                /*emit xyzPositionsChanged( x, y, z,
-                                          t0, dt1, adt0,
-                                          dt0dt2, v1, dt0LessDt2FoisV1 ) ;
-                */
-                emit xyzPositionsChanged( x, y, z, x7, y7, z7, x5, x5-x6, m_distanceCum ) ;
-            }
-            //emit xyzPositionChanged( x, y, z ) ;
-            //emit xyzPositionMoyChanged(  m_wiimoteData->Accelerometer.mpAccPos,0.0f,0.0f ) ;
-            //emit xyzPositionGausChanged( m_posGaus.x, m_posGaus.y, m_posGaus.z ) ;
-            //m_accXOld=m_posGaus.x ;m_accYOld=m_posGaus.y ;m_accZOld=m_posGaus.z ;
-        //}
+            //emit xyzPositionsChanged( x, y, z, x7, y7, z7, x5, x5-x6, m_distanceCum ) ;
+            emit xyzPositionsChanged( x, y, z, x1, y1, z1, x2, y2, x3 ) ;
+        }
     }
 }
 

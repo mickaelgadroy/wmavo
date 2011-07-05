@@ -22,7 +22,7 @@
 
 Window::Window() : m_extension(NULL), m_rowCurrent(0), file( "./out2.txt" )
 {
-    m_glWidget = new GLWidget;
+    m_glWidget = new GLWidget(this);
     m_extension = new Extension(this) ;
 
     if( !file.open( QIODevice::WriteOnly | QIODevice::Text) )

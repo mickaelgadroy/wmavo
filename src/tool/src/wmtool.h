@@ -237,7 +237,7 @@ namespace Avogadro
     /**
       * @name Wiimote informations for the WmTool class.
       * @{ */
-    void setWmInfo( bool connect, int nbDots, int nbSources, int distance ) ;
+    void setWmInfo( const QPoint &cursor, bool connect, int nbDots, int nbSources, int distance ) ;
     void changedWmSensitiveRedirect( int ) ;
     // @}
 
@@ -326,12 +326,13 @@ namespace Avogadro
     void drawAtom( float rayon, const Vector3d& from ) ;
     void drawCenter() ;
     void drawBarycenter() ;
+    void drawCursor() ;
     //void drawBond( float radius, const Vector3d& begin, const Vector3d& end ) ;
     void drawBond2( const Vector3d& begin, const Vector3d& end ) ;
     // @}
 
     /**
-      * @name Display something in the render zone
+      * @name Display text in the render zone
       * @{ */
     void displayInfo() ;
     void displayMsgInfo() ;
@@ -401,12 +402,13 @@ namespace Avogadro
 
 
     /**
-      * @name To display a message in rendering area
+      * @name To display a message in rendering area & Co.
       * @{ */
     QList<QString> m_displayList ;
     QPoint m_displayPos ;
     bool m_displayMsg ;
     int m_displayTime ;
+    QPoint m_cursorPos ;
     // @}
 
 
