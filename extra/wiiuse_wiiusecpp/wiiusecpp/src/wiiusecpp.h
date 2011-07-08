@@ -35,7 +35,6 @@
 #define WIIUSECPP_GUNIT_TO_MS2UNIT 9.80665 /**< Constant to convert g unit to m.s^-2 unit. */
 #define WIIUSECPP_ACC_NB_SAVED_VALUES 10 //< Number saved values in the mpValuesInTime attribut (CAccelerometer class) (3 is a minimum!).
 
-
 #ifdef _WIN32
 #include "wiiuse.h"
 #else
@@ -49,6 +48,7 @@
 #include <cmath>
 using namespace std;
 
+class CWiimoteData ;
 
 class CButtonBase
 {

@@ -49,8 +49,7 @@ INCLUDES = -I../src/
 #
 # Generate a list of object files
 #
-OBJS = \
-	$(OBJ_DIR)/wiiusecpp.o
+OBJS = $(OBJ_DIR)/wiiusecpp.o $(OBJ_DIR)/wiiusecppdata.o
 
 ###############################
 #
