@@ -305,7 +305,7 @@ bool WmAvo::wmPoll()
     }
 
     // If some action are not finished.
-    if( WMAVO_IS(WMAVO_CURSOR_MOVE) || WMAVO_IS( WMAVO_ATOM_MOVE )
+    if( WMAVO_IS(WMAVO_CURSOR_MOVE) || WMAVO_IS(WMAVO_ATOM_MOVE)
         || WMAVO_IS(WMAVO_SELECT) || WMAVO_IS(WMAVO_MENU_OK)
         || m_crossReleaseEnd || m_crossRelease || m_okMenuReleaseEnd )
       m_wmOtherPoll = true ;
@@ -974,24 +974,26 @@ bool WmAvo::transformWmAction1ToSelectOrTranslateAtom()
   if( !WMAVO_IS(WMAVO_MENU_ACTIVE)
       && m_wm->Buttons.isPressed(CButtons::BUTTON_A) )
   {
-    //m_isSelectAtom = false ;
-    WMAVO_SETOFF( WMAVO_SELECT ) ;
-
-    if( m_wm->Buttons.isPressed(CButtons::BUTTON_B) )
+    if( m_wm->Buttons.isPressed(CButtons::BUTTON_B) 
+        || (WMAVO_IS(WMAVO_SELECT_MULTI)&&m_pressedButton) ) // To avoid a bug during the end of the action : A+B -> B -> 0
     { // Here A+B => Selection multiple atom.
 
-      // Activate selection.
-      WMAVO_SETON( WMAVO_SELECT ) ;
+      if( !WMAVO_IS(WMAVO_SELECT_MULTI) )
+      {
+        m_pressedButton = true ; // To avoid having another action.
+        m_selectRelease = false ;
 
-      // Desactivate others actions & possibilities.
-      WMAVO_SETOFF( WMAVO_ATOM_TRANSLATE ) ;
-      WMAVO_SETOFF( WMAVO_ATOM_MOVE ) ;
-      m_selectRelease  = false ;
+        // Activate selection.
+        WMAVO_SETON( WMAVO_SELECT_MULTI ) ;
+
+        // Desactivate others actions & possibilities.
+        WMAVO_SETOFF( WMAVO_ATOM_TRANSLATE ) ;
+        WMAVO_SETOFF( WMAVO_ATOM_MOVE ) ;
+      }
     }
     else
     { // Here is the management of movement of an atom.
       // And selection a single atom.
-
 
       if( !WMAVO_IS(WMAVO_ATOM_MOVE) )
       { // Activate the possibility of movement of an atom.
@@ -1000,6 +1002,10 @@ bool WmAvo::transformWmAction1ToSelectOrTranslateAtom()
 
         WMAVO_SETON( WMAVO_ATOM_MOVE ) ;
         m_isMoveAtom_savePoint0 = m_currentPosSmooth ;
+
+        // Desactivate others actions & possibilities.
+        //WMAVO_SETOFF( WMAVO_SELECT ) ;
+        //WMAVO_SETOFF( WMAVO_SELECT_MULTI ) ;
       }
       else
       { // Try to activate the movement of an atom.
@@ -1032,7 +1038,8 @@ bool WmAvo::transformWmAction1ToSelectOrTranslateAtom()
     // WMAVO_IS(WMAVO_SELECT) & WMAVO_IS(WMAVO_ATOM_TRANSLATE)
     // here to finish this actions.
 
-    if( m_selectRelease || WMAVO_IS(WMAVO_SELECT) || WMAVO_IS(WMAVO_ATOM_TRANSLATE) )
+    if( m_selectRelease || WMAVO_IS(WMAVO_ATOM_TRANSLATE) 
+        || WMAVO_IS(WMAVO_SELECT) || WMAVO_IS(WMAVO_SELECT_MULTI) )
     {
       m_pressedButton = false ;
       m_timeFirst = 0 ;
@@ -1053,6 +1060,7 @@ bool WmAvo::transformWmAction1ToSelectOrTranslateAtom()
         WMAVO_SETOFF( WMAVO_ATOM_TRANSLATE ) ;
         WMAVO_SETOFF( WMAVO_ATOM_MOVE ) ;
         WMAVO_SETOFF( WMAVO_SELECT ) ;
+        WMAVO_SETOFF( WMAVO_SELECT_MULTI ) ;
       }
     }
   }
@@ -1575,7 +1583,8 @@ bool WmAvo::transformNcAction1ToTranslateCamera()
 
 /**
  * Transform a Nunchuk action to "Rotate camera" action,
- * <br/>for the 1st nunchuk operating mode.
+ * <br/>for the 1st nunchuk operating mode, and manage the 
+ * <br/>camera translation.
  * @return TRUE if an action has been realised ; FALSE else.
  * @param angle The sens of the direction takes by the Nunchuk joystick
  * @param magnitude The magnitude takes by the joystick

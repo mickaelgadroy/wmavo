@@ -31,6 +31,21 @@
 
 #include "wmtool.h"
 
+void checkModelviewProjectionMatrix()
+{
+  GLdouble modelview[16] ;  // Where The 16 Doubles Of The Modelview Matrix Are To Be Stored
+  GLdouble projection[16] ; // Where The 16 Doubles Of The Projection Matrix Are To Be Stored
+  glGetDoublev( GL_MODELVIEW_MATRIX, modelview ) ;   // Retrieve The Modelview Matrix
+  glGetDoublev( GL_PROJECTION_MATRIX, projection ) ; // Retrieve The Projection Matrix
+  printf( "modelview: " ) ;
+  for( int i=0 ; i<16 ; i++ )
+    printf( " %.3lf", modelview[i] ) ;
+  printf( "\n" ) ;
+  printf( "projection:" ) ;
+  for( int i=0 ; i<16 ; i++ )
+    printf( " %.3lf", projection[i] ) ;
+  printf( "\n" ) ;
+}
 
 namespace Avogadro
 {
@@ -41,8 +56,7 @@ namespace Avogadro
 
   const QString WmTool::m_angstromStr=QString::fromUtf8( " Å" ) ;
   const QString WmTool::m_degreeStr=QString::fromUtf8( "°" ) ;
-
-
+  
   WmTool::WmTool(QObject *parent) :
       Tool(parent),
       m_settingsWidget(NULL),/* m_addHydrogensCheck(NULL),*/
@@ -89,10 +103,10 @@ namespace Avogadro
     for( int i=0 ; i<6 ; i++ )
       m_lastMeasurement[i] = 0.0 ;
 
-    QAction *action = activateAction();
-    action->setIcon(QIcon(QString::fromUtf8(":/wmtool/wiimote.png")));
-    action->setToolTip(tr("Render Tool"));
-    //action->setShortcut(Qt::Key_F1);
+    QAction *action = activateAction() ;
+    action->setIcon(QIcon(QString::fromUtf8(":/wmtool/wiimote.png"))) ;
+    action->setToolTip(tr("Render Tool")) ;
+    //action->setShortcut(Qt::Key_F1) ;
 
     m_time.start() ;
   }
@@ -313,11 +327,26 @@ namespace Avogadro
     cout << "C'est passé ..." << endl ;
     */
 
-
+    //printf( ":\n" ) ;
+    //checkModelviewProjectionMatrix() ;
+    
     if( m_widget == NULL )
     {
       m_widget = widget ;
       m_wPainter = m_widget->painter() ;
+
+      // Initiate my projection matrix.
+      GLdouble fovy=m_widget->camera()->angleOfViewY() ;
+      GLdouble aspect=m_widget->width()/m_widget->height() ;
+      GLdouble nearPlan=1.0 ;
+      GLdouble farPlan=100.0 ;
+
+      glMatrixMode( GL_PROJECTION ) ;
+      glPushMatrix() ;
+        glLoadIdentity() ;
+        gluPerspective( fovy, aspect, nearPlan, farPlan ) ;
+        glGetFloatv( GL_MODELVIEW_MATRIX, m_projectionMatrix ) ;
+      glPopMatrix() ;
 
       // Normaly, useless ...
       //ContextMenuEater *cm=new ContextMenuEater( this, m_widget ) ;
@@ -349,8 +378,7 @@ namespace Avogadro
     if( m_activeRect )
       drawRect( m_rectPos1, m_rectPos2 ) ;
 
-    if( m_cursorPos.x()!=0 && m_cursorPos.y()!=0 )
-      drawCursor() ;
+    drawCursor() ;
 
     return true ;
   }
@@ -386,12 +414,6 @@ namespace Avogadro
     { // Calculate the inverse color.
 
       QColor bgColor=m_widget->background() ;
-      /*
-      rBg = 255 - bgColor.red() ;
-      gBg = 255 - bgColor.green() ;
-      bBg = 255 - bgColor.blue() ;
-      aBg = 100 ; //.4f
-      */
       
       rBgF = 1.0f - (float)bgColor.redF() ;
       gBgF = 1.0f - (float)bgColor.greenF() ;
@@ -586,6 +608,33 @@ namespace Avogadro
 
   void WmTool::drawCursor()
   {
+    glPushMatrix() ; //1 modelview
+
+    // Try to fix the size which change according to the camera or the movement of a atom ...
+
+    // Idea 1 : Load the matrix modelview of the camera 
+    // Not solve : the objects are positioned differently and are not face to face at the camera.
+    //Eigen::Transform3d modelviewTransf=m_widget->camera()->modelview() ;
+    //float modelviewTab[16]= { modelviewTransf(0,0), modelviewTransf(0,1), modelviewTransf(0,2),
+    //                          modelviewTransf(1,0), modelviewTransf(1,1), modelviewTransf(1,2),
+    //                          modelviewTransf(2,0), modelviewTransf(2,1), modelviewTransf(2,2),
+    //                          modelviewTransf(3,0), modelviewTransf(3,1), modelviewTransf(3,2) } ;                        
+    //glMatrixMode(GL_MODELVIEW) ;
+    //glLoadMatrixf( modelviewTab ) ;
+
+    // Idea 2 : verify the modelview/projection matrix.
+    // After check the state of the modelview/projection matrix, we can see that the projection matrix
+    // is always recalculated when there is a movement on the z axis (object or camera).
+    // This is a problem when we want draw an objet calculated by the right, up and direction vectors 
+    // (get by the modelview). The problem is thata the projection does not render the same visual distance ...
+
+    // Idea 3 : Load my projection matrix.
+    glMatrixMode( GL_PROJECTION ) ;
+    glPushMatrix() ; //2 projection
+    glLoadMatrixf( m_projectionMatrix ) ;
+    glMatrixMode( GL_MODELVIEW ) ;
+
+
     GLint viewport[4] ;       // Where The Viewport Values Will Be Stored
     GLdouble modelview[16] ;  // Where The 16 Doubles Of The Modelview Matrix Are To Be Stored
     GLdouble projection[16] ; // Where The 16 Doubles Of The Projection Matrix Are To Be Stored
@@ -602,6 +651,10 @@ namespace Avogadro
     GLdouble upY=modelview[5] ;
     GLdouble upZ=modelview[9] ;
 
+    GLdouble directionX=-modelview[2] ;
+    GLdouble directionY=-modelview[6] ;
+    GLdouble directionZ=-modelview[10] ;
+
     QPoint p=m_widget->mapFromGlobal(m_cursorPos) ;
 
     GLfloat winX=(float)p.x() ;
@@ -617,43 +670,61 @@ namespace Avogadro
 
 
     // Draw section.
-
-    glPushMatrix() ;
+    glPushAttrib(GL_ALL_ATTRIB_BITS) ; //3 attrib
+    glPushMatrix() ; //4 modelview
     
     //Will be transparent
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
+    //glDisable(GL_LIGHTING);
+    //glDisable(GL_CULL_FACE);
 
     //Draw the cursor at the current mouse pos
     
-    glBegin( GL_TRIANGLES ) ;
-        glColor4f( 0.75, 0.75, 0.75, 0.75 ) ;
-        glVertex3f( posX, posY, posZ ) ;
-        glVertex3f( posX+0.1f*rightX, posY+0.1*rightY, posZ+0.1*rightZ ) ;
-        glVertex3f( posX+0.1f*upX, posY+0.1f*upY, posZ+0.1f*upZ ) ;
-    glEnd() ;
+    float r=0.02 ;
+    float a=0, b=0 ;
+
+    //glBegin( GL_TRIANGLES ) ;
+    //    glColor4f( 0.75, 0.75, 0.75, 0.75 ) ;
+    //    glVertex3d( posX, posY, posZ ) ;
+    //    glVertex3d( posX+r*rightX, posY+r*rightY, posZ+r*rightZ ) ;
+    //    glVertex3d( posX+r*upX, posY+r*upY, posZ+r*upZ ) ;
+    //glEnd() ;
 
     // avoir right et up comme pour le triangle
-    float r=0.1 ;
-    float a=0, b=0 ;
     glBegin( GL_LINE_LOOP );
     for( float i=0 ; i<2*M_PI ; i+=(float)M_PI/10.0f )
     {
         a = r * cosf(i) ;
         b = r * sinf(i) ;
-        float xf = posX + rightX * a + upX * b ;
-        float yf = posY + rightY * a + upY * b ;
-        float zf = posZ + rightZ * a + upZ * b ;
+        float xf = posX + rightX * a + upX * b + -1.0f*directionX ;
+        float yf = posY + rightY * a + upY * b + -1.0f*directionY ;
+        float zf = posZ + rightZ * a + upZ * b + -1.0f*directionZ ;
+        glVertex3f( xf, yf, zf ) ;
+    }
+    glEnd() ;
+
+    glBegin( GL_LINE_LOOP );
+    for( float i=0 ; i<2*M_PI ; i+=(float)M_PI/10.0f )
+    {
+        a = r * cosf(i) ;
+        b = r * sinf(i) ;
+        float xf = posX + 1*a + 0*b + -1.0f*directionX ;
+        float yf = posY + 0*a + 1*b + -1.0f*directionY ;
+        float zf = posZ + 1*a + 1*b + -1.0f*directionZ ;
         glVertex3f( xf, yf, zf ) ;
     }
     glEnd();
     
-    // Come back ...
-    glDisable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
+    glPopMatrix() ; //4 modelview
+    glPopAttrib() ; //3 attrib
 
-    glPopMatrix() ;
+    glMatrixMode( GL_PROJECTION ) ;
+    glPopMatrix() ; //2 projection
+    glMatrixMode( GL_MODELVIEW ) ;
+
+    glPopMatrix() ; //1 modelview
   }
 
 

@@ -112,26 +112,29 @@
 #define WMAVO_SETOFF2(allActions, action) (allActions &= (~action))
 
 
-#define WMAVO_CURSOR_MOVE 0x00001
-#define WMAVO_SELECT 0x00002
-#define WMAVO_CREATE 0x00004
-#define WMAVO_DELETE 0x00008
-#define WMAVO_DELETEALL 0x00010
-#define WMAVO_ATOM_MOVE 0x00020 // Translate or rotate, the mode is "activate", but it can be "not working" to limit the calling of wmextension.
-#define WMAVO_ATOM_ROTATE 0x00040
-#define WMAVO_ATOM_TRANSLATE 0x00080
-#define WMAVO_CAM_ROTATE 0x00100
-#define WMAVO_CAM_ROTATE_BYNC 0x00200
-#define WMAVO_CAM_ROTATE_BYWM 0x00400
-#define WMAVO_CAM_ZOOM 0x00800
-#define WMAVO_CAM_TRANSLATE 0x01000
-#define WMAVO_CAM_INITIAT 0x02000
-#define WMAVO_MENU_ACTIVE 0x04000
-#define WMAVO_MENU_RIGHT 0x08000
-#define WMAVO_MENU_LEFT 0x10000
-#define WMAVO_MENU_UP 0x20000
-#define WMAVO_MENU_DOWN 0x40000
-#define WMAVO_MENU_OK 0x80000
+#define WMAVO_CURSOR_MOVE       0x000001
+#define WMAVO_SELECT            0x000002
+#define WMAVO_SELECT_MULTI      0x000004
+#define WMAVO_CREATE            0x000008
+#define WMAVO_DELETE            0x000010
+#define WMAVO_DELETEALL         0x000020
+#define WMAVO_ATOM_MOVE         0x000040 // Translate or rotate, the mode is "activate", 
+                                          // but it can be "not translating or rotating" 
+                                          // to limit the calling of wmextension.
+#define WMAVO_ATOM_ROTATE       0x000080
+#define WMAVO_ATOM_TRANSLATE    0x000100
+#define WMAVO_CAM_ROTATE        0x000200
+#define WMAVO_CAM_ROTATE_BYNC   0x000400
+#define WMAVO_CAM_ROTATE_BYWM   0x000800
+#define WMAVO_CAM_ZOOM          0x001000
+#define WMAVO_CAM_TRANSLATE     0x002000
+#define WMAVO_CAM_INITIAT       0x004000
+#define WMAVO_MENU_ACTIVE       0x008000
+#define WMAVO_MENU_RIGHT        0x010000
+#define WMAVO_MENU_LEFT         0x020000
+#define WMAVO_MENU_UP           0x040000
+#define WMAVO_MENU_DOWN         0x080000
+#define WMAVO_MENU_OK           0x100000
 
 
 ///**********************************************************

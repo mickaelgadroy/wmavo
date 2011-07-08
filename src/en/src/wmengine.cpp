@@ -138,7 +138,6 @@ namespace Avogadro
     m_frust.zFar = 0.0 ; // 13.0, 50
     m_frust.fov = 0.0 ;
     // <-
-
   }
 
 

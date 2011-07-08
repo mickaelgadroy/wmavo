@@ -375,7 +375,12 @@ namespace Avogadro
     Extension *m_wmExt ; ///< Shortcut.
     // @}
 
+    /**
+      * @name Miscellaneous.
+      * @{ */
     QTime m_time ;
+    float m_projectionMatrix[16] ; ///< My projection matrix for some object.
+    // @}
 
     /**
       * @name Informations of the Wiimote & Co

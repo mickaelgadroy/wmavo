@@ -1188,13 +1188,13 @@ namespace Avogadro
     * @param wmavoAction All actions ask by the wrapper
     * @param posCursor The position where a "click" is realised
     */
-  void WmExtension::transformWrapperActionToSelectAtom( int wmavoAction, QPoint posCursor)
+  void WmExtension::transformWrapperActionToSelectAtom( int wmavoAction, QPoint posCursor )
   {
-    if( WMAVO_IS2(wmavoAction,WMAVO_SELECT) )
+    if( WMAVO_IS2(wmavoAction,WMAVO_SELECT) || WMAVO_IS2(wmavoAction,WMAVO_SELECT_MULTI) )
     {
       //cout << "wmExtension::transformWrapperActionToSelectAtom" << endl ;
 
-      if( !WMAVO_IS2(wmavoAction,WMAVO_CURSOR_MOVE) )
+      if( WMAVO_IS2(wmavoAction,WMAVO_SELECT) )
       { // Select only 1 object.
 
         // Just one rumble.
@@ -1266,7 +1266,7 @@ namespace Avogadro
           }
         }
       }
-      else
+      else //if( WMAVO_IS2(wmavoAction,WMAVO_SELECT_MULTI) )
       { // Multiple selection.
 
         // For the display of the selection rectangle.
@@ -2201,15 +2201,15 @@ namespace Avogadro
             {
               if( actionMenu->text().compare(tr("Periodic Table")) != 0 )
               {
-                //qDebug() << "FIN" ;
                 m_wmavoThread->setWmMenuMode( false ) ;
                 WMAVO_SETOFF2( wmavoAction, WMAVO_MENU_ACTIVE ) ;
               }
 
+              // Trigger the associated action.
               actionMenu->trigger() ;
 
+              // Then close the menu.
               m_menuActive = false ;
-              //m_contextMenuCurrent->close() ;
               m_contextMenuMain->close() ;
             }
             else
@@ -2222,6 +2222,14 @@ namespace Avogadro
                   m_contextMenuCurrent = cm ;
               }
             }
+          }
+          else
+          { // No active menu => Close the context menu.
+
+            m_menuActive = false ;
+            m_contextMenuMain->close() ;
+            m_wmavoThread->setWmMenuMode( false ) ;
+            WMAVO_SETOFF2( wmavoAction, WMAVO_MENU_ACTIVE ) ;
           }
         }
 
@@ -4111,16 +4119,25 @@ namespace Avogadro
       Atom *a1=bond->beginAtom() ;
       Atom *a2=bond->endAtom() ;
 
-      if( !(a1->isHydrogen() || a2->isHydrogen()) )
+      if( a1!=NULL && a2!=NULL )
       {
-        removeBond( molecule, bond ) ;
+        if( !(a1->isHydrogen() || a2->isHydrogen()) )
+        {
+          removeBond( molecule, bond ) ;
 
-        OpenBabel::OBMol obmol=molecule->OBMol() ;
+          OpenBabel::OBMol obmol=molecule->OBMol() ;
 
-        addHydrogen_p( molecule, &obmol, a1 ) ;
-        addHydrogen_p( molecule, &obmol, a2 ) ;
+          addHydrogen_p( molecule, &obmol, a1 ) ;
+          addHydrogen_p( molecule, &obmol, a2 ) ;
 
-        adjustPartialCharge_p( molecule, &obmol ) ;
+          adjustPartialCharge_p( molecule, &obmol ) ;
+        }
+      }
+      else
+      {
+        const QString title=tr("Error ... No fatal.") ;
+        const QString msg=tr("A bug appeared. The current action must be canceled (remove a bond with hydrogen adjustment).") ;
+        QMessageBox( QMessageBox::Critical, title, msg ) ;
       }
     }
   }
