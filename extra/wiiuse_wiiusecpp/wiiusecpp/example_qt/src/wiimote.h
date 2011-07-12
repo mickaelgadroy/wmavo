@@ -39,7 +39,7 @@ const int LED_MAP[4] = {CWiimote::LED_1, CWiimote::LED_2, CWiimote::LED_3, CWiim
 
 class Wiimote : public QObject
 {
-    Q_OBJECT
+    Q_OBJECT // For the thread.
 
 // Public method.
 public :
