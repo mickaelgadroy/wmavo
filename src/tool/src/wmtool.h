@@ -86,7 +86,7 @@ QT_END_NAMESPACE
 #endif
 
 using namespace std ;
-using namespace Eigen ;
+//using namespace Eigen ;
 using namespace OpenBabel;
 
 
@@ -246,7 +246,7 @@ namespace Avogadro
       * @{ */
     void setDisplayMsg( QList<QString> strList, QPoint pos ) ;
     void setActiveRect( bool active, QPoint p1, QPoint p2 ) ;
-    void renderAtomBond( const Vector3d& beginAtom, const Vector3d& endAtom, bool drawBeginAtom, bool drawEndAtom, bool drawBond ) ;
+    void renderAtomBond( const Eigen::Vector3d& beginAtom, const Eigen::Vector3d& endAtom, bool drawBeginAtom, bool drawEndAtom, bool drawBond ) ;
     void setAtomicNumberCurent( int atomicNumber ) ;
     // @}
 
@@ -323,12 +323,12 @@ namespace Avogadro
     void drawRect( QPoint p1, QPoint p2, int r=-1, int g=-1, int b=-1, int a=-1  ) ;
     void drawRect( float sx, float sy, float ex, float ey, int r=-1, int g=-1, int b=-1, int a=-1 ) ;
     void drawBondAtom() ;
-    void drawAtom( float rayon, const Vector3d& from ) ;
+    void drawAtom( float rayon, const Eigen::Vector3d& from ) ;
     void drawCenter() ;
     void drawBarycenter() ;
     void drawCursor() ;
-    //void drawBond( float radius, const Vector3d& begin, const Vector3d& end ) ;
-    void drawBond2( const Vector3d& begin, const Vector3d& end ) ;
+    //void drawBond( float radius, const Eigen::Vector3d& begin, const Eigen::Vector3d& end ) ;
+    void drawBond2( const Eigen::Vector3d& begin, const Eigen::Vector3d& end ) ;
     // @}
 
     /**
@@ -338,9 +338,9 @@ namespace Avogadro
     void displayMsgInfo() ;
     void displayAtomicNumberCurrent() ;
     void displayMsgInRenderZone( QPoint pos, QString msg, QFont font, float r, float g, float b ) ;
-    void displayMsgInRenderZone( const Vector3d& pos, QString msg, QFont font, float r, float g, float b ) ;
+    void displayMsgInRenderZone( const Eigen::Vector3d& pos, QString msg, QFont font, float r, float g, float b ) ;
     void displayMsgOnScreen( QPoint pos, QString msg, QFont font, float r, float g, float b ) ;
-    void displayMsgOnScreen( const Vector3d& pos, QString msg, QFont font, float r, float g, float b ) ;
+    void displayMsgOnScreen( const Eigen::Vector3d& pos, QString msg, QFont font, float r, float g, float b ) ;
     void displayTextMethods() ; //< Methods tested to render text.
     // @}
 
@@ -399,7 +399,7 @@ namespace Avogadro
     bool m_activeRect ;
 
     bool m_drawBeginAtom, m_drawEndAtom, m_drawBond ;
-    Vector3d m_beginAtom, m_endAtom ;
+    Eigen::Vector3d m_beginAtom, m_endAtom ;
 
     GLUquadric* m_gluQuadricParams ;
     GLUquadric* m_gluQuadricParamsCenter ;
@@ -424,7 +424,7 @@ namespace Avogadro
     int m_nbAtomForDistDiedre ;
     QList<QPointer<Atom> > m_atomForDistDiedre ;
 
-    Vector3d m_vector[3] ;
+    Eigen::Vector3d m_vector[3] ;
     double m_angle[2] ;
     double m_dihedral ;
     // Need to store the previous values of all variables in order to only send

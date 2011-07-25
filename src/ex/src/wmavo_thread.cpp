@@ -24,13 +24,13 @@
 
 #include "wmavo_thread.h"
 
-WmAvoThread::WmAvoThread(QObject *parent/*, GLWidget *widget*/)
-  : QThread(parent),/* m_widget(widget),*/ m_wmavo(NULL),
-  m_updateOpMode(false), m_operatingMode(0),
-  m_updateRumble(false), m_start(false), m_continu(true), m_loop(true),
-  m_addAtom(false), m_delAtom(false),
-  m_updateSizeWidget(false), m_x(0), m_y(0), m_width(0), m_height(0),
-  m_menuMode(false)
+WmAvoThread::WmAvoThread( QObject *parent )
+  : QThread(parent), m_wmavo(NULL),
+    m_updateOpMode(false), m_operatingMode(0),
+    m_updateRumble(false), m_start(false), m_continu(true), m_loop(true),
+    m_addAtom(false), m_delAtom(false),
+    m_updateSizeWidget(false), m_x(0), m_y(0), m_width(0), m_height(0),
+    m_menuMode(false)
 {
   //cout << "Constructor WmAvoThread" << endl ;
 

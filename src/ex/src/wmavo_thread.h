@@ -22,39 +22,25 @@
 *******************************************************************************/
 
 
+#pragma once
 #ifndef __WMAVO_THREAD_H__
 #define __WMAVO_THREAD_H__
 
-#ifdef _WIN32
-#pragma warning( disable : 4365 ) // conversion from 'x' to 'y', signed/unsigned mismatch
-#pragma warning( disable : 4820 ) // 'x' bytes padding added after data member '...'
-#pragma warning( disable : 4668 ) // '...' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
-#pragma warning( disable : 4514 ) // '...' : unreferenced inline function has been removed
-#pragma warning( disable : 4738 ) // storing 32-bit float result in memory, possible loss of performance
-#pragma warning( disable : 4710 ) // function not inlined
-#pragma warning( disable : 4626 ) // '...' : assignment operator could not be generated because a base class assignment operator is inaccessible
-#pragma warning( disable : 4625 ) // '...' : copy constructor could not be generated because a base class copy constructor is inaccessible
-
-#pragma warning( push, 0 )
-#endif
-
+#include "warning_disable_begin.h"
 #include "wmavo_const.h"
 #include "wmavo.h"
 
 #include <iostream>
 #include <vector>
 
+#include <QMutex>
 #include <QThread>
 #include <qcursor.h>
 
 #include <Eigen/Core>
+#include <avogadro/atom.h>
+#include "warning_disable_end.h"
 
-#ifdef _WIN32
-#pragma warning( pop )
-#endif
-
-using namespace Eigen ;
-using namespace std ;
 
 /**
   * @class WmAvoThread
@@ -80,7 +66,7 @@ class WmAvoThread : public QThread
     {
       QPoint posCursor ;
       int wmActions ;
-      Vector3d pos3dCur, pos3dLast ;
+      Eigen::Vector3d pos3dCur, pos3dLast ;
 
       double angleCamRotateXDeg, angleCamRotateYDeg ;
       double distCamTranslateX, distCamTranslateY ;
@@ -118,7 +104,7 @@ class WmAvoThread : public QThread
     void setWmRumble( int gradual ) ;
     void setWmRumbleEnable( bool state ) ;
     void setWmSizeWidget( int x, int y, int width, int height ) ;
-    void setWmMenuMode( bool menuMode ) ;
+    void setWmMenuMode( bool menuMode ) ; // == !actionMode
     void setWmActionMode( bool actionMode ) ; // == !menuMode
     void setWmSensitive( int wmSensitive ) ;
 
@@ -144,7 +130,7 @@ class WmAvoThread : public QThread
     int m_gradual ;
 
     bool m_addAtom, m_delAtom ; // "Need update ?" and data to use.
-    vector<Vector3d> m_posAtomStock ;
+    std::vector<Eigen::Vector3d> m_posAtomStock ;
 
     bool m_updateSizeWidget ; // Need update ?
     int m_x, m_y, m_width, m_height ;

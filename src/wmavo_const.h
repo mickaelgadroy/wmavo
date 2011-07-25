@@ -56,7 +56,7 @@
 #define WMEX_DISTBEFORE_CREATE 0.6
 #define WMEX_MAXBONDNUMBER_BETWEENATOM 3
 #define WMEX_CREATEDATOMDEFAULT 6 // Carbon.
-#define WMEX_ADJUST_HYDROGEN true
+#define WMEX_ADJUST_HYDROGEN 1 // true
 
 
 ///**********************************************************
@@ -64,6 +64,8 @@
 ///**********************************************************
 
 #define WMAVOTH_SLEEPBEFORE_NEXTROUND 10 //4 // ms
+#define WMAVOTH_DIST_MIN 1.5 // Minimum distance before beginning atomic reaction.
+#define WMAVOTH_DIST_MAX 6.0 // Maximum distance, after : "no interaction" between atom.
 
 
 ///**********************************************************

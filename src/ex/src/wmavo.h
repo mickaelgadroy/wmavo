@@ -21,27 +21,15 @@
   along with WmAvo. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
+#pragma once
 #ifndef __WMAVO_H__
 #define __WMAVO_H__
-
-#ifdef _WIN32
-#pragma warning( disable : 4365 ) // conversion from 'x' to 'y', signed/unsigned mismatch
-#pragma warning( disable : 4820 ) // 'x' bytes padding added after data member '...'
-#pragma warning( disable : 4668 ) // '...' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
-#pragma warning( disable : 4514 ) // '...' : unreferenced inline function has been removed
-#pragma warning( disable : 4738 ) // storing 32-bit float result in memory, possible loss of performance
-#pragma warning( disable : 4710 ) // function not inlined
-#pragma warning( disable : 4626 ) // '...' : assignment operator could not be generated because a base class assignment operator is inaccessible
-#pragma warning( disable : 4625 ) // '...' : copy constructor could not be generated because a base class copy constructor is inaccessible
-
-#pragma warning( push, 0 )
-#endif
 
 #define NOMINMAX
 // To avoid a conflit with a macro definition in Eigen/Core.
 // If you are compiling on Windows, to prevent windows.h from defining these symbols.
 
-
+#include "warning_disable_begin.h"
 #include "wmavo_const.h"
 #include "wmavo_rumble.h"
 #include "wiwo.h"
@@ -49,7 +37,6 @@
 #include <wiiusecpp.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry> // eigen::AngleAxis
-
 
 #include <qapplication.h>
 #include <qdesktopwidget.h>
@@ -60,21 +47,18 @@
 #include <QTime>
 
 #include <time.h>
-#ifndef WIN32
+#if !defined WIN32 || !defined _WIN32
 #include <unistd.h>
 #endif
 #include <math.h>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include "warning_disable_end.h"
 
-#ifdef _WIN32
-#pragma warning( pop )
-#endif
-
-using Eigen::AngleAxisd ;
-using namespace std ;
-using namespace Eigen ;
+//using Eigen::AngleAxisd ;
+//using namespace std ;
+//using namespace Eigen ;
 
 class WmRumble ; // To solve a problem of mutual calling of the class.
 
@@ -106,7 +90,7 @@ class WmAvo
     static const double m_PI ; ///< Pi approximation.
     static const double m_PI180 ; ///< 3.14/180 for degree to radian.
     static const double m_180PI ; ///< 180/3.14 for radian to degree.
-    static const Vector3d m_refPoint0 ; ///< Point(0,0,0).
+    static const Eigen::Vector3d m_refPoint0 ; ///< Point(0,0,0).
     static const int m_XScreen, m_YScreen ; ///< Resolution of the screen.
 
 
@@ -127,8 +111,8 @@ class WmAvo
       * All informations to know the move of the Wiimote.
       * @{ */
     QPoint getPosCursor() ;
-    Vector3d getPos3dCurrent() ;
-    Vector3d getPos3dLast() ;
+    Eigen::Vector3d getPos3dCurrent() ;
+    Eigen::Vector3d getPos3dLast() ;
     double getDistCamZoom() ;
     double getAngleCamRotateXDeg() ;	double getAngleCamRotateYDeg() ;
     double getDistCamTranslateX() ;	double getDistCamTranslateY() ;
@@ -166,7 +150,7 @@ class WmAvo
     void wmDisconnect() ;
     bool wmPoll() ;
 
-    Vector3d wmGetIrCursor() ; ///< Update m_wmCurrentIrCursorPos and m_wmLastIrCursorPos.
+    Eigen::Vector3d wmGetIrCursor() ; ///< Update m_wmCurrentIrCursorPos and m_wmLastIrCursorPos.
     bool wmGetSmoothedCursor() ; ///< Update m_currentPosSmooth and m_lastPosSmooth.
     float wmGetAcc() ;
     // @}
@@ -295,7 +279,7 @@ class WmAvo
     // @}
 
     /**
-      * @name Wiimote/Avogadro states
+      * @name Wiimote/Chemical states
       * @{ */
     int m_isWhat ;
     // @}
@@ -304,14 +288,14 @@ class WmAvo
       * @name Differents positions of the IR cursor points.
       * @{ */
     QPoint m_posCursor ;
-    Vector3d m_wmCurrentIrCursorPos, m_wmLastIrCursorPos ;
+    Eigen::Vector3d m_wmCurrentIrCursorPos, m_wmLastIrCursorPos ;
     // @}
 
     /**
       * @name Movements informations
       * @{ */
-    Vector3d m_vectAtomTranslate ;
-    Transform3d m_transfAtomRotate ;
+    Eigen::Vector3d m_vectAtomTranslate ;
+    Eigen::Transform3d m_transfAtomRotate ;
     double m_angleNcJoystickCosDeg, m_angleNcJoystickSinDeg ;
     double m_distCamZoom, m_distCamXTranslate, m_distCamYTranslate ;
     // @}
@@ -319,9 +303,9 @@ class WmAvo
     /**
       * @name Manage smoothing
       * @{ */
-    WIWO<Vector3d> *m_smoothXY ;
-    Vector3d m_lastSmooth, m_diffSmooth, m_diffPos ;
-    Vector3d m_lastPosSmooth, m_currentPosSmooth ;
+    WIWO<Eigen::Vector3d> *m_smoothXY ;
+    Eigen::Vector3d m_lastSmooth, m_diffSmooth, m_diffPos ;
+    Eigen::Vector3d m_lastPosSmooth, m_currentPosSmooth ;
 
     WIWO<double> *m_smoothAcc ;
     double m_lastAccSmooth, m_diffAccSmooth ;
@@ -353,18 +337,18 @@ class WmAvo
     bool m_okMenuRelease, m_okMenuReleaseEnd ;
     bool m_delAllAlready ;
 
-    Vector3d m_isMoveAtom_savePoint0 ;
+    Eigen::Vector3d m_isMoveAtom_savePoint0 ;
     // @}
 
 
     /**
       * @name Test for acceleration values
       * @{ */
-    WIWO<Vector3d> *m_smoothedGravCalFile ;
-    Vector3d m_sumSmoothGravCal ;
+    WIWO<Eigen::Vector3d> *m_smoothedGravCalFile ;
+    Eigen::Vector3d m_sumSmoothGravCal ;
 
-    WIWO<Vector3d> *m_smoothedOrient ;
-    Vector3d m_sumSmoothOrient ;
+    WIWO<Eigen::Vector3d> *m_smoothedOrient ;
+    Eigen::Vector3d m_sumSmoothOrient ;
 
     int m_nbTickBySecond ;
     int m_t1, m_t2 ;

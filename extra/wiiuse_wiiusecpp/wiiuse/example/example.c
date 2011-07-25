@@ -60,6 +60,10 @@ void handle_event(struct wiimote_t* wm) {
 
 	/* if a button is pressed, report it */
 	if (IS_PRESSED(wm, WIIMOTE_BUTTON_A))		printf("A pressed\n");
+  if (IS_RELEASED(wm, WIIMOTE_BUTTON_A))		printf("A released\n");
+  if (IS_JUST_PRESSED(wm, WIIMOTE_BUTTON_A))		printf("A just pressed\n");
+  if (IS_HELD(wm, WIIMOTE_BUTTON_A))		printf("A is held\n");
+
 	if (IS_PRESSED(wm, WIIMOTE_BUTTON_B))		printf("B pressed\n");
 	if (IS_PRESSED(wm, WIIMOTE_BUTTON_UP))		printf("UP pressed\n");
 	if (IS_PRESSED(wm, WIIMOTE_BUTTON_DOWN))	printf("DOWN pressed\n");
@@ -411,7 +415,7 @@ int main(int argc, char** argv) {
 				switch (wiimotes[i]->event) {
 					case WIIUSE_EVENT:
 						/* a generic event occured */
-						//handle_event(wiimotes[i]);
+						handle_event(wiimotes[i]);
 						break;
 
 					case WIIUSE_STATUS:

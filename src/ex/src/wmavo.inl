@@ -36,14 +36,14 @@ inline QPoint WmAvo::getPosCursor(){ return m_posCursor ; }
   * and the distance calculated by the Wiimote.
   * @return A current "3D-position" of the Wiimote.
   */
-inline Vector3d WmAvo::getPos3dCurrent(){ return m_currentPosSmooth ; }
+inline Eigen::Vector3d WmAvo::getPos3dCurrent(){ return m_currentPosSmooth ; }
 
 /**
   * Get the last "3D-position" of the Wiimote, by coupling the "position of the cursor"
   * and the distance calculated by the Wiimote.
   * @return A last "3D-position" of the Wiimote.
   */
-inline Vector3d WmAvo::getPos3dLast(){ return m_lastPosSmooth ; }
+inline Eigen::Vector3d WmAvo::getPos3dLast(){ return m_lastPosSmooth ; }
 
 /**
   * Get the angle of rotation for the camera on the X-axis, calculated from the joystick
@@ -183,37 +183,37 @@ inline bool WmAvo::wmIsMovedCursor(){ return (m_doWork ? WMAVO_IS(WMAVO_CURSOR_M
   * Get if the action Wiimote is "selection".
   * @return TRUE if the action Wiimote is "selection" ; FALSE else.
   */
-inline bool WmAvo::wmIsSelected(){ return WMAVO_IS(WMAVO_SELECT) ; }
+inline bool WmAvo::wmIsSelected(){ return (WMAVO_IS(WMAVO_SELECT)==0?false:true) ; }
 
 /**
   * Get if the action Wiimote is "creation".
   * @return TRUE if the action Wiimote is "creation" ; FALSE else.
   */
-inline bool WmAvo::wmIsCreated(){ return WMAVO_IS(WMAVO_CREATE) ; }
+inline bool WmAvo::wmIsCreated(){ return (WMAVO_IS(WMAVO_CREATE)==0?false:true) ; }
 
 /**
   * Get if the action Wiimote is "delete".
   * @return TRUE if the action Wiimote is "delete" ; FALSE else.
   */
-inline bool WmAvo::wmIsDeleted(){ return WMAVO_IS(WMAVO_DELETE) ; }
+inline bool WmAvo::wmIsDeleted(){ return (WMAVO_IS(WMAVO_DELETE)==0?false:true) ; }
 
 /**
   * Get if the action Wiimote is "moving atoms".
   * @return TRUE if the action Wiimote is "moving atoms" ; FALSE else.
   */
-inline bool WmAvo::wmIsMovedAtom(){ return WMAVO_IS(WMAVO_ATOM_MOVE); }
+inline bool WmAvo::wmIsMovedAtom(){ return (WMAVO_IS(WMAVO_ATOM_MOVE)==0?false:true); }
 
 /**
   * Get if the action Wiimote is "rotating atoms".
   * @return TRUE if the action Wiimote is "rotating atoms" ; FALSE else.
   */
-inline bool WmAvo::wmAtomIsRotate(){ return (m_doWork ? WMAVO_IS(WMAVO_ATOM_ROTATE):false) ; }
+inline bool WmAvo::wmAtomIsRotate(){ return (m_doWork ? (WMAVO_IS(WMAVO_ATOM_ROTATE)==0?false:true):false) ; }
 
 /**
   * Get if the action Wiimote is "translating atoms".
   * @return TRUE if the action Wiimote is "translating atoms" ; FALSE else.
   */
-inline bool WmAvo::wmAtomIsTranslate(){ return (m_doWork ? WMAVO_IS(WMAVO_ATOM_TRANSLATE):false) ; }
+inline bool WmAvo::wmAtomIsTranslate(){ return (m_doWork ? (WMAVO_IS(WMAVO_ATOM_TRANSLATE)==0?false:true):false) ; }
 
 //inline bool WmAvo::wmAtomIsZoom(){ return m_isAtomZoom ; } // Not use.
 
@@ -221,29 +221,29 @@ inline bool WmAvo::wmAtomIsTranslate(){ return (m_doWork ? WMAVO_IS(WMAVO_ATOM_T
   * Get if the action Wiimote is "rotating the camera".
   * @return TRUE if the action Wiimote is "rotating the camera" ; FALSE else.
   */
-inline bool WmAvo::wmCamIsRotate(){ return WMAVO_IS(WMAVO_CAM_ROTATE) ; }
+inline bool WmAvo::wmCamIsRotate(){ return (WMAVO_IS(WMAVO_CAM_ROTATE)==0?false:true) ; }
 
 /**
   * Get if the action Wiimote is "translating the camera".
   * @return TRUE if the action Wiimote is "translating the camera" ; FALSE else.
   */
-inline bool WmAvo::wmCamIsTranslate(){ return WMAVO_IS(WMAVO_CAM_TRANSLATE) ; }
+inline bool WmAvo::wmCamIsTranslate(){ return (WMAVO_IS(WMAVO_CAM_TRANSLATE)==0?false:true) ; }
 
 /**
   * Get if the action Wiimote is "zooming the camera".
   * @return TRUE if the action Wiimote is "zooming the camera" ; FALSE else.
   */
-inline bool WmAvo::wmCamIsZoom(){ return WMAVO_IS(WMAVO_CAM_ZOOM) ; }
+inline bool WmAvo::wmCamIsZoom(){ return (WMAVO_IS(WMAVO_CAM_ZOOM)==0?false:true) ; }
 
 /**
   * Get if the action Wiimote is "initialized the camera".
   * @return TRUE if the action Wiimote is "initialized the camera" ; FALSE else.
   */
-inline bool WmAvo::wmCamIsInitialize(){ return WMAVO_IS(WMAVO_CAM_INITIAT) ; }
+inline bool WmAvo::wmCamIsInitialize(){ return (WMAVO_IS(WMAVO_CAM_INITIAT)==0?false:true) ; }
 
 
 /**
   * Get if the action Wiimote is "actived the menu".
   * @return TRUE if the action Wiimote is "actived the menu" ; FALSE else.
   */
-inline bool WmAvo::wmMenuIsActive(){ return WMAVO_IS(WMAVO_MENU_ACTIVE) ; }
+inline bool WmAvo::wmMenuIsActive(){ return (WMAVO_IS(WMAVO_MENU_ACTIVE)==0?false:true) ; }

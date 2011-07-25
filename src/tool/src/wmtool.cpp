@@ -68,7 +68,7 @@ namespace Avogadro
       m_rectPos1(QPoint(0,0)), m_rectPos2(QPoint(0,0)), m_activeRect(false),
 
       m_drawBeginAtom(false), m_drawEndAtom(false), m_drawBond(false),
-      m_beginAtom(Vector3d(0,0,0)), m_endAtom(Vector3d(0,0,0)),
+      m_beginAtom(Eigen::Vector3d(0,0,0)), m_endAtom(Eigen::Vector3d(0,0,0)),
       m_isCalculDistDiedre(false), m_nbAtomForDistDiedre(0),
 
       /*m_initDisplayDistDiedre(false),*/
@@ -490,7 +490,7 @@ namespace Avogadro
     * @param radius Radius of the atom.
     * @param from The position of the atom.
     */
-  void WmTool::drawAtom( float radius, const Vector3d& from )
+  void WmTool::drawAtom( float radius, const Eigen::Vector3d& from )
   {
     // Init & Save.
     glPushMatrix() ;
@@ -596,7 +596,7 @@ namespace Avogadro
 
     glColor3f( 0.2f, 1.0f,  0.2f ) ;
 
-    //Vector3d b=m_wmExt->getPointRef() ;
+    //Eigen::Vector3d b=m_wmExt->getPointRef() ;
     //glTranslatef( b[0], b[1] , b[2] ) ;
 
     gluSphere( m_gluQuadricParamsCenter, 0.1, 5, 5) ;
@@ -733,7 +733,7 @@ namespace Avogadro
     * @param begin 1st end of the "bond".
     * @param end 2nd end of the "bond".
     */
-  void WmTool::drawBond2( const Vector3d& begin, const Vector3d& end )
+  void WmTool::drawBond2( const Eigen::Vector3d& begin, const Eigen::Vector3d& end )
   {
     glPushAttrib(GL_ALL_ATTRIB_BITS);
 
@@ -756,7 +756,7 @@ namespace Avogadro
   }
 
 /*
-  void WmTool::drawBond( float radius, const Vector3d& begin, const Vector3d& end )
+  void WmTool::drawBond( float radius, const Eigen::Vector3d& begin, const Eigen::Vector3d& end )
   {
 
     // The position of the bond is calculated in 2 steps :
@@ -782,7 +782,7 @@ namespace Avogadro
     cout << "end:" << endl << end << endl ;
 
     /// 1) a. angle Â1
-    Vector3d C(end[0], begin[1], 0) ;
+    Eigen::Vector3d C(end[0], begin[1], 0) ;
 
     // ||A1C||
     double a=(begin[0]-C[0]) * (begin[0]-C[0]) ;
@@ -831,7 +831,7 @@ namespace Avogadro
 
 /*
     // b. angle Â2
-    Vector3d D( 0, begin[1], end[2] ) ;
+    Eigen::Vector3d D( 0, begin[1], end[2] ) ;
 
     // ||A2D||
     a = (begin[1]-D[1]) * (begin[1]-D[1]) ;
@@ -883,7 +883,7 @@ namespace Avogadro
 
 /*
     // c. angle Â3
-    Vector3d E( end[0], 0, begin[2] ) ;
+    Eigen::Vector3d E( end[0], 0, begin[2] ) ;
 
     // ||A3E||
     a = (begin[0]-E[0]) * (begin[0]-E[0]) ;
@@ -1286,7 +1286,7 @@ namespace Avogadro
     * @param drawEndAtom A boolean to draw or not the 2nd atom.
     * @param drawBond A boolean to draw or not the bond.
     */
-  void WmTool::renderAtomBond( const Vector3d& beginAtom, const Vector3d& endAtom, bool drawBeginAtom, bool drawEndAtom, bool drawBond )
+  void WmTool::renderAtomBond( const Eigen::Vector3d& beginAtom, const Eigen::Vector3d& endAtom, bool drawBeginAtom, bool drawEndAtom, bool drawBond )
   {
     /*
     cout << "atom begin:[" << beginAtom[0] << ";" << beginAtom[1] << ";" << beginAtom[2]  << "]" << endl ;
@@ -1466,8 +1466,8 @@ namespace Avogadro
       norm = m_vector[2].norm() ;
 
       // Calculate the angle between the atoms.
-      Vector3d v1=*(m_atomForDistDiedre[2]->pos()) - *(m_atomForDistDiedre[1]->pos()) ;
-      Vector3d v2=*(m_atomForDistDiedre[2]->pos()) - *(m_atomForDistDiedre[3]->pos()) ;
+      Eigen::Vector3d v1=*(m_atomForDistDiedre[2]->pos()) - *(m_atomForDistDiedre[1]->pos()) ;
+      Eigen::Vector3d v2=*(m_atomForDistDiedre[2]->pos()) - *(m_atomForDistDiedre[3]->pos()) ;
       m_angle[1] = acos(v1.normalized().dot(v2.normalized()));
       m_angle[1] *= m_180PI ;
 
@@ -1476,7 +1476,7 @@ namespace Avogadro
       double cSq=m_vector[2].norm()*m_vector[2].norm() ;
 
 
-      Vector3d v=*(m_atomForDistDiedre[1]->pos()) - *(m_atomForDistDiedre[3]->pos()) ;
+      Eigen::Vector3d v=*(m_atomForDistDiedre[1]->pos()) - *(m_atomForDistDiedre[3]->pos()) ;
       double bSq=v.norm()*v.norm() ;
 
       cout << "norm:" << v.norm() << endl ;
@@ -1544,13 +1544,13 @@ namespace Avogadro
       calculateParameters() ;
       //puts( "After calculateParameters() ;" ) ;
 
-      Vector3d btza=m_widget->camera()->backTransformedZAxis() ;
+      Eigen::Vector3d btza=m_widget->camera()->backTransformedZAxis() ;
       int wh=m_widget->height() ;
       
       QString msg ;
       string tmp1, tmp2 ;
       ostringstream oss ;
-      Vector3d textRelPos ;
+      Eigen::Vector3d textRelPos ;
       float r,g,b ;
 
       
@@ -1637,7 +1637,7 @@ namespace Avogadro
 
 
           // Draw the angle.
-          const Vector3d *origin=m_atomForDistDiedre[1]->pos() ;
+          const Eigen::Vector3d *origin=m_atomForDistDiedre[1]->pos() ;
           double radius=m_widget->radius(m_atomForDistDiedre[1])+0.2 ;
 
           glEnable(GL_BLEND);
@@ -1718,7 +1718,7 @@ namespace Avogadro
     * @param g Green composant.
     * @param b Blue composant.
     */
-  void WmTool::displayMsgInRenderZone( const Vector3d& pos, QString msg, QFont font, float r, float g, float b )
+  void WmTool::displayMsgInRenderZone( const Eigen::Vector3d& pos, QString msg, QFont font, float r, float g, float b )
   {
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
     glColor3f( r, g, b ) ;
@@ -1764,7 +1764,7 @@ namespace Avogadro
     * @param g Green composant.
     * @param b Blue composant.
     */
-  void WmTool::displayMsgOnScreen( const Vector3d& pos, QString msg, QFont font, float r, float g, float b )
+  void WmTool::displayMsgOnScreen( const Eigen::Vector3d& pos, QString msg, QFont font, float r, float g, float b )
   {
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
     glColor3f( r, g, b ) ;
@@ -1773,7 +1773,7 @@ namespace Avogadro
     QGLWidget *myWidget=dynamic_cast<QGLWidget*>(m_widget) ;
     if( myWidget != NULL )
     {
-      Vector3d proj=m_widget->camera()->project(pos) ;
+      Eigen::Vector3d proj=m_widget->camera()->project(pos) ;
       QPoint p( (int)proj[0], (int)proj[1] ) ;
       myWidget->renderText( (int)pos.x(), (int)pos.y(), msg, font ) ;
     }
@@ -1807,7 +1807,7 @@ namespace Avogadro
     //glColor3f( 1.0, 1.0, 1.0 ) ;
     //msg="Avo::Painter : DrawText() 2" ;
     // Origin : center screen.
-    //m_wPainter->drawText( Vector3d(0,0,0), msg, myFont ) ;
+    //m_wPainter->drawText( Eigen::Vector3d(0,0,0), msg, myFont ) ;
     //glPopAttrib() ;
    
     // 3.0 ! Painter class isn't a derived class of QPainter.

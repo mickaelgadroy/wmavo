@@ -29,8 +29,8 @@
 const double WmAvo::m_PI=(double)103993/(double)33102 ; // pi approximation.
 //const double WmAvo::m_PI=((double)20)*atan(((double)1)/((double)7))+((double)8)*atan((double)3/(double)79) ; // pi value approximation by Euler.
 const double WmAvo::m_PI180=m_PI/(double)180 ;
-const double WmAvo::m_180PI=(double)180/m_PI ;
-const Vector3d WmAvo::m_refPoint0(Vector3d(0., 0., 0.)) ;
+const double WmAvo::m_180PI=(double)180/M_PI ;
+const Eigen::Vector3d WmAvo::m_refPoint0(Eigen::Vector3d(0., 0., 0.)) ;
 const int WmAvo::m_XScreen=QApplication::desktop()->width() ;
 const int WmAvo::m_YScreen=QApplication::desktop()->height() ;
 
@@ -72,7 +72,7 @@ WmAvo::WmAvo( int operatingMode ) :
   m_wmRumble = new WmRumble(this) ;
 
   // Smoothing.
-  m_smoothXY = new WIWO<Vector3d>(WMAVO_SMOOTH) ;
+  m_smoothXY = new WIWO<Eigen::Vector3d>(WMAVO_SMOOTH) ;
   m_lastSmooth = m_refPoint0 ;
   m_diffSmooth = m_refPoint0 ;
   m_diffPos = m_refPoint0 ;
@@ -86,10 +86,10 @@ WmAvo::WmAvo( int operatingMode ) :
   // Calibration & Co.
   //m_hitList.clear() ;
 
-  m_smoothedGravCalFile = new WIWO<Vector3d>(10) ;
-  m_sumSmoothGravCal = Vector3d(0,0,0) ;
-  m_smoothedOrient = new WIWO<Vector3d>(10) ;
-  m_sumSmoothOrient = Vector3d(0,0,0) ;
+  m_smoothedGravCalFile = new WIWO<Eigen::Vector3d>(10) ;
+  m_sumSmoothGravCal = Eigen::Vector3d(0,0,0) ;
+  m_smoothedOrient = new WIWO<Eigen::Vector3d>(10) ;
+  m_sumSmoothOrient = Eigen::Vector3d(0,0,0) ;
 
   m_nbTickBySecond = 0 ;
   m_t1 = m_time.elapsed() ;
@@ -145,13 +145,13 @@ int WmAvo::wmConnect()
   {
     cout << "Searching for wiimotes... Turn them on !" << endl ;
     cout << "Press 1+2 !" << endl ;
-    nbFound = m_wii->Find( WMAVO_CONNECTION_TIMEOUT ) ;
+    nbFound = m_wii->Find( (int)WMAVO_CONNECTION_TIMEOUT ) ;
     //cout << "Found " << nbFound << " wiimotes" << endl ;
 
     if( nbFound > 0 ) // !!!
     {
       //cout << "Connecting to wiimotes..." << endl ;
-      vector<CWiimote*>& wms=m_wii->Connect() ;
+      std::vector<CWiimote*>& wms=m_wii->Connect() ;
       nbConnect = wms.size() ;
       wm = wms.at(0) ;
     }
@@ -221,7 +221,7 @@ bool WmAvo::wmPoll()
   if( m_wmGetWiimote )
   {
     m_mutex->lock() ;
-    isPoll = m_wii->Poll() ;
+    isPoll = (m_wii->Poll()==0?false:true) ;
     m_mutex->unlock() ;
 
     //m_timeTmp2 = m_timeTmp1 ;
@@ -258,17 +258,19 @@ bool WmAvo::wmPoll()
         {
           if( m_wm->ExpansionDevice.GetType() == m_wm->ExpansionDevice.TYPE_NUNCHUK )  // No concurrence.
           {
-            puts( "case CWiimote::EVENT_NUNCHUK_INSERTED:1" ) ;
+            puts( "case CWiimote::EVENT_NUNCHUK_INSERTED:" ) ;
             m_wmNunchuk = &(m_wm->ExpansionDevice.Nunchuk) ;
             m_wmGetNunchuk = true ;
           }
         }
-        puts( "case CWiimote::EVENT_NUNCHUK_INSERTED:2" ) ;
         break ;
 
       case CWiimote::EVENT_NUNCHUK_REMOVED:
         m_wmNunchuk = NULL ;
         m_wmGetNunchuk = false ;
+        m_angleNcJoystickCosDeg = 0 ;
+        m_angleNcJoystickSinDeg = 0 ;
+        WMAVO_SETOFF( WMAVO_CAM_ROTATE_BYNC ) ;
         //reloadWiimotes = 1;
         puts( "case CWiimote::EVENT_NUNCHUK_REMOVED:" ) ;
         break ;
@@ -285,6 +287,11 @@ bool WmAvo::wmPoll()
       case CWiimote::EVENT_READ_DATA :
         //cout << "EVENT_READ_DATA" << endl ;
         break ;
+
+      case CWiimote::EVENT_GUITAR_HERO_3_CTRL_REMOVED :
+      case CWiimote::EVENT_GUITAR_HERO_3_CTRL_INSERTED :
+      case CWiimote::EVENT_CLASSIC_CTRL_REMOVED :
+      case CWiimote::EVENT_CLASSIC_CTRL_INSERTED :
       default:
         //cout << "default" << endl ;
         break ;
@@ -471,7 +478,7 @@ void WmAvo::wmSetSensitive( int wmSensitive )
   * Get values : [0;1024] [0;760] with "jump problem".
   * @return The position targeted by the Wiimote.
   */
-Vector3d WmAvo::wmGetIrCursor()
+Eigen::Vector3d WmAvo::wmGetIrCursor()
 {
   if( m_wm == NULL )
     return m_refPoint0 ;
@@ -517,8 +524,8 @@ Vector3d WmAvo::wmGetIrCursor()
   */
 bool WmAvo::wmGetSmoothedCursor()
 {
-  int a=(m_wmCurrentIrCursorPos[0]>m_wmLastIrCursorPos[0] ? m_wmCurrentIrCursorPos[0]-m_wmLastIrCursorPos[0] : m_wmLastIrCursorPos[0]-m_wmCurrentIrCursorPos[0] ) ;
-  int b=(m_wmCurrentIrCursorPos[1]>m_wmLastIrCursorPos[1] ? m_wmCurrentIrCursorPos[1]-m_wmLastIrCursorPos[1] : m_wmLastIrCursorPos[1]-m_wmCurrentIrCursorPos[1] ) ;
+  int a=(int)(m_wmCurrentIrCursorPos[0]>m_wmLastIrCursorPos[0] ? m_wmCurrentIrCursorPos[0]-m_wmLastIrCursorPos[0] : m_wmLastIrCursorPos[0]-m_wmCurrentIrCursorPos[0] ) ;
+  int b=(int)(m_wmCurrentIrCursorPos[1]>m_wmLastIrCursorPos[1] ? m_wmCurrentIrCursorPos[1]-m_wmLastIrCursorPos[1] : m_wmLastIrCursorPos[1]-m_wmCurrentIrCursorPos[1] ) ;
 
   m_lastPosSmooth = m_currentPosSmooth ;
 
@@ -531,7 +538,7 @@ bool WmAvo::wmGetSmoothedCursor()
   {
     // Initiate to zero ...
     /*
-    m_diffPos = Vector3d(0,0,0) ;
+    m_diffPos = Eigen::Vector3d(0,0,0) ;
 
     if( m_smoothXY->isFull() )
       m_lastSmooth -= m_smoothXY->getQueue() ;
@@ -632,9 +639,9 @@ float WmAvo::wmGetAcc()
     bool isPM=m_wm->IR.IsInPrecisionMode() ;
 
     if( isPM )
-      return 0.03 ;
+      return 0.03f ;
     else
-      return 0.1 ; 
+      return 0.1f ; 
   }
 }
 
@@ -843,7 +850,7 @@ void WmAvo::calibrateCamTranslateDist( float angle, float magnitude )
   * @param angle The sens of the direction takes by the Nunchuk joystick
   * @param magnitude The magnitude takes by the joystick
   */
-void WmAvo::calibrateCamZoomDist( float angle, float magnitude )
+void WmAvo::calibrateCamZoomDist( float angle, float /*magnitude*/ )
 {
   // Manage rotation joystick.
   double angleJoyDeg = -(angle-90.0) ; // Calibrate degres value to look like unit circle ((fr)cercle trigonométrique).

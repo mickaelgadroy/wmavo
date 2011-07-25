@@ -2,10 +2,11 @@
 set( PLUGIN_NAME wmextension )
 
 # wmextension plugin source files.
-set( wmavoconst_include_dir ../ ) # .h (constants & revision)
+set( wmavoconst_include_dir ../ ) # .h (constants & revision & others)
 set( wmtool_include_dir ../tool/src ) # .h (wmtool plugin)
-set( undocommand_include_dir src/undo_command ) # .h (undocommand)
-set( tools_include_dir src/tools ) # .h (wiwo, contextmenu, action_modified ...)
+set( avotoolbox_include_dir src/avo_toolbox ) # .h (moleculemanipulation ...)
+set( toolbox_include_dir src/toolbox ) # .h (wiwo ...)
+set( qtextended_include_dir src/qt_extended ) # .h (qundo_ex, qaction_ex ...)
 
 set( wiiuse_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/wiiuse_wiiusecpp" ) # root directory of wiiuse/wiiusecpp files.
 set( wiiuse_include_dir "${wiiuse_dir}/wiiuse/src" ) # .h
@@ -42,8 +43,13 @@ if( "${LINK_LIBS}" STREQUAL "avogadro" )
 # - add "add_subdirectory( wmavo/src/ex )" in : [avogadro_path]/libavogadro/src/extensions/CMakeLists.txt
 
   # The Meta-Object Compiler, moc, is the program that handles Qt's C++ extensions.
-  set( in_MOC_SRC src/wmextension.cpp src/wmavo_thread.cpp src/wmavo_rumble.cpp src/undo_command/undocommand.cpp src/tools/context_menu.cpp src/tools/action_modified.cpp)
-  set( in_MOC_SRC ${in_MOC_SRC} src/wmavo.cpp ) # Add file to include in project, but it does not need moc file ...
+  set( in_MOC_SRC src/wmextension.cpp src/wmavo_thread.cpp src/wmavo_rumble.cpp )
+  #set( in_MOC_SRC ${in_MOC_SRC} src/wmavo.cpp ) # Add file to include in project, but it does not need moc file ...
+  set( in_MOC_SRC ${in_MOC_SRC} src/wrapper_chemicalcmd_to_avoaction.cpp )
+  set( in_MOC_SRC ${in_MOC_SRC} src/contextmenu_to_avoaction.cpp )
+  set( in_MOC_SRC ${in_MOC_SRC} src/avo_toolbox/moleculemanipulation.cpp )
+  #set( in_MOC_SRC ${in_MOC_SRC} src/avo_toolbox/undocommand.cpp src/avo_toolbox/constraintsmodel.cpp )
+  set( in_MOC_SRC ${in_MOC_SRC} src/qt_extended/qmenu_ex.cpp src/qt_extended/qaction_ex.cpp src/qt_extended/qundo_ex.cpp )
   set( in_UIS_H "" )
   set( in_RC_SCRS "" )
   
@@ -59,8 +65,9 @@ if( "${LINK_LIBS}" STREQUAL "avogadro" )
   include_directories( ${wmtool_include_dir} )
   include_directories( ${wiiuse_include_dir} )
   include_directories( ${wiiusecpp_include_dir} )
-  include_directories( ${undocommand_include_dir} )
-  include_directories( ${tools_include_dir} )
+  include_directories( ${qtextended_include_dir} )
+  include_directories( ${toolbox_include_dir} )
+  include_directories( ${avotoolbox_include_dir} )
 
   # ".dll"  
   link_directories( ${wiiuse_lib_dir} )
@@ -158,7 +165,13 @@ else()
   
     
   # The Meta-Object Compiler, moc, is the program that handles Qt's C++ extensions.
-  set( in_MOC_H src/wmextension.h src/wmavo_thread.h src/wmavo_rumble.h src/undo_command/undocommand.h src/tools/context_menu.h src/tools/action_modified.h )
+  set( in_MOC_H src/wmextension.h src/wmavo_thread.h src/wmavo_rumble.h )
+  #set( in_MOC_H ${in_MOC_H} src/wmavo.h ) # Add file to include in project, but it does not need moc file ...
+  set( in_MOC_H ${in_MOC_H} src/wrapper_chemicalcmd_to_avoaction.h )
+  set( in_MOC_H ${in_MOC_H} src/contextmenu_to_avoaction.h )
+  set( in_MOC_H ${in_MOC_H} src/avo_toolbox/moleculemanipulation.h )
+  #set( in_MOC_H ${in_MOC_H} src/avo_toolbox/undocommand.h src/avo_toolbox/constraintsmodel.h )
+  set( in_MOC_H ${in_MOC_H} src/qt_extended/qmenu_ex.h src/qt_extended/qaction_ex.h src/qt_extended/qundo_ex.h )
   set( in_UIS_H "" )
   set( in_RC_SCRS "" )
   
@@ -187,8 +200,9 @@ else()
   include_directories( ${wmtool_include_dir} )
   include_directories( ${wiiuse_include_dir} )
   include_directories( ${wiiusecpp_include_dir} )
-  include_directories( ${undocommand_include_dir} )
-  include_directories( ${tools_include_dir} )
+  include_directories( ${qtextended_include_dir} )
+  include_directories( ${toolbox_include_dir} )
+  include_directories( ${avotoolbox_include_dir} )
   include_directories( ${OPENBABEL2_INCLUDE_DIR} )
 
   # ".dll"

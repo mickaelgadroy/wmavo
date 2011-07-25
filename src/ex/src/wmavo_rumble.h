@@ -22,23 +22,12 @@
 *******************************************************************************/
 
 
+#pragma once
 #ifndef __WMAVO_RUMBLE_H__
 #define __WMAVO_RUMBLE_H__
 
-#ifdef _WIN32
-#pragma warning( disable : 4365 ) // conversion from 'x' to 'y', signed/unsigned mismatch
-#pragma warning( disable : 4820 ) // 'x' bytes padding added after data member '...'
-#pragma warning( disable : 4668 ) // '...' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
-#pragma warning( disable : 4514 ) // '...' : unreferenced inline function has been removed
-#pragma warning( disable : 4738 ) // storing 32-bit float result in memory, possible loss of performance
-#pragma warning( disable : 4710 ) // function not inlined
-#pragma warning( disable : 4626 ) // '...' : assignment operator could not be generated because a base class assignment operator is inaccessible
-#pragma warning( disable : 4625 ) // '...' : copy constructor could not be generated because a base class copy constructor is inaccessible
-
-#pragma warning( push, 0 )
-#endif
-
-#include <wmavo_const.h>
+#include "warning_disable_begin.h"
+#include "wmavo_const.h"
 #include "wmavo.h"
 
 #include <QThread>
@@ -46,12 +35,9 @@
 #include <QAtomicInt>
 
 #include <iostream>
+#include "warning_disable_end.h"
 
-#ifdef _WIN32
-#pragma warning( pop )
-#endif
-
-using namespace std ;
+//using namespace std ;
 
 // N.B. :
 // Generating src/moc_wmavo.cxx !
