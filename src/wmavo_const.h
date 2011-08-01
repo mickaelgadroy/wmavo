@@ -28,6 +28,7 @@
 #ifndef __WMAVO_CONST_H__
 #define __WMAVO_CONST_H__
 
+
 ///**********************************************************
 /// Naming plugins, descriptions ...
 /// Specific for wmextension.h & wmtool.h.

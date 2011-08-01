@@ -627,7 +627,7 @@ namespace Avogadro
     {
       double max=WMAVOTH_DIST_MAX, min=WMAVOTH_DIST_MIN, act=max+1 ; // Angstrom distance.
       Eigen::Vector3d dist ;
-      Atom *a=NULL
+      Atom *a=NULL ;
       
       a = m_moleculeManip->calculateNearestAtom( posAtom, atomNotUse ) ;
 

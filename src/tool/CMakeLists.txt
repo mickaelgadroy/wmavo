@@ -3,6 +3,8 @@ set( PLUGIN_NAME wmtool )
 
 # wmextension plugin source files.
 set( wmavoconst_include_dir ../ ) # .h (constants & revision)
+set( rendering_include_dir src/rendering ) # .h (drawObject & Co)
+set( inputdevice_include_dir src/inputdevice ) # .h (constants & revision)
 
 
 if( "${LINK_LIBS}" STREQUAL "avogadro" )
@@ -18,14 +20,17 @@ if( "${LINK_LIBS}" STREQUAL "avogadro" )
   
   # The Meta-Object Compiler, moc, is the program that handles Qt's C++ extensions.
   set( in_MOC_SRC src/wmtool.cpp )
+  set( in_MOC_SRC ${in_MOC_SRC} src/rendering/drawsimpleobject.h src/rendering/drawobject.h src/rendering/rendertext.cpp src/rendering/feature_distanceanglediedre.cpp)  
   set( in_UIS_H "" )
-  set( in_RC_SCRS src/wmtool.qrc )
+  set( in_RC_SCRS src/inputdevice/wmtool.qrc )
   
   ## Set up the build environment (to know where are .h, ".dll" and some files)
 
   # Let to use .h directly : 
   # ex. : #include <wmavo_const.h> instead of <../../wmavo_const.h>
   include_directories( ${wmavoconst_include_dir} )
+  include_directories( ${rendering_include_dir} )
+  include_directories( ${inputdevice_include_dir} )
  
   # Generate moc, specify install directories ...
   avogadro_plugin( ${PLUGIN_NAME} "${in_MOC_SRC}" "${in_UIS_H}" "${in_RC_SCRS}" )
@@ -103,8 +108,9 @@ else()
     
   # The Meta-Object Compiler, moc, is the program that handles Qt's C++ extensions.
   set( in_MOC_H src/wmtool.h )
+  set( in_MOC_H ${in_MOC_SRC} src/rendering/drawsimpleobject.h src/rendering/drawobject.h src/rendering/rendertext.h src/rendering/distanceanglediedre.h)
   set( in_UIS_H "" )
-  set( in_RC_SCRS src/wmtool.qrc )
+  set( in_RC_SCRS src/inputdevice/wmtool.qrc )
   
   # All source file (recursif search) (wmavo, fifo ...).
   # Add the forgotten files for the moc generation.
@@ -119,6 +125,8 @@ else()
   # Let to use .h directly : 
   # ex. : #include <wmavo_const.h> instead of <../../wmavo_const.h>
   include_directories( ${wmavoconst_include_dir} )
+  include_directories( ${rendering_include_dir} )
+  include_directories( ${inputdevice_include_dir} )
   include_directories( ${OPENBABEL2_INCLUDE_DIR} )
   
   # Other files.
