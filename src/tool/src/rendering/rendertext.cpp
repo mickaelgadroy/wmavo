@@ -92,7 +92,7 @@ void RenderText::setWmInfo( const InputDevice::WmDeviceData_from &wmData )
   * Set the current atomic number used for a new atom.
   * @param atomicNumber The new value of the current atomic number.
   */
-void RenderText::setAtomicNumberCurent( int atomicNumber )
+void RenderText::setAtomicNumberCurrent( int atomicNumber )
 {
   m_atomicNumberCur = atomicNumber ;
 }
@@ -128,12 +128,14 @@ void RenderText::drawWmInfo()
     QFontMetrics fontMetric( m_fontWmInfo ) ;
     QColor color( 255, 255, 255 ) ;
     QString msg ;
+    CWiimoteData *wm=m_wmDataFrom.getDeviceData() ;
+    bool isConnected=(wm!=NULL?wm->isConnected():false) ;
     int border=5 ;
     int height=fontMetric.height() ; //lineSpacing() ;
     int xB=10, yB=10+height ;
     int nbL=0, iH=0 ;
 
-    if( m_wmDataFrom.isConnected() )
+    if( isConnected )
       nbL = 4 ;
     else
       nbL = 2 ;
@@ -145,7 +147,7 @@ void RenderText::drawWmInfo()
     
     // 1
     msg = "Wiimote connected : " ;
-    if( m_wmDataFrom.isConnected() ) msg += "YES" ;
+    if( isConnected ) msg += "YES" ;
     else msg += tr("NO") ; //, Press 1+2") ;
     drawTextOnXY( QPoint(xB,yB), msg, m_fontWmInfo, color ) ;
     iH++ ;
@@ -155,17 +157,17 @@ void RenderText::drawWmInfo()
     drawTextOnXY( QPoint(xB,yB+height*iH), msg, m_fontWmInfo, color ) ;
     iH ++ ;
 
-    if( m_wmDataFrom.isConnected() )
+    if( isConnected )
     {
       int r,g,b ;
 
-      msg = tr("Nb detected LEDs : ") + QString::number(m_wmDataFrom.getNbDotsDetected()) ;
+      msg = tr("Nb detected LEDs : ") + QString::number(wm->IR.GetNumDots()) ;
       drawTextOnXY( QPoint(xB,yB+height*iH), msg, m_fontWmInfo, color ) ;
       iH++ ; 
 
-      msg = tr("Nb detected sources : ") + QString::number(m_wmDataFrom.getNbSourceDetected()) ;
-      if( m_wmDataFrom.getNbSourceDetected() == 1 ){ r=255; g=127; b=0; }
-      else if( m_wmDataFrom.getNbDotsDetected() == 0 ){ r=255; g=0; b=0; }
+      msg = tr("Nb detected sources : ") + QString::number(wm->IR.GetNumSources()) ;
+      if( wm->IR.GetNumSources() == 1 ){ r=255; g=127; b=0; }
+      else if( wm->IR.GetNumSources() == 0 ){ r=255; g=0; b=0; }
       else{ r=255; g=255; b=255; }
 
       drawTextOnXY( QPoint(xB,yB+height*iH), msg, m_fontWmInfo, QColor(r, g, b) ) ;

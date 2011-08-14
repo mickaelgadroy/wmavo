@@ -33,15 +33,16 @@
 #include "warning_disable_begin.h"
 #include <iostream>
 #include <Eigen/Core>
+#include <QObject>
 #include <QPoint>
 #include "warning_disable_end.h"
 
 namespace WrapperInputToDomain
 {
-  class WrapperData
+  class WrapperData_from
   {
 
-    protected :
+  public :
     struct wrapperActions_t
     {
       int actionsGlobal ;
@@ -67,7 +68,7 @@ namespace WrapperInputToDomain
         pos3dCur=Eigen::Vector3d(0,0,0) ;
         pos3dLast=Eigen::Vector3d(0,0,0) ;
       }
-    } m_posPointed ;
+    } ;
 
     struct positionCamera_t
     {
@@ -82,37 +83,48 @@ namespace WrapperInputToDomain
           distanceTranslate[i]=0 ;
         }
       }
-    } m_posCam ;
+    } ;
 
 
   public :
-    WrapperData() ;
-    virtual ~WrapperData() ;
+    WrapperData_from() ;
+    virtual ~WrapperData_from() ;
 
     inline virtual unsigned int getWrapperType(){ return WRAPPER_ID_NOTHING ; } ;
     inline wrapperActions_t getWrapperAction(){ return m_wrapActions ; } ;
     inline positionPointed_t getPositionPointed(){ return m_posPointed ; } ;
     inline positionCamera_t getPositionCamera(){ return m_posCam ; } ;
 
+    inline void setWrapperAction( const wrapperActions_t &action ){ m_wrapActions = action ; } ;
+    inline void setPositionPointed( const positionPointed_t &pos ){ m_posPointed = pos ; } ;
+    inline void setPositionCamera( const positionCamera_t &pos ){ m_posCam = pos ; } ;
+
   protected :
 
     wrapperActions_t m_wrapActions ;
-   
-  
+    positionCamera_t m_posCam ;
+    positionPointed_t m_posPointed ;
+
   };
 
+  class WrapperData_to
+  {
+  public :
+    WrapperData_to() ;
+    virtual ~WrapperData_to() ;
+    inline virtual unsigned int getWrapperType(){ return WRAPPER_ID_NOTHING ; } ;
+  } ;
 
-  class Wrapper
+
+  class Wrapper : public QObject
   {
   public :
     Wrapper() ;
     virtual ~Wrapper() ;
 
-    virtual unsigned int getWrapperType(){ return WRAPPER_ID_NOTHING ; } ;
-    virtual WrapperData* getWrapperData(){ return m_wrapData ; };
-
-  protected :
-    WrapperData *m_wrapData ;
+    inline virtual unsigned int getWrapperType(){ return WRAPPER_ID_NOTHING ; } ;
+    inline virtual WrapperData_from* getWrapperDataFrom(){ return NULL ; };
+    //inline virtual void setWrapperDataTo( const WrapperData_to& ){} ;
   };
 
 }

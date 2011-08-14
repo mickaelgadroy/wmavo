@@ -38,7 +38,7 @@
 #include "warning_disable_end.h"
 
 
-class RenderText : protected DrawSimpleObject
+class RenderText : public DrawSimpleObject
 {
   Q_OBJECT
 
@@ -46,7 +46,7 @@ class RenderText : protected DrawSimpleObject
     void setSizeRatioFont( int ratio ) ; //< Change the size of all the font.
     void setSizeRatioFont( float ratio ) ;
     void setWmInfo( const InputDevice::WmDeviceData_from &wmDataFrom ) ;
-    void setAtomicNumberCurent( int atomicNumber ) ;
+    void setAtomicNumberCurrent( int atomicNumber ) ;
     void setMsg( const QList<QString> &strList, const QPoint &pos, int msTime=0 ) ;
    
   public :

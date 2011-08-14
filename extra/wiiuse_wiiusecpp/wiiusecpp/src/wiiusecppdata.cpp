@@ -40,6 +40,7 @@ int CButtonBaseData::isPressed(int Button)   { return (mpBtns & Button) == Butto
 int CButtonBaseData::isHeld(int Button)      { return (mpBtnsHeld & Button) == Button; }
 int CButtonBaseData::isReleased(int Button)  { return (mpBtnsReleased & Button) == Button; }
 int CButtonBaseData::isJustPressed(int Button){ return (((mpBtns & Button)==Button) && ((mpBtnsHeld & Button)!=Button)) ; }
+int CButtonBaseData::isJustChanged()          { return (mpBtnsHeld & mpBtns) == mpBtns; }
 
 CButtonsData::CButtonsData() : CButtonBaseData() {}
 CButtonsData::CButtonsData( const CButtons &cb ) : CButtonBaseData(cb) {}
@@ -198,21 +199,30 @@ void CAccelerometerData::GetTmp( double &tmp0, double &tmp1, double &tmp2)
   tmp0 = mpValues.tmp1 ;tmp1 = mpValues.tmp2 ;tmp2 = mpValues.tmp3 ;
 }
 
-CIRDotData::CIRDotData() : mpDotPtr(0) {}
-CIRDotData::CIRDotData( ir_dot_t &ird ) : mpDotPtr(&ird) {}
+CIRDotData::CIRDotData()
+{
+  mpDotPtr.order = 0 ;
+  mpDotPtr.rx = 0 ;
+  mpDotPtr.ry = 0 ;
+  mpDotPtr.size = 0 ;
+  mpDotPtr.visible = 0 ;
+  mpDotPtr.x = 0 ;
+  mpDotPtr.y = 0 ;
+}
+CIRDotData::CIRDotData( const ir_dot_t &ird ) : mpDotPtr(ird) {}
 CIRDotData::~CIRDotData(){}
-int CIRDotData::isVisible(){ return mpDotPtr->visible ; }
-int CIRDotData::GetSize(){ return mpDotPtr->size ; }
-int CIRDotData::GetOrder(){ return mpDotPtr->order ; }
+int CIRDotData::isVisible(){ return mpDotPtr.visible ; }
+int CIRDotData::GetSize(){ return mpDotPtr.size ; }
+int CIRDotData::GetOrder(){ return mpDotPtr.order ; }
 void CIRDotData::GetCoordinate(int &X, int &Y)
 {
-    X = mpDotPtr->x;
-    Y = mpDotPtr->y;
+    X = mpDotPtr.x;
+    Y = mpDotPtr.y;
 }
 void CIRDotData::GetRawCoordinate(int &X, int &Y)
 {
-  X = mpDotPtr->rx ;
-  Y = mpDotPtr->ry ;
+  X = mpDotPtr.rx ;
+  Y = mpDotPtr.ry ;
 }
 
 
@@ -354,8 +364,11 @@ CExpansionDevice::ExpTypes CExpansionDeviceData::GetType(){ return (CExpansionDe
 
 CWiimoteData::CWiimoteData() :
   mpUnid(0), mpLEDs(0), mpBattery(0), 
-  mpEvent(CWiimote::EVENT_NONE), mpState(0), mpFlags(0)
+  mpEvent(CWiimote::EVENT_NONE), mpState(0), mpFlags(0),
+  mpIsConnected(false), mpIsPolled(false), mpIsPolledButton(false),
+  mpIsPolledAcc(false), mpIsPolledIR(false)
 {}
+
 CWiimoteData::CWiimoteData( const CWiimote &cw ) :
   IR(cw.IR), Buttons(cw.Buttons), 
   Accelerometer(cw.Accelerometer), ExpansionDevice(cw.ExpansionDevice)
@@ -368,6 +381,11 @@ CWiimoteData::CWiimoteData( const CWiimote &cw ) :
     mpEvent = (CWiimote::EventTypes)cw.mpWiimotePtr->event ;
     mpState = cw.mpWiimotePtr->state ;
     mpFlags = cw.mpWiimotePtr->flags ;
+    mpIsPolled = cw.mpIsConnected ;
+    mpIsPolled = cw.mpIsPolled ;
+    mpIsPolledButton = cw.mpIsPolledButton ;
+    mpIsPolledAcc = cw.mpIsPolledAcc ;
+    mpIsPolledIR = cw.mpIsPolledIR ;
   }
   else
   {
@@ -377,6 +395,11 @@ CWiimoteData::CWiimoteData( const CWiimote &cw ) :
     mpEvent = CWiimote::EVENT_NONE ;
     mpState = 0 ;
     mpFlags = 0 ;
+    mpIsConnected = false ;
+    mpIsPolled = false ;
+    mpIsPolledButton = false ;
+    mpIsPolledAcc = false ;
+    mpIsPolledIR = false ;
   }
 }
 
@@ -387,13 +410,13 @@ CWiimote::EventTypes CWiimoteData::GetEvent(){ return mpEvent ; }
 int CWiimoteData::GetID(){ return mpUnid ; }
 int CWiimoteData::GetState(){ return mpState ; }
 int CWiimoteData::GetFlags(){ return mpFlags ; }
-int CWiimoteData::isUsingACC(){ return (mpState & 0x0020) != 0 ; }
-int CWiimoteData::isUsingEXP(){ return (mpState & 0x0040) != 0 ; }
-int CWiimoteData::isUsingIR(){ return (mpState & 0x0080) != 0 ; }
-int CWiimoteData::isUsingSpeaker(){ return (mpState & 0x0100) != 0 ; }
-int CWiimoteData::isLEDSet(int LEDNum)
+bool CWiimoteData::isUsingACC(){ return (mpState & 0x0020) != 0 ; }
+bool CWiimoteData::isUsingEXP(){ return (mpState & 0x0040) != 0 ; }
+bool CWiimoteData::isUsingIR(){ return (mpState & 0x0080) != 0 ; }
+bool CWiimoteData::isUsingSpeaker(){ return (mpState & 0x0100) != 0 ; }
+bool CWiimoteData::isLEDSet(int LEDNum)
 {
-  int result=0 ;
+  bool result=false ;
 
   switch(LEDNum)
   {
@@ -412,4 +435,29 @@ int CWiimoteData::isLEDSet(int LEDNum)
       result = 0;
   }
   return result;
+}
+
+bool CWiimoteData::isConnected()
+{
+  return mpIsConnected ;
+}
+
+bool CWiimoteData::isPolled()
+{
+  return mpIsPolled ;
+}
+
+bool CWiimoteData::isPolledByIR()
+{
+  return mpIsPolledIR ;
+}
+
+bool CWiimoteData::isPolledByAcc()
+{
+  return mpIsPolledAcc ;
+}
+
+bool CWiimoteData::isPolledByButton()
+{
+  return mpIsPolledButton ;
 }

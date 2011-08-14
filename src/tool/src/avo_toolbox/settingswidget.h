@@ -1,6 +1,6 @@
 
 /*******************************************************************************
-  Copyright (C) 2011 Mickael Gadroy
+  Copyright (C) 2010,2011 Mickael Gadroy
 
   This file is part of WmAvo (WiiChem project)
   WmAvo - Integrate the Wiimote and the Nunchuk in Avogadro software for the
@@ -21,32 +21,45 @@
   along with WmAvo. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-#include "wrapper.h"
+#pragma once
+#ifndef __SETTINGSWIDGET_H__
+#define __SETTINGSWIDGET_H__
 
-namespace WrapperInputToDomain
+
+#include "warning_disable_begin.h"
+#include "variousfeatures.h"
+#include "wmavo_const.h"
+#include <QObject>
+#include <QCheckBox>
+#include <QLabel>
+#include <QGridLayout>
+#include <QSlider>
+#include "warning_disable_end.h"
+
+
+class SettingsWidget : public QObject
 {
-  WrapperData_from::WrapperData_from()
-    : m_wrapActions(), m_posPointed(), m_posCam()
-  {
-  }
+  Q_OBJECT
 
-  WrapperData_from::~WrapperData_from()
-  {
-  }
+public : 
+  SettingsWidget() ;
+  ~SettingsWidget() ;
 
-  WrapperData_to::WrapperData_to()
-  {
-  }
+  inline QWidget* getSettingsWidget(){ return m_settingsWidget ; } ;
+  inline QSlider* getSliderIRSensitive(){ return m_irSensitiveSlider ; } ;
+  inline QSlider* getSliderPointSizeFont(){ return m_wmPointSizeFontSlider ; } ;
+  inline QCheckBox* getCheckboxVibration(){ return m_checkBoxActivateVibration ; } ;
 
-  WrapperData_to::~WrapperData_to()
-  {
-  }
+private :
 
-  Wrapper::Wrapper()
-  {
-  }
+  void createSettingsWidget() ;
 
-  Wrapper::~Wrapper()
-  {
-  }
-}
+private :
+  QWidget *m_settingsWidget ; // (object)
+  QSlider *m_irSensitiveSlider ; // (object)
+  QSlider *m_wmPointSizeFontSlider ; // (object)
+  QCheckBox *m_checkBoxActivateVibration ; // (object)
+
+} ;
+
+#endif 

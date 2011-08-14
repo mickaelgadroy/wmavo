@@ -26,30 +26,106 @@
 #define __CHEMICALWRAPPER_H__
 
 #include "wrapper.h"
+#include "inputdevice.h"
+#include "wiwo_sem.h"
+#include "qthread_ex.h"
+
+#include "wiiusecpp.h"
+#include "wiiusecppdata.h"
+#include "wmtochem.h"
 
 namespace WrapperInputToDomain
 {
-  class ChemicalWrapData
+  class ChemicalWrapData_from : public WrapperData_from
   {
   public :
-    ChemicalWrapData() ;
-    virtual ~ChemicalWrapData() ;
+    ChemicalWrapData_from() ;
+    ~ChemicalWrapData_from() ;
 
     inline unsigned int getWrapperType(){ return WRAPPER_ID_CHEMICAL ; } ;
   };
 
-  // Chemical wrapper data.
-  class ChemicalWrap
+ 
+  class ChemicalWrapData_to
   {
   public :
-    ChemicalWrap() ;
+    ChemicalWrapData_to() ;
+    virtual ~ChemicalWrapData_to() ;
+
+    inline unsigned int getWrapperType(){ return WRAPPER_ID_CHEMICAL ; } ;
+    inline bool getOperatingMode( int &opMode_out )
+    { bool up=m_updateOpMode ; m_updateOpMode=false ;
+      opMode_out = m_operatingMode ; return up ; } ;
+    inline bool getMenuMode( bool &menuMode_out )
+    { bool up=m_updateMenuMode ; m_updateMenuMode=false ;
+      menuMode_out = m_menuMode ; return up ; } ;
+    inline bool getIRSensitive( int &irSensitive_out )
+    { bool up=m_updateIRSensitive ; m_updateIRSensitive=false ;
+      irSensitive_out = m_irSensitive ; return up ; } ;
+
+    inline void setOperatingMode( int opMode )
+    { m_operatingMode = opMode ; m_updateOpMode = true ; } ;
+    inline void setMenuMode( bool mode )
+    { m_menuMode = mode ; m_updateMenuMode = true ; } ;
+    inline void setIRSensitive( int sensitive )
+    { m_irSensitive = sensitive ; m_updateIRSensitive = true ; } ;
+
+    inline void resetUpdate()
+    { m_updateOpMode=false; m_updateMenuMode=false; m_updateIRSensitive=false; }
+
+  private :
+    int m_operatingMode ;
+    bool m_updateOpMode ;
+
+    bool m_menuMode ;
+    bool m_updateMenuMode ;
+
+    int m_irSensitive ;
+    bool m_updateIRSensitive ;
+  };
+
+
+  // Chemical wrapper data.
+  class ChemicalWrap : public Wrapper
+  {
+    Q_OBJECT // Signal need.
+
+  public :
+    ChemicalWrap( InputDevice::Device *dev ) ;
     virtual ~ChemicalWrap() ;
 
     inline unsigned int getWrapperType(){ return WRAPPER_ID_CHEMICAL ; } ;
-    inline ChemicalWrapData* getWrapperData(){ return m_chemWrapData ; } ;
+    ChemicalWrapData_from* getWrapperDataFrom() ; //< Blocking call.
+    void setWrapperDataTo( const ChemicalWrapData_to& data ) ; //< Blocking call.
+
+    bool connectAndStart() ;
+    void stopPoll() ;
+
+  private :
+    bool updateDataFrom() ;
+    bool updateDataTo() ;
+
+  public slots :
+    void runPoll() ;
+
+  signals :
+    void newActions() ;
 
   protected :
-    ChemicalWrapData* m_chemWrapData ;
+    /**
+      * @name Manage Chemical data.
+      * @{ */
+    InputDevice::Device *m_dev ;
+    WmToChem *m_wmToChem ;
+    WIWO_sem<ChemicalWrapData_from*> *m_cirBufferFrom ;
+    WIWO_sem<ChemicalWrapData_to*> *m_cirBufferTo ;
+    // @}
+
+    /** @name Manage thread.
+      * @{ */
+    QThread_ex m_wrapperThread ;
+    bool m_isRunning ;
+    // @}
   };
 
 }

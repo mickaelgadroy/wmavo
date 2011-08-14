@@ -1,6 +1,6 @@
 
 /*******************************************************************************
-  Copyright (C) 2011 Mickael Gadroy
+  Copyright (C) 2010,2011 Mickael Gadroy
 
   This file is part of WmAvo (WiiChem project)
   WmAvo - Integrate the Wiimote and the Nunchuk in Avogadro software for the
@@ -21,32 +21,5 @@
   along with WmAvo. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-#include "wrapper.h"
 
-namespace WrapperInputToDomain
-{
-  WrapperData_from::WrapperData_from()
-    : m_wrapActions(), m_posPointed(), m_posCam()
-  {
-  }
-
-  WrapperData_from::~WrapperData_from()
-  {
-  }
-
-  WrapperData_to::WrapperData_to()
-  {
-  }
-
-  WrapperData_to::~WrapperData_to()
-  {
-  }
-
-  Wrapper::Wrapper()
-  {
-  }
-
-  Wrapper::~Wrapper()
-  {
-  }
-}
+#include "qaction_ex.h"

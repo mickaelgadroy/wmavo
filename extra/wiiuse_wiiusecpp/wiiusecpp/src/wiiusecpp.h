@@ -56,19 +56,20 @@ class CButtonBase
 
 public:
     CButtonBase(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr);
-    ~CButtonBase() ;
+    virtual ~CButtonBase() ;
 
     int isPressed(int Button);
     int isHeld(int Button);
     int isReleased(int Button);
     int isJustPressed(int Button);
+    int isJustChanged() ;
 
 protected:
     CButtonBase() ;
     CButtonBase( const CButtonBase& bb ) ;
 
 private:
-    virtual short Cast(void *Ptr) {return *((short *)(Ptr));} // Inlined.
+    virtual inline short Cast(void *Ptr) {return *((short *)(Ptr));}
 
     void *mpBtnsPtr;
     void *mpBtnsHeldPtr;
@@ -98,7 +99,7 @@ public:
     };
 
     CButtons(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr);
-    ~CButtons() ;
+    virtual ~CButtons() ;
 
 private :
     CButtons() ;
@@ -118,7 +119,7 @@ public:
     };
 
     CNunchukButtons(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr);
-    ~CNunchukButtons() ;
+    virtual ~CNunchukButtons() ;
 
 protected :
     CNunchukButtons() ;
@@ -155,7 +156,7 @@ public:
     };
 
     CClassicButtons(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr);
-    ~CClassicButtons() ;
+    virtual ~CClassicButtons() ;
 
 private :
     CClassicButtons() ;
@@ -182,7 +183,7 @@ public:
     };
 
     CGH3Buttons(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr);
-    ~CGH3Buttons() ;
+    virtual ~CGH3Buttons() ;
 
 private :
     CGH3Buttons() ;
@@ -595,6 +596,7 @@ private:
 
 class CWiimote
 {
+  friend class CWii ;
   friend class CWiimoteData ;
 public:
     enum LEDS
@@ -665,6 +667,12 @@ public:
     int isUsingSpeaker();
     int isLEDSet(int LEDNum);
 
+    bool isConnected() ;
+    bool isPolled() ;
+    bool isPolledByIR() ;
+    bool isPolledByAcc() ;
+    bool isPolledByButton() ;
+
     void ReadData(unsigned char *Buffer, unsigned int Offset, unsigned int Length);
     void WriteData(unsigned int Address, unsigned char *Data, unsigned int Length);
 
@@ -693,6 +701,12 @@ private:
     struct wiimote_t *mpWiimotePtr; /* The pointer to the wm structure */
     int mpTempInt ; // Ref in the default constructor.
     float mpTempFloat ; // Ref in the default constructor.
+
+    bool mpIsConnected ;
+    bool mpIsPolled ;
+    bool mpIsPolledIR ;
+    bool mpIsPolledAcc ;
+    bool mpIsPolledButton ;
 };
 
 class CWii
@@ -723,9 +737,9 @@ public:
     int Find(int timeout) ;
     std::vector<CWiimote*>& Connect() ;
 
-    int Poll() ; //< Return if a button has been pressed.
-    void Poll( bool &updateButton_out, bool &updateAccelerometerData_out, bool &updateIRData_out ) ;
-      //< "Return" if buttons has been pressed, if accelemeter/ir data have changed.
+    int Poll() ; //< Return !0 if a button is just changed state.
+    int Poll( bool &updateButton_out, bool &updateAccelerometerData_out, bool &updateIRData_out ) ;
+      //< Return !0 if a button is just changed state, if accelemeter/ir data have changed.
 
 private:
     CWii( const CWii& cw ) ;

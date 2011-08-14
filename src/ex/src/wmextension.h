@@ -134,9 +134,6 @@ namespace Avogadro
       virtual QUndoCommand* performAction(QAction *action, GLWidget *widget) ;
       //@}
 
-      void adjustRumble( bool active, const Eigen::Vector3d *posAtom=NULL, Atom *atomNotUse=NULL ) ;
-          ///< Adjust rumble according to distance between the nearest atom.
-
       
 
     // Private methods.

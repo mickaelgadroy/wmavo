@@ -65,24 +65,39 @@ CButtonBase::~CButtonBase()
   mpBtnsReleasedPtr = NULL ;
 }
 
+
 int CButtonBase::isPressed(int Button)
 {
-    return (Cast(mpBtnsPtr) & Button) == Button;
+  // wiiuse -> events.c :
+  // buttons pressed now
+	// wm->btns = now ;
+  return (Cast(mpBtnsPtr) & Button) == Button;
 }
 
 int CButtonBase::isHeld(int Button)
 {
-    return (Cast(mpBtnsHeldPtr) & Button) == Button;
+  // wiiuse -> events.c :
+  // pressed now & were pressed, then held
+  // wm->btns_held = (now & wm->btnsPrevious);
+  return (Cast(mpBtnsHeldPtr) & Button) == Button;
 }
 
 int CButtonBase::isReleased(int Button)
 {
-    return (Cast(mpBtnsReleasedPtr) & Button) == Button;
+  // wiiuse -> events.c :
+  // were pressed or were held & not pressed now, then released
+	// wm->btns_released = ((wm->btns | wm->btns_held) & ~now);
+  return (Cast(mpBtnsReleasedPtr) & Button) == Button;
 }
 
 int CButtonBase::isJustPressed(int Button)
 {
-    return ((Cast(mpBtnsPtr) & Button) == Button) && ((Cast(mpBtnsHeldPtr) & Button) != Button);
+  return ((Cast(mpBtnsPtr) & Button) == Button) && ((Cast(mpBtnsHeldPtr) & Button) != Button);
+}
+
+int CButtonBase::isJustChanged()
+{
+  return (Cast(mpBtnsHeldPtr) & Cast(mpBtnsPtr)) == Cast(mpBtnsPtr) ;
 }
 
 /*
@@ -1205,7 +1220,9 @@ CWiimote::CWiimote() : // SWIG insisted it exist for the vectors. Hopefully it w
 
 CWiimote::CWiimote(struct wiimote_t *wmPtr) :
   IR(), Buttons(), Accelerometer(), ExpansionDevice(), 
-  mpWiimotePtr(NULL), mpTempInt(0), mpTempFloat(0)
+  mpWiimotePtr(NULL), mpTempInt(0), mpTempFloat(0),
+  mpIsConnected(false), mpIsPolled(false), mpIsPolledButton(false),
+  mpIsPolledAcc(false), mpIsPolledIR(false)
 {
   puts( "Constructor CWiimote par argument" ) ;
   if( wmPtr != NULL )
@@ -1218,7 +1235,9 @@ CWiimote::CWiimote(struct wiimote_t *wmPtr) :
 
 CWiimote::CWiimote(const CWiimote &copyin) : // Copy constructor to handle pass by value.
   IR(), Buttons(), Accelerometer(), ExpansionDevice(), 
-  mpWiimotePtr(NULL), mpTempInt(0), mpTempFloat(0)
+  mpWiimotePtr(NULL), mpTempInt(0), mpTempFloat(0),
+  mpIsConnected(false), mpIsPolled(false), mpIsPolledButton(false),
+  mpIsPolledAcc(false), mpIsPolledIR(false)
 {
   puts( "Constructor CWiimote par copie" ) ;
   mpWiimotePtr = copyin.mpWiimotePtr ;
@@ -1408,6 +1427,31 @@ int CWiimote::isLEDSet(int LEDNum)
   return result;
 }
 
+bool CWiimote::isConnected()
+{
+  return mpIsConnected ;
+}
+
+bool CWiimote::isPolled()
+{
+  return mpIsPolled ;
+}
+
+bool CWiimote::isPolledByIR()
+{
+  return mpIsPolledIR ;
+}
+
+bool CWiimote::isPolledByAcc()
+{
+  return mpIsPolledAcc ;
+}
+
+bool CWiimote::isPolledByButton()
+{
+  return mpIsPolledButton ;
+}
+
 CWiimoteData* CWiimote::copyData()
 {
   CWiimoteData *wm=NULL ;
@@ -1541,19 +1585,6 @@ CWiimote* CWii::GetByID( int UnID, int Refresh )
     return NULL ;
 }
 
-/*
-CWiimote& CWii::GetByID( int UnID )
-{
-	CWiimote *wm=NULL ;
-
-	if( UnID>=0 && UnID<4 )
-		wm = CWiimote( mpWiimoteArray[UnID] )  ; // No no no ...
-	else
-		wm = CWiimote( mpWiimoteArray[0] )  ;
-
-	return *wm ;
-}*/
-
 std::vector<CWiimote*>& CWii::GetWiimotes(int Refresh)
 {
     if(Refresh)
@@ -1586,41 +1617,61 @@ std::vector<CWiimote*>& CWii::Connect()
 
 int CWii::Poll()
 {
-    int poll=wiiuse_poll((struct wiimote_t**) mpWiimoteArray, mpWiimoteArraySize) ;
-
-    for( int i=0 ; i<mpWiimoteArraySize ; i++ )
-    {
-      if( poll )
-        mpWiimotesVector[i]->Accelerometer.calculateValues( true ) ;
-      else
-        mpWiimotesVector[i]->Accelerometer.calculateValues( false ) ;
-    }
-
-    return poll ;
+  bool a,b,c ;
+  return Poll(a,b,c) ; 
 }
 
-void CWii::Poll( bool &updateButton_out, bool &updateAccelerometerData_out, bool &updateIRData_out )
+int CWii::Poll( bool &updateButton_out, bool &updateAccelerometerData_out, bool &updateIRData_out )
 {
     bool isUpdated=false ;
-    double x,y, z ;
+    double x, y, z ;
     int poll=wiiuse_poll((struct wiimote_t**) mpWiimoteArray, mpWiimoteArraySize) ;
+    int a=0 ;
+
     updateButton_out = (poll==0?false:true) ;
-    updateAccelerometerData_out = false ;    
+    updateAccelerometerData_out = false ;
     updateIRData_out = false ;
 
     for( int i=0 ; i<mpWiimoteArraySize ; i++ )
     {
+      isUpdated = false ;
+
+      // Buttons updated.
+      a = mpWiimotesVector[i]->Buttons.isJustChanged() ;
+      if( a == 0 )
+        mpWiimotesVector[i]->mpIsPolledButton = false ;
+      else
+        mpWiimotesVector[i]->mpIsPolledButton = true ;
+
+      // Acc Updated.
       if( poll )
         isUpdated = mpWiimotesVector[i]->Accelerometer.calculateValues( true ) ;
       else
         isUpdated = mpWiimotesVector[i]->Accelerometer.calculateValues( false ) ;
 
-      mpWiimotesVector[i]->IR.GetCursorDelta(x,y,z) ;
-
       if( isUpdated )
+      {
         updateAccelerometerData_out = true ;
+        mpWiimotesVector[i]->mpIsPolledAcc = true ;
+      }
+      else
+        mpWiimotesVector[i]->mpIsPolledAcc = false ;
 
+      // IR Updated.
+      mpWiimotesVector[i]->IR.GetCursorDelta(x,y,z) ;
       if( x!=0 || y!=0 || z!=0 )
+      {
         updateIRData_out = true ;
+        mpWiimotesVector[i]->mpIsPolledIR = true ;
+      }
+      else
+        mpWiimotesVector[i]->mpIsPolledIR = false ;
+
+      if( mpWiimotesVector[i]->mpIsPolledButton
+          || mpWiimotesVector[i]->mpIsPolledAcc 
+          || mpWiimotesVector[i]->mpIsPolledIR )
+        mpWiimotesVector[i]->mpIsPolled = true ;
     }
+
+    return poll ;
 }

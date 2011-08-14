@@ -1,6 +1,6 @@
 
 /*******************************************************************************
-  Copyright (C) 2011 Mickael Gadroy
+  Copyright (C) 2010,2011 Mickael Gadroy
 
   This file is part of WmAvo (WiiChem project)
   WmAvo - Integrate the Wiimote and the Nunchuk in Avogadro software for the
@@ -22,54 +22,54 @@
 *******************************************************************************/
 
 #pragma once
-#ifndef __INPUTDEVICE_H__
-#define __INPUTDEVICE_H__
-
-#define INPUTDEVICE_ID_NOTHING 0x00000000
-#define INPUTDEVICE_ID_WIIMOTE 0x00000001
+#ifndef __QACTION_EX_H__
+#define __QACTION_EX_H__
 
 #include "warning_disable_begin.h"
-#include <iostream>
-
 #include <QObject>
+#include <QWidget>
+#include <QAction>
 #include "warning_disable_end.h"
 
-namespace InputDevice
+class QAction_ex : public QAction
 {
-  class DeviceData_from
-  {
-  public :
-    DeviceData_from() ;
-    virtual ~DeviceData_from() ;
 
-    virtual unsigned int getDeviceType()=0 ;
+  Q_OBJECT
+
+signals :
+
+  void triggeredInfo( QString info ) ;
+
+private slots :
+
+  void triggerInfo()
+  {
+    emit triggeredInfo( statusTip() ) ;
+  } ;
+
+public :
+
+  QAction_ex( QObject * parent ) : QAction( parent )
+  {
+    connect( this, SIGNAL(triggered()), this, SLOT(triggerInfo()) ) ;
   };
 
-  class DeviceData_to
+  QAction_ex( const QString & text, QObject * parent ) : QAction( text, parent )
   {
-  public :
-    DeviceData_to() ;
-    virtual ~DeviceData_to() ;
-
-    virtual unsigned int getDeviceType()=0 ;
+    connect( this, SIGNAL(triggered()), this, SLOT(triggerInfo()) ) ;
   };
 
-  class Device : public QObject
+  QAction_ex( const QIcon & icon, const QString & text, QObject * parent )
+    : QAction( icon, text, parent )
   {
-    Q_OBJECT 
-
-  public :
-    Device() ;
-    virtual ~Device() ;
-
-    virtual unsigned int getDeviceType()=0 ;
-    virtual DeviceData_from* getDeviceDataFrom()=0 ;
-    inline bool isConnected(){return m_isConnected;} ;
-
-  protected :
-    bool m_isConnected ;
+    connect( this, SIGNAL(triggered()), this, SLOT(triggerInfo()) ) ;
   };
 
-}
+  QAction_ex( const QAction_ex& am ) : QAction(am.parent())
+  {
+    connect( this, SIGNAL(triggered()), this, SLOT(triggerInfo()) ) ;
+  };
+
+} ;
 
 #endif

@@ -21,46 +21,5 @@
   along with WmAvo. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-#pragma once
-#ifndef __SETTINGSWIDGET_H__
-#define __SETTINGSWIDGET_H__
 
-
-#include "warning_disable_begin.h"
-#include "variousfeatures.h"
-#include "wmavo_const.h"
-#include <QObject>
-#include <QCheckBox>
-#include <QLabel>
-#include <QGridLayout>
-#include <QSlider>
-#include "warning_disable_end.h"
-
-
-class SettingsWidget : public QObject
-{
-  Q_OBJECT
-
-public slots :
-  void changedWmSensitiveRedirect( int ) ;
-
-public : 
-  SettingsWidget() ;
-  ~SettingsWidget() ;
-
-  QWidget* getSettingsWidget() ;
-
-private :
-
-  void createSettingsWidget() ;
-  void connectSignal() ;
-
-private :
-  QWidget *m_settingsWidget ; // (object)
-  QSlider *m_wmSensitiveSlider ; // (object)
-  QSlider *m_wmPointSizeFontSlider ; // (object)
-  QCheckBox *m_checkBoxActivateVibration ; // (object)
-
-} ;
-
-#endif 
+#include "qmenu_ex.h"

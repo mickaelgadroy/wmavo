@@ -41,6 +41,7 @@ public:
   int isHeld(int Button) ;
   int isReleased(int Button) ;
   int isJustPressed(int Button) ;
+  int isJustChanged() ;
 
 private:
   int mpBtns ;				/**< what buttons have just been pressed	*/
@@ -185,7 +186,7 @@ class CIRDotData
 {
 public:
   CIRDotData() ;
-  CIRDotData( ir_dot_t &cird ) ;
+  CIRDotData( const ir_dot_t &cird ) ;
   ~CIRDotData() ;
 
   int isVisible();
@@ -195,7 +196,7 @@ public:
   void GetRawCoordinate(int &X, int &Y);
 
 private:
-  ir_dot_t* mpDotPtr ;
+  ir_dot_t mpDotPtr ;
 };
 
 class CIRData
@@ -309,11 +310,17 @@ public:
   int GetState();
   int GetFlags();
 
-  int isUsingACC();
-  int isUsingEXP();
-  int isUsingIR();
-  int isUsingSpeaker();
-  int isLEDSet(int LEDNum);
+  bool isUsingACC();
+  bool isUsingEXP();
+  bool isUsingIR();
+  bool isUsingSpeaker();
+  bool isLEDSet(int LEDNum);
+
+  bool isConnected() ;
+  bool isPolled() ;
+  bool isPolledByIR() ;
+  bool isPolledByAcc() ;
+  bool isPolledByButton() ;
 
 
   CIRData IR;
@@ -328,6 +335,12 @@ private:
   CWiimote::EventTypes mpEvent ;
   int mpState ;
   int mpFlags ;
+
+  bool mpIsConnected ;
+  bool mpIsPolled ;
+  bool mpIsPolledIR ;
+  bool mpIsPolledAcc ;
+  bool mpIsPolledButton ;
 };
 
 #endif

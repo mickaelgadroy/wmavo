@@ -34,7 +34,6 @@
 SettingsWidget::SettingsWidget()
 {
   createSettingsWidget() ;
-  connectSignal() ;
 }
 
 
@@ -49,25 +48,6 @@ SettingsWidget::~SettingsWidget()
 
 
 /**
-  * Get the widget which contains the "setting widget".
-  */
-QWidget* SettingsWidget::getSettingsWidget()
-{
-  return m_settingsWidget ;
-}
-
-
-/**
-  * Help to redirect a signal to transmit an information about the sensitive of the Wiimote.
-  * @param wmSens The new sensitive of the Wiimote.
-  */
-void SettingsWidget::changedWmSensitiveRedirect( int wmSens )
-{
-  emit changedWmSensitive( wmSens ) ;
-}
-
-
-/**
   * Create the settings widget.
   */
 void SettingsWidget::createSettingsWidget()
@@ -76,14 +56,14 @@ void SettingsWidget::createSettingsWidget()
   {
     m_settingsWidget = new QWidget ;
 
-    QLabel *lblWmSensitive = new QLabel(tr("Wiimote sensitive :")) ;
+    QLabel *lblirSensitive = new QLabel(tr("Wiimote sensitive :")) ;
     QLabel *lblWmSMoins = new QLabel(tr("(-)")) ;
     QLabel *lblWmSPlus = new QLabel(tr("(+)")) ;
-    m_wmSensitiveSlider = new QSlider( Qt::Horizontal ) ;
-    m_wmSensitiveSlider->setMaximum( PLUGIN_WM_SENSITIVE_MAX ) ;
-    m_wmSensitiveSlider->setMinimum( PLUGIN_WM_SENSITIVE_MIN ) ;
-    m_wmSensitiveSlider->setValue( PLUGIN_WM_SENSITIVE_DEFAULT ) ;
-    m_wmSensitiveSlider->setTickInterval( 1 ) ;
+    m_irSensitiveSlider = new QSlider( Qt::Horizontal ) ;
+    m_irSensitiveSlider->setMaximum( PLUGIN_WM_SENSITIVE_MAX ) ;
+    m_irSensitiveSlider->setMinimum( PLUGIN_WM_SENSITIVE_MIN ) ;
+    m_irSensitiveSlider->setValue( PLUGIN_WM_SENSITIVE_DEFAULT ) ;
+    m_irSensitiveSlider->setTickInterval( 1 ) ;
     //m_addHydrogensCheck = new QCheckBox( "Adjust Hydrogen" ) ;
 
     QLabel *lblWmPointSize = new QLabel(tr("Font Size :")) ;
@@ -103,9 +83,9 @@ void SettingsWidget::createSettingsWidget()
     QVBoxLayout *vBoxSens=new QVBoxLayout() ;
     QHBoxLayout *hBoxSens=new QHBoxLayout() ;
     hBoxSens->addWidget( lblWmSMoins ) ;
-    hBoxSens->addWidget( m_wmSensitiveSlider ) ;
+    hBoxSens->addWidget( m_irSensitiveSlider ) ;
     hBoxSens->addWidget( lblWmSPlus ) ;
-    vBoxSens->addWidget( lblWmSensitive ) ;
+    vBoxSens->addWidget( lblirSensitive ) ;
     vBoxSens->addLayout( hBoxSens ) ;
     vBoxSens->addStretch( 1 ) ;
 
@@ -133,22 +113,4 @@ void SettingsWidget::createSettingsWidget()
 
     m_settingsWidget->setLayout( vBox ) ;
   }
-}
-
-
-/**
-  * Connect all signal used by this settings Widget ...
-  */
-void SettingsWidget::connectSignal()
-{
-  // Signals connected in wmEx class by the rederected signal ...
-  bool isConnect = connect( m_wmSensitiveSlider,  SIGNAL(valueChanged(int)),
-                            this, SLOT(changedWmSensitiveRedirect(int)) ) ;
-  if( !isConnect )
-    mytoolbox::dbgMsg( "Problem connection signal : m_wmSensitiveSlider.valueChanged() -> wmTool.changedWmSensitiveRedirect() !!" ) ;
-
-  isConnect = connect( m_wmPointSizeFontSlider,  SIGNAL(valueChanged(int)),
-                       this, SLOT(setSizeRatioFont(int)) ) ;
-  if( !isConnect )
-    mytoolbox::dbgMsg( "Problem connection signal : m_wmPointSizeFontSlider.valueChanged() -> wmTool.setSizeRatioFont() !!" ) ;
 }

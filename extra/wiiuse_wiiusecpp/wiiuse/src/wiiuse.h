@@ -617,7 +617,7 @@ typedef struct wiimote_t {
 
 	WCONST WIIUSE_EVENT_TYPE event;			/**< type of event that occured				*/
 	WCONST byte event_buf[MAX_PAYLOAD];		/**< event buffer							*/
-} wiimote;
+} wiimote_t ;
 
 
 /*****************************************

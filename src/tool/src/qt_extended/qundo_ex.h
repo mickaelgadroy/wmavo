@@ -1,6 +1,6 @@
 
 /*******************************************************************************
-  Copyright (C) 2011 Mickael Gadroy
+  Copyright (C) 2010,2011 Mickael Gadroy
 
   This file is part of WmAvo (WiiChem project)
   WmAvo - Integrate the Wiimote and the Nunchuk in Avogadro software for the
@@ -21,32 +21,29 @@
   along with WmAvo. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-#include "wrapper.h"
+#pragma once
+#ifndef __QUNDO_EX_H__
+#define __QUNDO_EX_H__
 
-namespace WrapperInputToDomain
-{
-  WrapperData_from::WrapperData_from()
-    : m_wrapActions(), m_posPointed(), m_posCam()
-  {
-  }
+#include "warning_disable_begin.h"
+#include <QUndoCommand>
+#include "warning_disable_end.h"
 
-  WrapperData_from::~WrapperData_from()
-  {
-  }
+// Avoir une donnée de retour dans le constructeur
+// + http://lynxline.com/undo-in-complex-qt-projects/
+// + des pointeurs sur fonction en paramètre pour éviter d'avoir des classes 
+//    en doublon (pour les méthodes avec les mêmes prototypes).
+ class QUndoCommand_ex : public QUndoCommand
+ {
+ public:
+     QUndoCommand_ex( Molecule *molecule, void* donneeDeRetour ){};
+     void undo(){};
+     void redo(){};
 
-  WrapperData_to::WrapperData_to()
-  {
-  }
+     void *getDonneeDeRetour(){} ;
 
-  WrapperData_to::~WrapperData_to()
-  {
-  }
+ private :
+   void *donneeDeRetour ;
+ };
 
-  Wrapper::Wrapper()
-  {
-  }
-
-  Wrapper::~Wrapper()
-  {
-  }
-}
+#endif

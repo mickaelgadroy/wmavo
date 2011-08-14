@@ -28,20 +28,19 @@
 #include "warning_disable_begin.h"
 #include "wmavo_const.h"
 #include "drawsimpleobject.h"
+#include "moleculemanipulation.h"
 
 #include <avogadro/extension.h>
 
 #include "warning_disable_end.h"
 
 
-class DrawObject : protected DrawSimpleObject
+class DrawObject : public DrawSimpleObject
 {
   Q_OBJECT
 
   // Public slots.
   public slots :
-
-    void connectSignalFromWmExt( Avogadro::Extension *wmExtens ) ;
     void setCursorPos( const QPoint &cursor ) ;
     void setSelectRect( bool active, const QPoint &p1, const QPoint &p2 ) ;
 
@@ -72,8 +71,7 @@ class DrawObject : protected DrawSimpleObject
     /**
       * @name Main objects
       * @{ */
-    MoleculeManipulation *m_moleculeManip ;
-    Avogadro::Extension *m_wmExt ; ///< (shortcut)
+    Avogadro::MoleculeManipulation *m_moleculeManip ;
     // @}
 
     /**

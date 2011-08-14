@@ -41,9 +41,13 @@
 #include "rendertext.h"
 #include "distanceanglediedre.h"
 #include "wmdevice.h"
+#include "chemicalwrapper.h"
+#include "wrapper_chemicalcmd_to_avoaction.h"
+#include "contextmenu_to_avoaction.h"
 
 #include <avogadro/tool.h>
 #include <QAction>
+#include <QMutex>
 
 /*
 QT_BEGIN_NAMESPACE
@@ -51,6 +55,10 @@ class QAction;
 QT_END_NAMESPACE
 //! [0]
 */
+
+// For connect().
+//qRegisterMetaType<...>("...") ; // before the connect method()
+Q_DECLARE_METATYPE( Eigen::Vector3d )
 
 #include "warning_disable_end.h"
 
@@ -82,11 +90,10 @@ namespace Avogadro
                      )
       // @}
 
-    private :
+  private :
     /**
       * @name Try to solve doxygen bug with the previous macro
-      * Try to solve by add a no used method.
-      * This message does not appear in the doc.
+      * Try to solve by add a no used method. This message does not appear in the doc.
       * @{ */
     void solveDoxygenBug(){} ;
     //@}
@@ -114,37 +121,70 @@ namespace Avogadro
     virtual QUndoCommand* keyReleaseEvent(GLWidget *widget, QKeyEvent *event);
     QWidget* settingsWidget() ;
     void settingsWidgetDestroyed() ;
-    //@}
-
     virtual int usefulness() const ;
-
     virtual bool paint(GLWidget *widget) ;
         ////< The paint() method of a Tool class to render in the render zone.
+    //@}
 
 
   // Private methods.
   private :
     void initAllMainObject() ;
+    void waitNewAction() ;
+    void switchToThisTool( int state ) ;
+    void connectSignals() ;
 
+  // Public slots.
+  public slots :
+    void initAndStart( GLWidget *widget ) ;
+    void applyActions() ;
+
+    inline void setIRSensitiveNow( int sensitive )
+    {
+      WITD::ChemicalWrapData_to chemDataTo ;
+      chemDataTo.setIRSensitive(sensitive) ;
+      m_chemWrap->setWrapperDataTo( chemDataTo ) ;
+    } ;
+
+  // Signals.
+  signals :
+    void actionsApplied() ;
 
   // Private attributs.
   private :
 
-    GLWidget *m_widget ;
-
     /**
-      * Settings Widget.
+      * Miscellaneous 
       * @{ */
+    GLWidget *m_widget ;
     SettingsWidget *m_settingsWidget ;
+    QMutex m_mutex ;
     // @}
 
     /**
       * Input device data.
       * @{ */
-    InputDevice::WmDevice *m_wm ;
-    InputDevice::WmDeviceData_from *m_wmDataFrom ;
-    InputDevice::WmDeviceData_to *m_wmDataTo ;
+    InputDevice::WmDevice *m_wm ; //< (object)
     // @}
+
+    /**
+      * Wrapper device do domain.
+      * @{ */
+    WITD::ChemicalWrap *m_chemWrap ; //< (object)
+    //@}
+
+    /**
+      * Avogadro command.
+      * @{ */
+    WrapperChemicalCmdToAvoAction *m_wrapperChemToAvo ; // (object)
+    // @}
+
+    /**
+      * Apply Actions.
+      * @{ */
+    bool m_updateActionDisplay ;
+    bool m_updateInfoDeviceDisplay ;
+    //@}
 
     /**
       * Paint/Draw objects.
@@ -153,7 +193,6 @@ namespace Avogadro
     RenderText *m_renderText ;
     DistanceAngleDiedre *m_distAngleDiedre ;
     // @}
-
 
   };
 

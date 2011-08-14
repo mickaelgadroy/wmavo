@@ -25,10 +25,12 @@
 #ifndef __DRAWSIMPLEOBJECT_H__
 #define __DRAWSIMPLEOBJECT_H__
 
+#ifndef NOMINMAX
 #define NOMINMAX
 // >C:\src\eigen-2.0.15\Eigen/Core(77) : fatal error C1189: #error :  
 // The preprocessor symbols 'min' or 'max' are defined. If you are compiling on Windows, 
 // do #define NOMINMAX to prevent windows.h from defining these symbols.
+#endif
 
 #include "warning_disable_begin.h"
 #include "wmavo_const.h"
@@ -40,7 +42,7 @@
 
 #include "avogadro/glwidget.h"
 #include "avogadro/painter.h"
-#include <avogadro/atom.h>
+#include "avogadro/atom.h"
 #include "avogadro/camera.h"
 
 #include <Eigen/Core>

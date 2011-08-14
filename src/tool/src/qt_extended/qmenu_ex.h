@@ -1,6 +1,6 @@
 
 /*******************************************************************************
-  Copyright (C) 2011 Mickael Gadroy
+  Copyright (C) 2010,2011 Mickael Gadroy
 
   This file is part of WmAvo (WiiChem project)
   WmAvo - Integrate the Wiimote and the Nunchuk in Avogadro software for the
@@ -21,32 +21,36 @@
   along with WmAvo. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-#include "wrapper.h"
+#pragma once
+#ifndef __QMENU_EX_H__
+#define __QMENU_EX_H__
 
-namespace WrapperInputToDomain
+#include "warning_disable_begin.h"
+#include <QWidget>
+#include <QMenu>
+#include "warning_disable_end.h"
+
+class QMenu_ex : public QMenu
 {
-  WrapperData_from::WrapperData_from()
-    : m_wrapActions(), m_posPointed(), m_posCam()
-  {
-  }
 
-  WrapperData_from::~WrapperData_from()
-  {
-  }
+  Q_OBJECT
 
-  WrapperData_to::WrapperData_to()
-  {
-  }
+public :
 
-  WrapperData_to::~WrapperData_to()
-  {
-  }
+  QMenu_ex( QWidget *parent=0, QMenu_ex* menuParent=0 )
+    : QMenu(parent), m_menuParent(menuParent)
+    {};
 
-  Wrapper::Wrapper()
-  {
-  }
+  QMenu_ex ( const QString& title, QWidget* parent=0, QMenu_ex* menuParent=0 )
+    : QMenu(title,parent), m_menuParent(menuParent)
+    {};
 
-  Wrapper::~Wrapper()
-  {
-  }
-}
+  QMenu_ex* getMenuParent(){ return m_menuParent ; } ;
+
+private :
+
+  QMenu_ex *m_menuParent ;
+
+};
+
+#endif

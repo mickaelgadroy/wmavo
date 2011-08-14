@@ -27,7 +27,6 @@
 DrawObject::DrawObject( Avogadro::GLWidget *widget ) 
   : DrawSimpleObject(widget),
     m_moleculeManip(NULL),
-    m_wmExt(NULL), 
     m_cursorPos(QPoint(0,0)),
     m_rectPos1(QPoint(0,0)), m_rectPos2(QPoint(0,0)), m_activeRect(false),
     m_drawBeginAtom(false), m_drawEndAtom(false), m_drawBond(false),
@@ -38,27 +37,6 @@ DrawObject::DrawObject( Avogadro::GLWidget *widget )
 
 DrawObject::~DrawObject()
 {
-}
-
-
-/**
-  * Set the WmExtension object (a hand on the object, a shortcut).
-  * @param wmExtens The WmExtension object instanciate by Avogadro.
-  */
-void DrawObject::connectSignalFromWmExt( Avogadro::Extension *wmExtension )
-{ // setWmExt
-  if( wmExtension != NULL )
-    m_wmExt = wmExtension ;
-
-  bool isConnect = connect( m_wmPointSizeFontSlider,  SIGNAL(valueChanged(int)),
-                            m_wmExt, SLOT(setFontSizeContextMenu(int)) ) ;
-  if( !isConnect )
-    mytoolbox::dbgMsg( "Problem connection signal : m_wmPointSizeFontSlider.valueChanged() -> m_wmExt.setFontSizeContextMenu() !!" ) ;
-
-  isConnect = connect( m_checkBoxActivateVibration,  SIGNAL(stateChanged(int)),
-                       m_wmExt, SLOT(setActivatedVibration(int)) ) ;
-  if( !isConnect )
-    mytoolbox::dbgMsg( "Problem connection signal : m_checkBoxActivateVibration.stateChanged() -> m_wmExt.setActivatedVibration() !!" ) ;
 }
 
 
@@ -196,7 +174,7 @@ void DrawObject::drawBarycenter()
 {
   QColor color( 50, 255, 100 ) ;
   float radius=0.1f ;
-  drawSphereFill( radius, m_moleculeManip->getBarycenter(), color ) ;
+  drawSphereFill( radius, m_moleculeManip->getBarycenterMolecule(), color ) ;
 }
 
 

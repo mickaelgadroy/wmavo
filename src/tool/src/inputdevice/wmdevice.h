@@ -25,26 +25,45 @@
 #ifndef __WMDEVICE_H__
 #define __WMDEVICE_H__
 
+#include "warning_disable_begin.h"
 #include "inputdevice.h"
+#include "wmavo_const.h"
+#include "variousfeatures.h"
+#include "wiwo_sem.h"
+#include "qthread_ex.h"
+#include "wiiusecpp.h"
+
+#if defined WIN32 || defined _WIN32
+  #include "wiiusecpp.h"
+#else
+  #include <wiiusecpp.h>
+#endif
+
+#include "warning_disable_end.h"
 
 
 namespace InputDevice
 {
+  class WmRumble ;
+  class RumbleSettings ;
+
   class WmDeviceData_from : public DeviceData_from
   {
   public :
     WmDeviceData_from() ;
+    WmDeviceData_from( CWiimoteData *wmData ) ; //> Just copy the pointer.
+    WmDeviceData_from( const WmDeviceData_from &wmData ) ; //> Copy all object.
     ~WmDeviceData_from() ;
 
     inline unsigned int getDeviceType(){ return INPUTDEVICE_ID_WIIMOTE ; } ;
-    inline bool isConnected(){ return m_isConnected ; } ;
-    inline int getNbDotsDetected(){ return m_nbDotsDetected ; } ;
-    inline int getNbSourceDetected(){ return m_nbSourceDetected ; } ;
+    inline CWiimoteData* getDeviceData(){ return m_data ; } ;
+
+    bool hasPoll() ; // 
+
+    void operator=( const WmDeviceData_from& wmDataFrom ) ; // To be sur to have 2 distinct object.
 
   private :
-    bool m_isConnected ;
-    int m_nbDotsDetected ;
-    int m_nbSourceDetected ;
+    CWiimoteData *m_data ;
   } ;
 
 
@@ -52,46 +71,89 @@ namespace InputDevice
   {
   public :
     WmDeviceData_to() ;
+    WmDeviceData_to( RumbleSettings* rumble, int LED ) ;
+    WmDeviceData_to( const WmDeviceData_to& data ) ;
     ~WmDeviceData_to() ;
 
     inline unsigned int getDeviceType(){ return INPUTDEVICE_ID_WIIMOTE ; } ;
-    inline void setOperatingMode( int opMode ){ m_operatingMode = opMode ; } ;
-    inline void setMenuMode( bool menuMode ){ m_menuMode = menuMode ; } ;
-    inline void setRumble( bool rumble ){ m_setRumble = rumble ; } ;
-    inline void setLED( int LED ){ m_setLED = LED ; } ;
-    inline void setSensitiveIR( int sensitive ){ m_sensitiveIR = sensitive ; } ;
 
-    inline void initAttributsToZero()
-    {
-      m_operatingMode = 0 ; m_menuMode = false ;
-      m_setRumble = false ; m_setLED = 0 ; m_sensitiveIR = 0 ;
-    } ;
+    bool getRumble( RumbleSettings &rumble_out ) ;
+    void setRumble( const RumbleSettings &rumble ) ;
+
+    bool getLED( int &LED ) ;
+    void setLED( int LED ) ;
+
+    void operator=( const WmDeviceData_to& wmDataTo ) ;
+
+    inline void resetUpdate()
+    { m_updateRumble=false ; m_updateLED=false;} ;
+
+    void initAttributsToZero() ;
 
   private :
-    int m_operatingMode ; ///< A mode defines "what buttons for what actions".
-    bool m_menuMode ; 
-      ///< Swith between the menu mode (choose option & co with the Wiimote), and the job action.
+    RumbleSettings *m_setRumble ;
+    bool m_updateRumble ;
 
-    bool m_setRumble ;
     int m_setLED ;
-
-    int m_sensitiveIR ;
+    bool m_updateLED ;
   } ;
 
     
-  class WmDevice : Device
+  class WmDevice : public Device
   {
+    Q_OBJECT // For the thread.
+
+    friend WmRumble ;
+
   public :
     WmDevice() ;
     ~WmDevice() ;
 
     inline unsigned int getDeviceType(){ return INPUTDEVICE_ID_WIIMOTE ; } ;
-    inline WmDeviceData_from* getDeviceDataFrom(){ return m_data_from ; } ;
-    inline WmDeviceData_to* getDeviceDataTo(){ return m_data_to ; } ;
+    WmDeviceData_from* getDeviceDataFrom() ; //< Blocking call.
+    void setDeviceDataTo( const WmDeviceData_to& wmDataTo ) ; //< Blocking call.
+
+    bool connectAndStart() ;
+    void stopPoll() ;
 
   private :
-    WmDeviceData_from* m_data_from ;
-    WmDeviceData_to* m_data_to ;
+    int  connectWm() ;
+    bool connectNc() ;
+    bool updateDataFrom() ;
+    bool updateDataTo() ;
+
+    // Delete m_wii (use many times).
+    void deleteWii() ;
+
+  private slots :
+    void runPoll() ;
+
+  private :
+
+    /**
+      * @name Manage Wiimote data.
+      * @{ */
+    WIWO_sem<WmDeviceData_from*> *m_cirBufferFrom ;
+    WIWO_sem<WmDeviceData_to*> *m_cirBufferTo ;
+    // @}
+
+    /**
+      * @name Manage thread.
+      * @{ */
+    QThread_ex m_deviceThread ;
+    QMutex m_mutex ; // Secure Poll() with rumble feature.
+    bool m_isRunning ;
+    // @}
+
+    /**
+      * @name Wiimote things.
+      * @{ */
+    CWii *m_wii ; ///< Manage the Wiimotes. (object)
+    CWiimote *m_wm ; ///< Manage the first Wiimote. (shortcut)
+    CNunchuk *m_nc ; // (shortcut)
+    WmRumble *m_rumble ; // (object)
+    bool m_hasWm, m_hasNc ; ///< Have Wiimote and/or Nunchuk ?
+    // @}
   };
 
 }

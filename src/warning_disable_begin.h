@@ -5,9 +5,12 @@
 #ifdef _WIN32
 #pragma warning( disable : 4251 ) // '...' : class '...' needs to have dll-interface to be used by clients of class '...'
 #pragma warning( disable : 4365 ) // conversion from 'x' to 'y', signed/unsigned mismatch
+#pragma warning( disable : 4510 ) // '...' : default constructor could not be generated
+#pragma warning( disable : 4512 ) // '...' : assignment operator could not be generated
 #pragma warning( disable : 4514 ) // '...' : unreferenced inline function has been removed
 #pragma warning( disable : 4548 ) // expression before comma has no effect; expected expression with side-effect
 #pragma warning( disable : 4571 ) // Informational: catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught
+#pragma warning( disable : 4610 ) //  struct '...' can never be instantiated - user defined constructor required
 #pragma warning( disable : 4619 ) //  #pragma warning : there is no warning number '...'
 #pragma warning( disable : 4625 ) // '...' : copy constructor could not be generated because a base class copy constructor is inaccessible
 #pragma warning( disable : 4626 ) // '...' : assignment operator could not be generated because a base class assignment operator is inaccessible

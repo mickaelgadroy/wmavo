@@ -35,7 +35,7 @@
 #include "warning_disable_end.h"
 
 
-class DistanceAngleDiedre : protected DrawSimpleObject
+class DistanceAngleDiedre : public DrawSimpleObject
 {
   Q_OBJECT
 
@@ -48,7 +48,7 @@ class DistanceAngleDiedre : protected DrawSimpleObject
   // Signals.
   signals :
     void askDistDiedre() ; ///< Element to the calculation of the distance feature.
-    void changedWmSensitive( int ) ;
+    void changedIrSensitive( int ) ;
 
 
   // Public methods.

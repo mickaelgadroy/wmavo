@@ -49,6 +49,8 @@
 
 #define PLUGIN_WM_VIBRATION_ONOFF true
 
+#define CIRBUFFER_DEFAULT_SIZE 20
+
 
 ///**********************************************************
 /// Specific for wmextension.h.
@@ -76,7 +78,7 @@
 
 #define WMAVO_CONNECTION_TIMEOUT 5.0 // Computer lets few time to the connection of the Wiimote (in seconde).
 #define WMAVO_IRSENSITIVITY 3
-#define WMAVO_SMOOTH 10
+#define WMAVO_WIWO_IR_SMOOTH 10
 #define WMAVO_ACTIVATEMENU_AFTER 1000 //ms
 
 #define WMAVO_CURSOR_CALIBRATION_X 2.4 // 2.5
@@ -199,31 +201,5 @@
 #define WMTOOL_FONT_WEIGHT_ERROR QFont::Bold
 #define WMTOOL_FONT_WEIGHT_DISTDIEDREINFO QFont::Bold
 #define WMTOOL_FONT_WEIGHT_DISTDIEDREATOM QFont::DemiBold
-
-
-
-///**********************************************************
-/// To disable warning.
-///**********************************************************
-
-
-//#define DISABLE_WARNING #ifdef _WIN32 \
-//  #pragma warning( disable : 4365 ) /* conversion from 'x' to 'y', signed/unsigned mismatch */ \
-//  #pragma warning( disable : 4820 ) /* 'x' bytes padding added after data member '...' */ \
-//  #pragma warning( disable : 4668 ) /* '...' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif' */ \
-//  #pragma warning( disable : 4514 ) /* '...' : unreferenced inline function has been removed */ \
-//  #pragma warning( disable : 4738 ) /* storing 32-bit float result in memory, possible loss of performance */ \
-//  #pragma warning( disable : 4710 ) /* function not inlined */ \
-//  #pragma warning( disable : 4626 ) /* '...' : assignment operator could not be generated because a base class assignment operator is inaccessible */ \
-//  #pragma warning( disable : 4625 ) /* '...' : copy constructor could not be generated because a base class copy constructor is inaccessible */ \
-//  #pragma warning( disable : 4711 ) /* The compiler performed inlining on the given function, although it was not marked for inlining. Inlining is performed at the compiler's discretion. This warning is informational. */ \
-//  #pragma warning( disable : 4628 ) /* Digraphs not supported with -Ze. Character sequence 'digraph' not interpreted as alternate token for 'char'. Digraphs are not supported under /Ze. This warning will be followed by an error. */ \
-//  #pragma warning( push, 0 ) \
-//  #endif
-
-//#define ENABLE_WARNING \
-//  #ifdef _WIN32 \
-//  #pragma warning( pop ) \
-//  #endif 
 
 #endif
