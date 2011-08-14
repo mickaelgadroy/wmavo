@@ -3,35 +3,13 @@ set( PLUGIN_NAME wmextension )
 
 # wmextension plugin source files.
 set( wmavoconst_include_dir ../ ) # .h (constants & revision & others)
-set( wmtool_include_dir ../tool/src ) # .h (wmtool plugin)
-set( avotoolbox_include_dir src/avo_toolbox ) # .h (moleculemanipulation ...)
-set( toolbox_include_dir src/toolbox ) # .h (wiwo ...)
-set( qtextended_include_dir src/qt_extended ) # .h (qundo_ex, qaction_ex ...)
+#set( wmtool_include_dir ../tool/src ) # .h (wmtool plugin)
 
-set( wiiuse_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../extra/wiiuse_wiiusecpp" ) # root directory of wiiuse/wiiusecpp files.
-set( wiiuse_include_dir "${wiiuse_dir}/wiiuse/src" ) # .h
-set( wiiusecpp_include_dir "${wiiuse_dir}/wiiusecpp/src" ) # .h
-set( wiiuse_lib_name wiiuse )
-set( wiiusecpp_lib_name wiiusecpp )
-  
 if( WIN32 )
 # Windows.
-
-  # wiiuse/wiiusecpp libraries.
-  set( wiiuse_lib_dir "${wiiuse_dir}/lib_win32" ) # ".lib" for wiise/wiiusecpp (release mode)
-  set( wiiuse_libd_dir "${wiiuse_dir}/lib_win32/debug" ) # ".lib" for wiise/wiiusecpp (debug mode)
-
-else() 
+else()
 # Unix ...
-  #set( wiiusecpp_include_dir /home/myck/install/linux/wiiusecpp/src ) # .h
-  #set( wiiusecpp_lib_dir /usr/lib ) # ".lib"
-  #set( wiiusecpp_lib_name wiiusecpp )
-  
-  # wiiuse/wiiusecpp libraries.
-  set( wiiuse_lib_dir "${wiiuse_dir}/lib_nix64" ) # ".lib" for wiise/wiiusecpp (release mode)
-  
   set( OpenBabel2_include_DIR "/usr/include/openbabel-2.0/" )
-
 endif()
 
 
@@ -43,54 +21,22 @@ if( "${LINK_LIBS}" STREQUAL "avogadro" )
 # - add "add_subdirectory( wmavo/src/ex )" in : [avogadro_path]/libavogadro/src/extensions/CMakeLists.txt
 
   # The Meta-Object Compiler, moc, is the program that handles Qt's C++ extensions.
-  set( in_MOC_SRC src/wmextension.cpp src/wmavo_thread.cpp src/wmavo_rumble.cpp )
-  #set( in_MOC_SRC ${in_MOC_SRC} src/wmavo.cpp ) # Add file to include in project, but it does not need moc file ...
-  set( in_MOC_SRC ${in_MOC_SRC} src/wrapper_chemicalcmd_to_avoaction.cpp )
-  set( in_MOC_SRC ${in_MOC_SRC} src/contextmenu_to_avoaction.cpp )
-  set( in_MOC_SRC ${in_MOC_SRC} src/avo_toolbox/moleculemanipulation.cpp )
-  #set( in_MOC_SRC ${in_MOC_SRC} src/avo_toolbox/undocommand.cpp src/avo_toolbox/constraintsmodel.cpp )
-  set( in_MOC_SRC ${in_MOC_SRC} src/qt_extended/qmenu_ex.cpp src/qt_extended/qaction_ex.cpp src/qt_extended/qundo_ex.cpp )
+  set( in_MOC_SRC src/wmextension.cpp )
   set( in_UIS_H "" )
   set( in_RC_SCRS "" )
   
   # Write the Avogadro revision in revision.h.
   configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/revision.h.in ${CMAKE_CURRENT_SOURCE_DIR}/revision.h )
 
-  
   ## Set up the build environment (to know where are .h, ".dll" and some files)
 
   # Let to use .h directly : 
   # ex. : #include <wmavo_const.h> instead of <../../wmavo_const.h>
   include_directories( ${wmavoconst_include_dir} )
-  include_directories( ${wmtool_include_dir} )
-  include_directories( ${wiiuse_include_dir} )
-  include_directories( ${wiiusecpp_include_dir} )
-  include_directories( ${qtextended_include_dir} )
-  include_directories( ${toolbox_include_dir} )
-  include_directories( ${avotoolbox_include_dir} )
-
-  # ".dll"  
-  link_directories( ${wiiuse_lib_dir} )
-  link_directories( ${wiiusecpp_lib_dir} )
 
   # Generate moc, specify install directories ...
   avogadro_plugin( ${PLUGIN_NAME} "${in_MOC_SRC}" )
-
-  # Link the LIBRARY ! Not *.h !
-  target_link_libraries( ${PLUGIN_NAME} ${wiiuse_lib_name} )
-  target_link_libraries( ${PLUGIN_NAME} ${wiiusecpp_lib_name} )
   
-  # To install wiiuse/wiiusecpp libraries (& other things)in the Avogadro bin.
-  file( GLOB wiiuse_files ${wiiuse_libd_dir}/*wiiuse* )
-  if( WIN32 ) 
-    install( FILES ${wiiuse_files} DESTINATION ${BIN_INSTALL_DIR} )
-   
-    #file( GLOB_RECURSE frag_files img/fragments/* )
-    #install( FILES ${frag_files} DESTINATION ${BIN_INSTALL_DIR}/../share/avogadro/fragments_resume )
-  else()
-    install( FILES ${wiiuse_files} DESTINATION "/usr/lib" )
-  endif()
-
 else()
 # In a stand alone compilation process.
 # Nothing is initiated ...
@@ -165,13 +111,7 @@ else()
   
     
   # The Meta-Object Compiler, moc, is the program that handles Qt's C++ extensions.
-  set( in_MOC_H src/wmextension.h src/wmavo_thread.h src/wmavo_rumble.h )
-  #set( in_MOC_H ${in_MOC_H} src/wmavo.h ) # Add file to include in project, but it does not need moc file ...
-  set( in_MOC_H ${in_MOC_H} src/wrapper_chemicalcmd_to_avoaction.h )
-  set( in_MOC_H ${in_MOC_H} src/contextmenu_to_avoaction.h )
-  set( in_MOC_H ${in_MOC_H} src/avo_toolbox/moleculemanipulation.h )
-  #set( in_MOC_H ${in_MOC_H} src/avo_toolbox/undocommand.h src/avo_toolbox/constraintsmodel.h )
-  set( in_MOC_H ${in_MOC_H} src/qt_extended/qmenu_ex.h src/qt_extended/qaction_ex.h src/qt_extended/qundo_ex.h )
+  set( in_MOC_H src/wmextension.h )
   set( in_UIS_H "" )
   set( in_RC_SCRS "" )
   
@@ -197,16 +137,7 @@ else()
   # Let to use .h directly : 
   # ex. : #include <wmavo_const.h> instead of <../../wmavo_const.h>
   include_directories( ${wmavoconst_include_dir} )
-  include_directories( ${wmtool_include_dir} )
-  include_directories( ${wiiuse_include_dir} )
-  include_directories( ${wiiusecpp_include_dir} )
-  include_directories( ${qtextended_include_dir} )
-  include_directories( ${toolbox_include_dir} )
-  include_directories( ${avotoolbox_include_dir} )
   include_directories( ${OPENBABEL2_INCLUDE_DIR} )
-
-  # ".dll"
-  link_directories( ${wiiuse_libd_dir} )
 
   # Other files.
   include(${Avogadro_USE_FILE})
@@ -223,8 +154,6 @@ else()
   add_library( ${PLUGIN_NAME} MODULE ${source_files} ${out_UIS_H} ${out_MOC_H} ${out_RC_SRCS} )
   
   # Link the LIBRARY ! Not *.h !
-  target_link_libraries( ${PLUGIN_NAME} ${wiiuse_lib_name} ) 
-  target_link_libraries( ${PLUGIN_NAME} ${wiiusecpp_lib_name} )
   target_link_libraries( ${PLUGIN_NAME} avogadro )
   target_link_libraries( ${PLUGIN_NAME} ${OPENGL_LIBRARIES} )
   

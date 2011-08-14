@@ -62,12 +62,6 @@ Q_DECLARE_METATYPE( Eigen::Vector3d )
 
 #include "warning_disable_end.h"
 
-
-//using namespace std ;
-//using namespace Eigen ;
-//using namespace OpenBabel;
-
-
 namespace Avogadro
 {
   /**

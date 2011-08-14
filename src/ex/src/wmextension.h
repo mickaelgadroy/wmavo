@@ -33,37 +33,20 @@
 
 #include "warning_disable_begin.h"
 #include "variousfeatures.h"
-
-#include "wmtool.h"
 #include "wmavo_const.h"
-#include "wmavo_thread.h"
-#include "wrapper_chemicalcmd_to_avoaction.h"
-#include <Eigen/Core>
+#include <avogadro/glwidget.h>
 #include <avogadro/extension.h>
-#include <avogadro/atom.h>
-
+#include <avogadro/tool.h>
+#include <avogadro/toolgroup.h>
+#include <QAction>
 #include "warning_disable_end.h"
-
-
-// For connect().
-//qRegisterMetaType<...>("...") ; // In PerformAction(), before the connect method()
-Q_DECLARE_METATYPE( WmAvoThread::wmDataTransfert )
 
 
 namespace Avogadro
 {
-  //class WrapperChemicalCmdToAvoAction ;
-
   /**
     * @class WmExtension
-    * @brief The class lets to include the Wiimote in Avogadro.
-    *
-    * In fact, the WmavoThread class is instancied to launch the connection of the Wiimote,
-    * then it polls. There are many others elements manages here :
-    * - interpret the signal to realize the associated actions ;
-    * - the menu context
-    * - the calls to display informations in the render zone
-    * - ...
+    * @brief
     */
   class WmExtension : public Extension
   {
@@ -72,56 +55,16 @@ namespace Avogadro
       * @{ */
     Q_OBJECT
       AVOGADRO_EXTENSION("WmExtension", tr("WmExtension"),
-                         tr("Use Wiimote to manage camera and manipulate atoms"))
+                         tr("Launch the WmTool plugin to start the Wiimote."))
       // @}
-
-      #include "doxygenbug.h"
 
 
       // Signal.
-      signals :
-
-        /**
-          * @name Activate/initiate display in the render zone.
-          * Inform WmTool class to display something
-          * @{ */
-        void displayedWmInfo( const QPoint &cursor, bool connect, int nbDots, int nbSources, int distance ) ;
-        //@}
-
-        /**
-          * @name Initiate the WmTool class.
-          * Send the WmExtention object itself to the WmTool class. It lets the WmTool class
-          * to communicate with WmExtention.
-          * @{ */
-        void setToolWmExt( Extension *wmExt ) ;
-        // @}
-
-
-    // Public methods (slots).
-    public slots:
-
-      /**
-        * @name Main methods of the WmExtension class
-        * This is the main method where all actions are executed.
-        * It is called by the wrapper to execute new actions.
-        * @{ */
-      void wmActions( WmAvoThread::wmDataTransfert wmData ) ;
-      // @}
-
-      /**
-        * @name Manage some Wiimote features
-        * Recup/Manage informations on the Wiimote states from the WmAvo class.
-        * @{ */
-      void wmConnected( int nbConnected ) ; ///< Inform the result of a connection attempt.
-      void wmDisconnected() ; ///< Inform the result of a disconnection attempt.
-      void setActivatedVibration( int state ) ; ///< Set the vibration of the Wiimote (from WmTool class)
-      void setWmSensitive( int newSensitive ) ; ///< Set the sensitive of the Wiimote (from WmTool class)
-      // @}
-
+    signals :
+      void startWmTool( GLWidget *widget ) ;
      
     // Public methods.
     public:
-
       /**
         * @name Avogadro default methods
         * @{ */
@@ -134,28 +77,13 @@ namespace Avogadro
       virtual QUndoCommand* performAction(QAction *action, GLWidget *widget) ;
       //@}
 
-      
-
     // Private methods.
     private :
-
-      /**
-        * @name Some methods of initialization
-        * @{ */
-      bool wmBeginUse() ; ///< To use a Wiimote.
       void initPullDownMenu() ; ///< To manipulate the pull-down menu in the Avogadro menu bar.
-      void initSizeWidgetForWmAvo() ;
-
-      void initAndActiveForWmToolMenu() ;
-          ///< To activate the tool menu of the Wiimote tool plugin in Avogadro, and initiate some data for the use of WmTool class.
-      bool initSignalBetweenWmExtWmTool() ;
-      void sendWmInfoToWmTool( const QPoint &cursor, bool connect, int nbDots, int nbSources, int distance ) ;
-      // @}
-
+      bool searchToolPlugin() ;     
 
     // Private attributs.
     private:
-
       /** Use in the pull-down menu to represent the actions 
         * of each button of the Wiimote menu. */
       enum m_wmMenuState
@@ -165,14 +93,8 @@ namespace Avogadro
       } ;
 
       GLWidget *m_widget ; ///< (shortcut)
-      Tool *m_wmTool, *m_drawTool ; ///< (shortcut)
+      Tool *m_wmTool ; ///< (shortcut)
       QList<QAction*> m_pullDownMenuActions ;
-      WmAvoThread *m_wmavoThread ; // (object)
-      WrapperChemicalCmdToAvoAction *m_wrapperChemToAvo ; // (object)
-
-      bool m_wmIsConnected ;
-      bool m_wmIsAlreadyConnected ;
-      int m_wmSensitive ;
   };
 
 

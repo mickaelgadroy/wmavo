@@ -241,11 +241,4 @@ else()
   #set_target_properties(${PLUGIN_NAME} PROPERTIES
   #                      COMPILE_FLAGS "${NO_RTTI_FLAG}")
   
-  # Copy some files in the Avogadro directory.
-  file( GLOB_RECURSE frag_files img/fragments/* )
-  message( STATUS "fragments_resume directory:" "${BIN_INSTALL_DIR}/../share/avogadro/fragments_resume" )
-  message( STATUS "fragments_resume files:" ${frag_files} )
-  #install( FILES ${frag_files} DESTINATION "${BIN_INSTALL_DIR}/../share/avogadro/fragments/resume" )
-
-
 endif()
