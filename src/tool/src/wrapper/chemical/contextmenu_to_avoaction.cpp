@@ -44,7 +44,7 @@ namespace Avogadro
   {
 
     m_periodicTable = new PeriodicTableView() ;
-
+    buildActionForCM() ;
     buildContextMenu() ;
     
     if( !connectMainQActionSignal() )
@@ -63,72 +63,30 @@ namespace Avogadro
 
 
   /**
-    * Connect the main signals of the context menu. The others are managed dynamically.
-    * @return TRUE if all signals are connected ; FALSE else.
+    * Allocate all QAction object for the context menu.
     */
-  bool ContextMenuToAvoAction::connectMainQActionSignal()
+  void ContextMenuToAvoAction::buildActionForCM()
   {
-    bool isConnect=false, ok=true ;
-
-    //
-    // Connect QAction triggered signals.
-
     m_cancelAct = new QAction( tr("Close menu"), this ) ;
     m_cancelAct->setStatusTip( tr("Close this context menu") ) ;
     //QIcon icon( "/home/mickaelgadroy/Dropbox/Photos/Plan9bunnysmblack.jpg" ) ;
     //m_cancelAct->setIcon( icon ) ;
     //m_cancelAct->setIconVisibleInMenu(true) ;
-    isConnect=connect( m_cancelAct, SIGNAL(triggered()), this, SLOT(closeContextMenu()) ) ;
-    if( !isConnect )
-    {
-      mytoolbox::dbgMsg( "Problem connection signal : m_cancelAct.triggered() -> ContextMenuToAvoAction.closeContextMenu() !!" ) ;
-      ok = false ;
-    }
 
     m_periodicTableAct = new QAction( tr("Periodic Table"), this ) ;
     m_periodicTableAct->setStatusTip( tr("Display a periodic table") ) ;
-    isConnect=connect( m_periodicTableAct, SIGNAL(triggered()), m_periodicTable, SLOT(show()) ) ;
-    if( !isConnect )
-    {
-      mytoolbox::dbgMsg( "Problem connection signal : m_periodicTableAct.triggered() -> m_periodicTable.show() !!" ) ;
-      ok = false ;
-    }
 
     m_noDistAct = new QAction( tr("Clear measure"), this ) ;
     m_noDistAct->setStatusTip( tr("Clear current display of distance, angle & angle diedre") ) ;
-    isConnect=connect( m_noDistAct, SIGNAL(triggered()), this, SLOT(askWmToolToCalculNothing()) ) ;
-    if( !isConnect )
-    {
-      mytoolbox::dbgMsg( "Problem connection signal : m_noDistAct.triggered() -> ContextMenuToAvoAction.askWmToolToCalculNothing() !!" ) ;
-      ok = false ;
-    }
 
     m_distAct = new QAction( tr("Measure distances"), this ) ;
     m_distAct->setStatusTip( tr("Measure & display the distance between atoms") ) ;
-    isConnect=connect( m_distAct, SIGNAL(triggered()), this, SLOT(askWmToolToCalculDistance()) ) ;
-    if( !isConnect )
-    {
-      mytoolbox::dbgMsg( "Problem connection signal : m_distAct.triggered() -> ContextMenuToAvoAction.askWmToolToCalculDistance() !!" ) ;
-      ok = false ;
-    }
 
     m_angleAct = new QAction( tr("Measure angle between atoms"), this ) ;
     m_angleAct->setStatusTip( tr("Measure & display the angle between atoms") ) ;
-    isConnect=connect( m_angleAct, SIGNAL(triggered()), this, SLOT(askWmToolToCalculAngle()) ) ;
-    if( !isConnect )
-    {
-      mytoolbox::dbgMsg( "Problem connection signal : m_angleAct.triggered() -> ContextMenuToAvoAction.askWmToolToCalculAngle() !!" ) ;
-      ok = false ;
-    }
 
     m_diedreAct = new QAction( tr("Measure dihedral angle between atoms"), this ) ;
     m_diedreAct->setStatusTip( tr("Measure & display dihedral angle between atoms") ) ;
-    isConnect=connect( m_diedreAct, SIGNAL(triggered()), this, SLOT(askWmToolToCalculDiedre()) ) ;
-    if( !isConnect )
-    {
-      mytoolbox::dbgMsg( "Problem connection signal : m_diedreAct.triggered() -> ContextMenuToAvoAction.askWmToolToCalculDiedre() !!" ) ;
-      ok = false ;
-    }
 
     m_changeAddHAct = new QAction( tr("Adjust Hydrogen ..."), this ) ;
     m_changeAddHAct->setCheckable( true ) ;
@@ -138,35 +96,16 @@ namespace Avogadro
       m_changeAddHAct->setChecked(false) ;
     #endif
     m_changeAddHAct->setStatusTip( tr("Measure & display dihedral angle between atoms") ) ;
-    isConnect=connect( m_changeAddHAct, SIGNAL(triggered()), m_moleculeManip, SLOT(invertAddHydrogen()) ) ;
-    if( !isConnect )
-    {
-      mytoolbox::dbgMsg( "Problem connection signal : m_changeAddHAct.m_changeAddHAct() -> ContextMenuToAvoAction.invertAddHydrogen() !!" ) ;
-      ok = false ;
-    }
 
     m_addAllHAct = new QAction( tr("Add all Hydrogen"), this ) ;
     m_addAllHAct->setStatusTip( tr("Add all Hydrogen atoms in the molecule") ) ;
-    isConnect=connect( m_addAllHAct, SIGNAL(triggered()), this, SLOT(addAllHydrogens()) ) ;
-    if( !isConnect )
-    {
-      mytoolbox::dbgMsg( "Problem connection signal : m_addAllHAct.triggered() -> ContextMenuToAvoAction.addAllHydrogens() !!" ) ;
-      ok = false ;
-    }
 
     m_removeAllHAct = new QAction( tr("Remove all Hydrogen"), this ) ;
     m_removeAllHAct->setStatusTip( tr("Remove all Hydrogen atoms in the molecule") ) ;
-    isConnect=connect( m_removeAllHAct, SIGNAL(triggered()), this, SLOT(removeAllHydrogens()) ) ;
-    if( !isConnect )
-    {
-      mytoolbox::dbgMsg( "Problem connection signal : m_removeAllHAct.triggered() -> ContextMenuToAvoAction.removeAllHydrogens() !!" ) ;
-      ok = false ;
-    }
 
-    return ok ;
   }
 
-  /**
+    /**
     * Build the context menu before use it ...
     */
   void ContextMenuToAvoAction::buildContextMenu()
@@ -207,6 +146,85 @@ namespace Avogadro
     m_contextMenuMain->setDefaultAction( m_cancelAct ) ;
     m_contextMenuMain->setActiveAction( m_periodicTableAct ) ;
   }
+
+
+  /**
+    * Connect the main signals of the context menu. The others are managed dynamically.
+    * @return TRUE if all signals are connected ; FALSE else.
+    */
+  bool ContextMenuToAvoAction::connectMainQActionSignal()
+  {
+    bool isConnect=false, ok=true ;
+
+    //
+    // Connect QAction triggered signals.
+
+    isConnect=connect( m_cancelAct, SIGNAL(triggered()), this, SLOT(closeContextMenu()) ) ;
+    if( !isConnect )
+    {
+      mytoolbox::dbgMsg( "Problem connection signal : m_cancelAct.triggered() -> ContextMenuToAvoAction.closeContextMenu() !!" ) ;
+      ok = false ;
+    }
+
+    isConnect=connect( m_periodicTableAct, SIGNAL(triggered()), m_periodicTable, SLOT(show()) ) ;
+    if( !isConnect )
+    {
+      mytoolbox::dbgMsg( "Problem connection signal : m_periodicTableAct.triggered() -> m_periodicTable.show() !!" ) ;
+      ok = false ;
+    }
+
+    isConnect=connect( m_noDistAct, SIGNAL(triggered()), this, SLOT(askWmToolToCalculNothing()) ) ;
+    if( !isConnect )
+    {
+      mytoolbox::dbgMsg( "Problem connection signal : m_noDistAct.triggered() -> ContextMenuToAvoAction.askWmToolToCalculNothing() !!" ) ;
+      ok = false ;
+    }
+
+    isConnect=connect( m_distAct, SIGNAL(triggered()), this, SLOT(askWmToolToCalculDistance()) ) ;
+    if( !isConnect )
+    {
+      mytoolbox::dbgMsg( "Problem connection signal : m_distAct.triggered() -> ContextMenuToAvoAction.askWmToolToCalculDistance() !!" ) ;
+      ok = false ;
+    }
+
+    isConnect=connect( m_angleAct, SIGNAL(triggered()), this, SLOT(askWmToolToCalculAngle()) ) ;
+    if( !isConnect )
+    {
+      mytoolbox::dbgMsg( "Problem connection signal : m_angleAct.triggered() -> ContextMenuToAvoAction.askWmToolToCalculAngle() !!" ) ;
+      ok = false ;
+    }
+
+    isConnect=connect( m_diedreAct, SIGNAL(triggered()), this, SLOT(askWmToolToCalculDiedre()) ) ;
+    if( !isConnect )
+    {
+      mytoolbox::dbgMsg( "Problem connection signal : m_diedreAct.triggered() -> ContextMenuToAvoAction.askWmToolToCalculDiedre() !!" ) ;
+      ok = false ;
+    }
+
+    isConnect=connect( m_changeAddHAct, SIGNAL(triggered()), m_moleculeManip, SLOT(invertHasAddHydrogen()) ) ;
+    if( !isConnect )
+    {
+      mytoolbox::dbgMsg( "Problem connection signal : m_changeAddHAct.triggered() -> ContextMenuToAvoAction.invertHasAddHydrogen() !!" ) ;
+      ok = false ;
+    }
+
+    isConnect=connect( m_addAllHAct, SIGNAL(triggered()), m_moleculeManip, SLOT(addHydrogens()) ) ;
+    if( !isConnect )
+    {
+      mytoolbox::dbgMsg( "Problem connection signal : m_addAllHAct.triggered() -> m_moleculeManip.addHydrogens() !!" ) ;
+      ok = false ;
+    }
+
+    isConnect=connect( m_removeAllHAct, SIGNAL(triggered()), m_moleculeManip, SLOT(removeHydrogens()) ) ;
+    if( !isConnect )
+    {
+      mytoolbox::dbgMsg( "Problem connection signal : m_removeAllHAct.triggered() -> m_moleculeManip.removeHydrogens() !!" ) ;
+      ok = false ;
+    }
+
+    return ok ;
+  }
+
 
   /**
     * Change the size of the context menu.

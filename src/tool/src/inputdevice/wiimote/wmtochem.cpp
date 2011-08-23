@@ -112,7 +112,8 @@ WmToChem::~WmToChem()
 
 
 /**
-  * Poll the Wiimote. It watches what the Wiimote is doing.
+  * Convert Wiimote data to "chemistry actions".
+  * It watches what the Wiimote is doing.
   * Currently this method return almost every time TRUE because the
   * accelerometer is sensitive, and another thing to "debug"/improve.
   * @return TRUE if something is realized ; FALSE else.
@@ -120,8 +121,18 @@ WmToChem::~WmToChem()
 bool WmToChem::convert( CWiimoteData *data )
 {
   bool isPoll=false ;
+  bool returnedValue=false ;
 
   m_wmData = data ;
+
+  if( m_wmData != NULL )
+    m_hasWm = true ;
+  else
+    m_hasWm = false ;
+
+  if( m_hasNc )
+    m_ncData = &(m_wmData->ExpansionDevice.Nunchuk) ;
+
 
   if( m_hasWm )
   {
@@ -143,18 +154,16 @@ bool WmToChem::convert( CWiimoteData *data )
       switch( m_wmData->GetEvent() )
       {
       case CWiimote::EVENT_EVENT :
-        isPoll = true ;
-        break ;
+        isPoll = true ; break ;
 
       case CWiimote::EVENT_DISCONNECT :
       case CWiimote::EVENT_UNEXPECTED_DISCONNECT :
-        cout << "--- DISCONNECTED ---" << endl << " [wiimote id " << m_wmData->GetID() << "]" << endl ;
-        //reloadWiimotes = 1; // To update Wiimote always connected ! Not search a Wiimote disconnected !!
+        mytoolbox::dbgMsg( "--- WIIMOTE DISCONNECTED :(" ) ;
         m_hasWm = false ;
-        //emit wmDisconnected() ;
         break;
 
       case CWiimote::EVENT_NUNCHUK_INSERTED :
+        mytoolbox::dbgMsg( "--- NUNCHUK CONNECTED :)" ) ;
         if( m_ncData == NULL )
         { // Get Nunchuk.
 
@@ -167,6 +176,7 @@ bool WmToChem::convert( CWiimoteData *data )
         break ;
 
       case CWiimote::EVENT_NUNCHUK_REMOVED:
+        mytoolbox::dbgMsg( "--- NUNCHUK DISCONNECTED :(" ) ;
         m_ncData = NULL ;
         m_hasNc = false ;
         m_angleNcJoystickCosDeg = 0 ;
@@ -200,7 +210,7 @@ bool WmToChem::convert( CWiimoteData *data )
     // Verify if Nunchuk polls.
     // In fact, if a 'Z' is pushed and no movement is realized, the Wiimote detects
     // the change state, but does not indicate that 'Z' is always pushed.
-    if( m_hasNc != NULL )
+    if( m_hasNc == true )
     {
       float angle, magnitude ;
       m_ncData->Joystick.GetPosition(angle, magnitude) ; // No concurrence.
@@ -218,7 +228,7 @@ bool WmToChem::convert( CWiimoteData *data )
 
     // "Poll" of the Wiimote or other poll.
     if( !(isPoll || m_otherPoll) )
-      return false ;
+      returnedValue = false ;
     else
     {
       switch( m_operatingMode )
@@ -251,13 +261,13 @@ bool WmToChem::convert( CWiimoteData *data )
       //    WMAVO_IS( SMTHG ) || m_crossReleaseEnd || m_crossRelease || m_okMenuReleaseEnd
       // Et pour l'accélération/les données à visualiser en continu
       //  )
-        return true ;
+        returnedValue = true ;
       //else
         //return false
     }
   }
 
-  return false ;
+  return returnedValue ;
 }
 
 

@@ -46,15 +46,18 @@ int gausTabSum = 26 ;
  * CButtonBase class methods.
  */
 CButtonBase::CButtonBase() :
-  mpBtnsPtr( NULL ), mpBtnsHeldPtr( NULL ), mpBtnsReleasedPtr( NULL )
+  mpBtnsPtr(NULL), mpBtnsHeldPtr(NULL), 
+  mpBtnsReleasedPtr(NULL)
 {}
     
-CButtonBase::CButtonBase(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr) :
-  mpBtnsPtr( ButtonsPtr ), mpBtnsHeldPtr( ButtonsHeldPtr ), mpBtnsReleasedPtr( ButtonsReleasedPtr )
+CButtonBase::CButtonBase(short *ButtonsPtr, short *ButtonsHeldPtr, short *ButtonsReleasedPtr, short *ButtonsPreviousPtr) :
+  mpBtnsPtr( ButtonsPtr ), mpBtnsHeldPtr( ButtonsHeldPtr ), 
+  mpBtnsReleasedPtr( ButtonsReleasedPtr ), mpBtnsPreviousPtr(ButtonsPreviousPtr)
 {}
   
 CButtonBase::CButtonBase( const CButtonBase& cbb ) :
-  mpBtnsPtr( cbb.mpBtnsPtr ), mpBtnsHeldPtr( cbb.mpBtnsHeldPtr ), mpBtnsReleasedPtr( cbb.mpBtnsReleasedPtr )
+  mpBtnsPtr(cbb.mpBtnsPtr), mpBtnsHeldPtr(cbb.mpBtnsHeldPtr), 
+  mpBtnsReleasedPtr(cbb.mpBtnsReleasedPtr), mpBtnsPreviousPtr(cbb.mpBtnsPreviousPtr)
 {}
 
 CButtonBase::~CButtonBase()
@@ -63,41 +66,48 @@ CButtonBase::~CButtonBase()
   mpBtnsPtr = NULL ;
   mpBtnsHeldPtr = NULL ;
   mpBtnsReleasedPtr = NULL ;
+  mpBtnsPreviousPtr = 0 ;
 }
 
 
-int CButtonBase::isPressed(int Button)
+bool CButtonBase::isPressed(int Button)
 {
   // wiiuse -> events.c :
   // buttons pressed now
 	// wm->btns = now ;
-  return (Cast(mpBtnsPtr) & Button) == Button;
+  return ((*mpBtnsPtr) & Button) == Button;
 }
 
-int CButtonBase::isHeld(int Button)
+bool CButtonBase::isHeld(int Button)
 {
   // wiiuse -> events.c :
   // pressed now & were pressed, then held
   // wm->btns_held = (now & wm->btnsPrevious);
-  return (Cast(mpBtnsHeldPtr) & Button) == Button;
+  return ((*mpBtnsHeldPtr) & Button) == Button;
 }
 
-int CButtonBase::isReleased(int Button)
+bool CButtonBase::isReleased(int Button)
 {
   // wiiuse -> events.c :
   // were pressed or were held & not pressed now, then released
 	// wm->btns_released = ((wm->btns | wm->btns_held) & ~now);
-  return (Cast(mpBtnsReleasedPtr) & Button) == Button;
+  return ((*mpBtnsReleasedPtr) & Button) == Button;
 }
 
-int CButtonBase::isJustPressed(int Button)
+bool CButtonBase::isJustPressed(int Button)
 {
-  return ((Cast(mpBtnsPtr) & Button) == Button) && ((Cast(mpBtnsHeldPtr) & Button) != Button);
+  // wiiuse -> events.c :
+  // isPressed && !isHeld
+  return (((*mpBtnsPtr) & Button) == Button) 
+         && (((*mpBtnsHeldPtr) & Button) != Button) ;
 }
 
-int CButtonBase::isJustChanged()
+
+bool CButtonBase::isJustChanged()
 {
-  return (Cast(mpBtnsHeldPtr) & Cast(mpBtnsPtr)) == Cast(mpBtnsPtr) ;
+  // wiiuse -> events.c :
+  // wm->btns != wm->btnsPrevious)
+  return (*mpBtnsPtr) != (*mpBtnsPreviousPtr) ;
 }
 
 /*
@@ -106,8 +116,8 @@ int CButtonBase::isJustChanged()
 CButtons::CButtons() : CButtonBase()
 {}
     
-CButtons::CButtons( void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr ) :
-    CButtonBase(ButtonsPtr, ButtonsHeldPtr, ButtonsReleasedPtr)
+CButtons::CButtons( short *ButtonsPtr, short *ButtonsHeldPtr, short *ButtonsReleasedPtr, short *ButtonsPreviousPtr ) :
+  CButtonBase(ButtonsPtr, ButtonsHeldPtr, ButtonsReleasedPtr, ButtonsPreviousPtr)
 {}
 
 CButtons::CButtons( const CButtons& cb ) : CButtonBase( cb )
@@ -120,8 +130,8 @@ CButtons::~CButtons() // See ~CButtonBase
 CNunchukButtons::CNunchukButtons() : CButtonBase()
 {}
 
-CNunchukButtons::CNunchukButtons(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr) :
-    CButtonBase(ButtonsPtr, ButtonsHeldPtr, ButtonsReleasedPtr)
+CNunchukButtons::CNunchukButtons(short *ButtonsPtr, short *ButtonsHeldPtr, short *ButtonsReleasedPtr, short *ButtonsPreviousPtr ) :
+    CButtonBase(ButtonsPtr, ButtonsHeldPtr, ButtonsReleasedPtr, ButtonsPreviousPtr)
 {}
 
 CNunchukButtons::CNunchukButtons( const CNunchukButtons& cnb ) : CButtonBase( cnb )
@@ -134,8 +144,8 @@ CNunchukButtons::~CNunchukButtons() // See ~CButtonBase
 CClassicButtons::CClassicButtons() : CButtonBase()
 {}
 
-CClassicButtons::CClassicButtons(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr) :
-    CButtonBase(ButtonsPtr, ButtonsHeldPtr, ButtonsReleasedPtr)
+CClassicButtons::CClassicButtons(short *ButtonsPtr, short *ButtonsHeldPtr, short *ButtonsReleasedPtr, short *ButtonsPreviousPtr) :
+    CButtonBase(ButtonsPtr, ButtonsHeldPtr, ButtonsReleasedPtr, ButtonsPreviousPtr)
 {}
 
 CClassicButtons::CClassicButtons( const CClassicButtons& ccb ) : CButtonBase( ccb )
@@ -148,8 +158,8 @@ CClassicButtons::~CClassicButtons() // See ~CButtonBase
 CGH3Buttons::CGH3Buttons() : CButtonBase()
 {}
     
-CGH3Buttons::CGH3Buttons(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr) :
-    CButtonBase(ButtonsPtr, ButtonsHeldPtr, ButtonsReleasedPtr)
+CGH3Buttons::CGH3Buttons(short *ButtonsPtr, short *ButtonsHeldPtr, short *ButtonsReleasedPtr, short *ButtonsPreviousPtr) :
+    CButtonBase(ButtonsPtr, ButtonsHeldPtr, ButtonsReleasedPtr, ButtonsPreviousPtr)
 {}
 
 CGH3Buttons::CGH3Buttons( const CGH3Buttons& cgb ) : CButtonBase( cgb )
@@ -1086,7 +1096,7 @@ void CNunchuk::init( struct nunchuk_t *n )
 {
   if( n != NULL )
   {
-    Buttons = CNunchukButtons( (void*) &(n->btns), (void*) &(n->btns_held), (void*) &(n->btns_released) ) ;
+    Buttons = CNunchukButtons( &(n->btns.btns), &(n->btns.btns_held), &(n->btns.btns_released), &(n->btns.btns_previous) ) ;
     Joystick = CJoystick( &(n->js) ) ;
     Accelerometer = CAccelerometer( &(n->accel_calib), &(n->accel), &(n->accel_threshold), 
                                     &(n->orient), &(n->orient_threshold), &(n->gforce) ) ;
@@ -1134,7 +1144,7 @@ void CClassic::init( struct classic_ctrl_t *c )
 {
   if( c != NULL )
   {
-    Buttons = CClassicButtons( (void*) &(c->btns), (void*) &(c->btns_held), (void*) &(c->btns_released) ) ;
+    Buttons = CClassicButtons( &(c->btns.btns), &(c->btns.btns_held), &(c->btns.btns_released), &(c->btns.btns_previous) ) ;
     LeftJoystick = CJoystick( &(c->ljs) ) ;
     RightJoystick = CJoystick( &(c->rjs) ) ;
   }
@@ -1189,7 +1199,7 @@ void CGuitarHero3::init( struct guitar_hero_3_t *g )
 {
   if( g != NULL )
   {
-    Buttons = CGH3Buttons( (void*) &(g->btns), (void*) &(g->btns_held), (void*) &(g->btns_released) ) ;
+    Buttons = CGH3Buttons( &(g->btns.btns), &(g->btns.btns_held), &(g->btns.btns_released), &(g->btns.btns_previous) ) ;
     Joystick = CJoystick( &(g->js) ) ;
   }
   else
@@ -1259,7 +1269,8 @@ void CWiimote::init( struct wiimote_t *wmPtr )
   if( wmPtr != NULL )
   {
     IR = CIR(wmPtr) ;
-    Buttons = CButtons( (void*) &(wmPtr->btns), (void*) &(wmPtr->btns_held), (void*) &(wmPtr->btns_released) ) ;
+    Buttons = CButtons( const_cast<short*>(&(wmPtr->btns.btns)), const_cast<short*>(&(wmPtr->btns.btns_held)), 
+                        const_cast<short*>(&(wmPtr->btns.btns_released)), const_cast<short*>(&(wmPtr->btns.btns_previous)) ) ;
     Accelerometer = CAccelerometer( (accel_t*) &(wmPtr->accel_calib), (vec3b_t*) &(wmPtr->accel),
                                     (int*) &(wmPtr->accel_threshold), (orient_t*) &(wmPtr->orient),
                                     (float*) &(wmPtr->orient_threshold), (gforce_t*) &(wmPtr->gforce) ) ;
@@ -1618,7 +1629,9 @@ std::vector<CWiimote*>& CWii::Connect()
 int CWii::Poll()
 {
   bool a,b,c ;
-  return Poll(a,b,c) ; 
+  int d ;
+  d = Poll(a,b,c) ; 
+  return (a || b || c || d) ;
 }
 
 int CWii::Poll( bool &updateButton_out, bool &updateAccelerometerData_out, bool &updateIRData_out )
@@ -1626,7 +1639,6 @@ int CWii::Poll( bool &updateButton_out, bool &updateAccelerometerData_out, bool 
     bool isUpdated=false ;
     double x, y, z ;
     int poll=wiiuse_poll((struct wiimote_t**) mpWiimoteArray, mpWiimoteArraySize) ;
-    int a=0 ;
 
     updateButton_out = (poll==0?false:true) ;
     updateAccelerometerData_out = false ;
@@ -1637,11 +1649,11 @@ int CWii::Poll( bool &updateButton_out, bool &updateAccelerometerData_out, bool 
       isUpdated = false ;
 
       // Buttons updated.
-      a = mpWiimotesVector[i]->Buttons.isJustChanged() ;
-      if( a == 0 )
-        mpWiimotesVector[i]->mpIsPolledButton = false ;
-      else
+      isUpdated = mpWiimotesVector[i]->Buttons.isJustChanged() ;
+      if( isUpdated )
         mpWiimotesVector[i]->mpIsPolledButton = true ;
+      else
+        mpWiimotesVector[i]->mpIsPolledButton = false ;
 
       // Acc Updated.
       if( poll )

@@ -281,6 +281,7 @@ class WmToChem
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
       ///< http://eigen.tuxfamily.org/dox/StructHavingEigenMembers.html
+      ///< http://eigen2.sourcearchive.com/documentation/2.0.10/StructHavingEigenMembers.html
 
 };
 

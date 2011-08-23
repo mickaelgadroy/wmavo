@@ -35,8 +35,10 @@ namespace WrapperInputToDomain
   }
 
   ChemicalWrapData_to::ChemicalWrapData_to()
-    : m_operatingMode(0), m_menuMode(false), m_irSensitive(0),
-      m_updateOpMode(false), m_updateMenuMode(false), m_updateIRSensitive(false)
+    : m_operatingMode(0), m_menuMode(false), 
+      m_irSensitive(0), m_hasSleepThread(PLUGIN_WM_SLEEPTHREAD_ONOFF),
+      m_updateOpMode(false), m_updateMenuMode(false), 
+      m_updateIRSensitive(false), m_updateSleepThread(false)
   {
   }
 
@@ -45,15 +47,23 @@ namespace WrapperInputToDomain
   }
 
   ChemicalWrap::ChemicalWrap( InputDevice::Device *dev ) 
-    : m_dev(dev), m_isRunning(false)
+    : m_dev(dev), m_isRunning(false), m_hasSleepThread(PLUGIN_WM_SLEEPTHREAD_ONOFF)
   {
     m_cirBufferFrom = new WIWO_sem<ChemicalWrapData_from*>( CIRBUFFER_DEFAULT_SIZE ) ;
     m_cirBufferTo = new WIWO_sem<ChemicalWrapData_to*>( CIRBUFFER_DEFAULT_SIZE ) ;
     m_wmToChem = new WmToChem(WMAVO_OPERATINGMODE3) ;
+    m_actionsAreApplied.fetchAndStoreRelaxed(0) ;
+    m_threadFinished.fetchAndStoreRelaxed(1) ;
+
+    bool isConnect=QObject::connect( this, SIGNAL(runRunPoll()), this, SLOT(runPoll()) ) ;
+    if( !isConnect )
+      mytoolbox::dbgMsg( "Problem connection signal : ChemicalWrap.runRunPoll() -> ChemicalWrap.runPoll() !!" ) ;
   }
 
   ChemicalWrap::~ChemicalWrap()
   {
+    stopPoll() ;
+
     if( m_cirBufferFrom != NULL )
     {
       delete( m_cirBufferFrom ) ;
@@ -75,46 +85,137 @@ namespace WrapperInputToDomain
 
   ChemicalWrapData_from* ChemicalWrap::getWrapperDataFrom()
   { 
-    ChemicalWrapData_from *data=NULL ;
-    m_cirBufferFrom->popFront( data ) ;
-    return data ;
+    if( m_isRunning && m_cirBufferFrom!=NULL )
+    {
+      ChemicalWrapData_from *data=NULL ;
+      m_cirBufferFrom->popFront( data ) ;
+      return data ;
+    }
+    else
+      return NULL ;
   }
 
   void ChemicalWrap::setWrapperDataTo( const ChemicalWrapData_to& dataTo )
   { 
-    ChemicalWrapData_to *data=new ChemicalWrapData_to() ;
-    *data = dataTo ;
-    m_cirBufferTo->pushBack(data) ;
+    if( m_isRunning && m_cirBufferTo!=NULL )
+    {
+      ChemicalWrapData_to *data=new ChemicalWrapData_to() ;
+      *data = dataTo ;
+      m_cirBufferTo->pushBack(data) ;
+    }
   }
 
   bool ChemicalWrap::connectAndStart()
   {
-    this->connect( &m_wrapperThread, SIGNAL(started()), SLOT(runPoll()) ) ;
+    bool isConnect=this->connect( &m_wrapperThread, SIGNAL(started()), SLOT(runPoll()) ) ;
+    if( !isConnect )
+        mytoolbox::dbgMsg( "Problem connection signal : m_wrapperThread.started() -> ChemicalWrap.runPoll() !!" ) ;
+
     this->moveToThread( &m_wrapperThread ) ;
+
+    m_threadFinished.fetchAndStoreRelaxed(0) ;
     m_wrapperThread.start() ;
+
     return true ;
   }
 
+  void ChemicalWrap::setOnActionsApplied()
+  {
+    m_actionsAreApplied.fetchAndStoreRelaxed(1) ;
+  }
 
   void ChemicalWrap::runPoll()
   {
     if( m_dev != NULL )
     {
-      //m_isRunning = true ;
+      bool needUpdateDataFrom=false ;
+      bool needUpdateDataTo=false ;
+      m_isRunning = true ;
 
-      // Update local data.
-      //while( m_isRunning )
+      while( m_isRunning )
       {
-        updateDataFrom() ;
-        updateDataTo() ;
+        needUpdateDataFrom = false ;
+        needUpdateDataTo = false ;
+
+        // Check if there are some works.
+        if( m_actionsAreApplied==1 
+            && m_dev->hasDeviceDataAvailable() )
+          needUpdateDataFrom = true ;
+
+        if( !m_cirBufferTo->isEmpty() )
+          needUpdateDataTo = true ;
+
+        if( needUpdateDataFrom || needUpdateDataTo )
+        { // Working ...
+
+          if( needUpdateDataFrom && updateDataFrom() )
+            m_actionsAreApplied.fetchAndStoreRelaxed(0) ;
+
+          if( needUpdateDataTo )
+            updateDataTo() ;
+        }
+        else
+        { // Sleeping ...
+
+          if( m_hasSleepThread )
+            m_wrapperThread.msleep(PLUGIN_WM_SLEEPTHREAD_TIME) ;
+          else
+            m_wrapperThread.yieldCurrentThread() ;
+            // With m_deviceThread.setPriority( QThread::LowPriority ) ;
+        }
+      
+        // Call event loop (to get "incoming signals").
+        QCoreApplication::processEvents() ; 
+        // By default : QEventLoop::AllEvent "& !QEventLoop::WaitForMoreEvents"
+        // http://doc.qt.nokia.com/latest/qeventloop.html#ProcessEventsFlag-enum
       }
+
+      // Must be disconnect, else there is a crash when this object is deleted.
+      // Once QCoreApplication::processEvents() called, this object is "attached" at QCoreApplication.
+      // So with this static method, this object must force to disconnect every signal after use,
+      // mainly with QCoreApplication object.
+      this->disconnect() ;
+
+      m_threadFinished.fetchAndStoreRelaxed(1) ;
+    }
+    else
+    {
+      m_threadFinished.fetchAndStoreRelaxed(1) ;
+      m_isRunning = false ;
     }
   }
 
   void ChemicalWrap::stopPoll()
   {
-    // Stop the working thread.
-    m_isRunning = false ;
+    if( m_isRunning )
+    {
+      // Stop the working thread.
+      m_isRunning = false ;
+      while( m_threadFinished == 0 ) ;
+
+      ChemicalWrapData_from *dataFrom=NULL ;
+      ChemicalWrapData_to *dataTo=NULL ;
+
+      while( !m_cirBufferFrom->isEmpty() )
+      {
+        m_cirBufferFrom->popFront(dataFrom) ;
+        if( dataFrom != NULL )
+        {
+          delete dataFrom ;
+          dataFrom = NULL ;
+        }
+      }
+
+      while( !m_cirBufferTo->isEmpty() )
+      {
+        m_cirBufferTo->popFront(dataTo) ;
+        if( dataTo != NULL )
+        {
+          delete dataTo ;
+          dataTo = NULL ;
+        }
+      }
+    }
 
     // Stop the event loop thread (run() method).
     m_wrapperThread.quit() ;
@@ -125,7 +226,7 @@ namespace WrapperInputToDomain
     bool r=false ;
     CWiimoteData *wmData=NULL ;
 
-    if( m_dev )
+    if( m_dev != NULL )
     {
       InputDevice::WmDevice* dev=dynamic_cast<InputDevice::WmDevice*>(m_dev) ;
       InputDevice::WmDeviceData_from *wmDataFrom=NULL ;
@@ -136,9 +237,15 @@ namespace WrapperInputToDomain
 
         if( wmDataFrom != NULL )
           wmData = wmDataFrom->getDeviceData() ;
+
+        if( wmData==NULL 
+            || wmData->GetBatteryLevel()<0 
+            || wmData->IR.GetNumDots()<0 || wmData->IR.GetNumDots()>4 )
+          printf("Error data : in ChemicalWrapper.CWiimoteData *wm!=NULL && no allocated ...\n") ;
       }
 
-      if( wmData!=NULL && wmData->isConnected() && wmData->isPolled() && m_wmToChem->convert(wmData) )
+      if( wmData!=NULL && wmData->isConnected() 
+          && m_wmToChem->convert(wmData) )
       {
         // Initiate data.
         ChemicalWrapData_from *chemData=new ChemicalWrapData_from() ;
@@ -170,17 +277,22 @@ namespace WrapperInputToDomain
         chemData->distBetweenSources = (int)m_wmavo->getWiimote()->IR.GetDistance() ;
         */
 
-        m_cirBufferFrom->pushBack( chemData ) ;
-        emit newActions() ;
-
-        r = true ;
+        // 1st stategy : If no place, no push data.
+        if( !m_cirBufferFrom->isFull() )
+        {
+          m_cirBufferFrom->pushBack( chemData ) ;
+          emit newActions() ;
+          r = true ;
+        }
+        else
+          delete chemData ;
       }
       else
         r = false ;
-    }
 
-    if( wmData != NULL )
-      delete wmData ;
+      if( wmData != NULL )
+        delete wmData ;
+    }
 
     return r ;
   }
@@ -195,24 +307,32 @@ namespace WrapperInputToDomain
     //if( isConnected = wmavo->wmIsConnected() )
     {
       ChemicalWrapData_to *data=NULL ; 
-      if( !m_cirBufferTo->isEmpty() )
+      //if( !m_cirBufferTo->isEmpty() )
       {
         m_cirBufferTo->popFront(data) ;
 
         if( data != NULL )
         {
           int opMode ;
-          bool menuMode ;
+          bool menuMode, hasSleepThread ;
           int irSensitive ;
+          bool hasUpdated=false ;
 
-          if( data->getOperatingMode(opMode) )
+          hasUpdated = data->getOperatingMode(opMode) ;
+          if( hasUpdated )
             m_wmToChem->setOperatingMode(opMode) ;
 
-          if( data->getMenuMode(menuMode) )
+          hasUpdated = data->getMenuMode(menuMode) ;
+          if( hasUpdated )
             m_wmToChem->setMenuMode(menuMode) ;
 
-          if( data->getIRSensitive(irSensitive) )
+          hasUpdated = data->getIRSensitive(irSensitive) ;
+          if( hasUpdated )
             m_wmToChem->setIrSensitive(irSensitive) ;
+
+          hasUpdated = data->getHasSleepThread(hasSleepThread) ;
+          if( hasUpdated )
+            m_hasSleepThread = hasSleepThread ;
 
           delete data ;
           

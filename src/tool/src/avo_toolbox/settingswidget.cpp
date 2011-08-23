@@ -31,7 +31,10 @@
 #include "settingswidget.h"
 
 
-SettingsWidget::SettingsWidget()
+SettingsWidget::SettingsWidget() 
+  : m_settingsWidget(NULL), 
+    m_irSensitiveSlider(NULL), m_wmPointSizeFontSlider(NULL),
+    m_checkBoxActivateVibration(NULL), m_checkBoxActivateSleepThread(NULL)
 {
   createSettingsWidget() ;
 }
@@ -79,6 +82,9 @@ void SettingsWidget::createSettingsWidget()
     m_checkBoxActivateVibration = new QCheckBox( "ON/OFF" ) ;
     m_checkBoxActivateVibration->setChecked(PLUGIN_WM_VIBRATION_ONOFF) ;
 
+    QLabel *lblSleepThread = new QLabel(tr("Less CPU use (but can lag):")) ;
+    m_checkBoxActivateSleepThread = new QCheckBox( "ON/OFF" ) ;
+    m_checkBoxActivateSleepThread->setChecked(PLUGIN_WM_SLEEPTHREAD_ONOFF) ;
 
     QVBoxLayout *vBoxSens=new QVBoxLayout() ;
     QHBoxLayout *hBoxSens=new QHBoxLayout() ;
@@ -102,6 +108,9 @@ void SettingsWidget::createSettingsWidget()
     hBoxVibration->addWidget( lblVibration ) ;
     hBoxVibration->addWidget( m_checkBoxActivateVibration ) ;
 
+    QHBoxLayout *hBoxSleepTh=new QHBoxLayout() ;
+    hBoxSleepTh->addWidget( lblSleepThread ) ;
+    hBoxSleepTh->addWidget( m_checkBoxActivateSleepThread ) ;
 
     QVBoxLayout *vBox=new QVBoxLayout() ;
     vBox->addLayout( vBoxSens ) ;
@@ -109,8 +118,26 @@ void SettingsWidget::createSettingsWidget()
     vBox->addLayout( vBoxPointSize ) ;
     vBox->addSpacing( 30 ) ;
     vBox->addLayout( hBoxVibration ) ;
+    vBox->addSpacing( 30 ) ;
+    vBox->addLayout( hBoxSleepTh ) ;
     vBox->addStretch( 1 ) ;
 
     m_settingsWidget->setLayout( vBox ) ;
   }
+}
+
+
+void SettingsWidget::resetWidget()
+{
+  if( m_irSensitiveSlider != NULL )
+    m_irSensitiveSlider->setValue( PLUGIN_WM_SENSITIVE_DEFAULT ) ;
+
+  if( m_wmPointSizeFontSlider != NULL )
+    m_wmPointSizeFontSlider->setValue( (int)(WMTOOL_POINTSIZE_RATIO_DEFAULT * 10.0f) ) ;
+
+  if( m_checkBoxActivateVibration != NULL )
+    m_checkBoxActivateVibration->setChecked(PLUGIN_WM_VIBRATION_ONOFF) ;
+
+  if( m_checkBoxActivateSleepThread != NULL )
+    m_checkBoxActivateSleepThread->setChecked(PLUGIN_WM_SLEEPTHREAD_ONOFF) ;
 }

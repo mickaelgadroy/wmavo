@@ -33,32 +33,6 @@
 #include "moleculeManipulation.h"
 #include "contextmenu_to_avoaction.h"
 
-/*
-#include <avogadro/glwidget.h>
-#include <avogadro/camera.h>
-#include <avogadro/navigate.h>
-#include <avogadro/primitivelist.h>
-#include <avogadro/molecule.h>
-#include <avogadro/atom.h>
-#include <avogadro/bond.h>
-#include <avogadro/tool.h>
-#include <avogadro/toolgroup.h>
-#include <avogadro/glhit.h>
-#include <avogadro/undosequence.h>
-*/
-
-/*
-#include <openbabel/mol.h>
-//#include <openbabel/math/vector3.h>
-#include <openbabel/griddata.h>
-#include <openbabel/grid.h>
-#include <openbabel/generic.h>
-#include <openbabel/forcefield.h>
-#include <openbabel/obiter.h>
-#include <openbabel/obconversion.h>
-#include <openbabel/builder.h>
-*/
-
 namespace Avogadro
 {
 
@@ -253,7 +227,7 @@ namespace Avogadro
             m_isCalculDistDiedre = false ;
 
             // Inform the WmTool class of the selected atom.
-            emit setCalculDistDiedre( atom ) ; // To wmTool.
+            emit sendAtomToCalculDistDiedre( atom ) ; // To wmTool.
 
             // Nota Bene : it is the WmTool class which infoms the WrapperChemicalCmdToAvoAction class when
             // it is necessary to select an atom for the "calcul distance" mode.
@@ -569,16 +543,19 @@ namespace Avogadro
             m_curPosDraw = m_widget->camera()->unProject(p, pointRef) ;
 
             Atom *an = m_moleculeManip->calculateNearestAtom( &m_curPosDraw, NULL ) ;
-            Eigen::Vector3d dist = m_curPosDraw - *(an->pos()) ;
-            double act = dist.norm() ;
 
-            InputDevice::RumbleSettings rumble(true, true, false, true ) ;
-            rumble.setDistance( act ) ;
-            InputDevice::WmDeviceData_to wmDevDataTo ;
-            wmDevDataTo.setRumble( rumble ) ;
-            m_wmDev->setDeviceDataTo( wmDevDataTo ) ;
+            if( an != NULL )
+            {
+              Eigen::Vector3d dist=m_curPosDraw - *(an->pos()) ;
+              double act=dist.norm() ;
 
-
+              // Activate rumble.
+              InputDevice::RumbleSettings rumble(true, true, false, true ) ;
+              rumble.setDistance( act ) ;
+              InputDevice::WmDeviceData_to wmDevDataTo ;
+              wmDevDataTo.setRumble( rumble ) ;
+              m_wmDev->setDeviceDataTo( wmDevDataTo ) ;
+            }
 
             // Methode0 : SPEED !!
             Atom* a=NULL ;
@@ -1225,9 +1202,11 @@ namespace Avogadro
     */
   void WrapperChemicalCmdToAvoAction::updateForAvoActions2( int wmavoAction )
   {
-    if( (WMAVO_IS2(wmavoAction, WMAVO_MENU_ACTIVE) ? 0 // To update wmInfo in wmTool class
-                                                   : 1 ) // To avoid a bug with periodic table.
-        || WMAVO_IS2(wmavoAction,WMAVO_SELECT)
+    if( //(WMAVO_IS2(wmavoAction, WMAVO_MENU_ACTIVE) ? 0 // To update wmInfo in wmTool class
+        //                                           : 1 ) // To avoid a bug with periodic table.
+        //|| 
+        WMAVO_IS2(wmavoAction,WMAVO_SELECT)
+        || WMAVO_IS2(wmavoAction,WMAVO_SELECT_MULTI)
         || WMAVO_IS2(wmavoAction,WMAVO_CREATE)
         || WMAVO_IS2(wmavoAction,WMAVO_CAM_ROTATE)
         || WMAVO_IS2(wmavoAction,WMAVO_CAM_ZOOM)
@@ -1257,14 +1236,13 @@ namespace Avogadro
       }
 
       QApplication::sendEvent( m_widget->m_current, m_me2 ) ;
+      
 
-      /*
-      // Installer un truc en plus.
+      // Install something else.
       // 5. Try Fake mouse event.
-      QTestEventList events;
-      events.addMouseMove(p,1);
-      events.simulate(m_widget);
-      */
+      //qTestEventList events;
+      //events.addMouseMove(p,1);
+      //events.simulate(m_widget);
     }
     else
     {
@@ -1393,10 +1371,10 @@ namespace Avogadro
 
         // Apply rotations.
         transfAtomRotate_out.rotate(
-          Eigen::AngleAxisd( (rotAtomdegX_in/90.0)*0.1, camBackTransformedYAxis) );
+          Eigen::AngleAxisd( (rotAtomdegX_in/90.0)* 0.1, camBackTransformedYAxis) );
 
         transfAtomRotate_out.rotate(
-            Eigen::AngleAxisd( (rotAtomdegY_in/90.0)*0.1, camBackTransformedXAxis) );
+          Eigen::AngleAxisd( (rotAtomdegY_in/90.0)*-0.1, camBackTransformedXAxis) );
 
         /*
         m_transfAtomRotate_out.rotate(

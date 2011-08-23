@@ -39,15 +39,17 @@ namespace Avogadro
       Tool(parent),
       m_widget(NULL), m_settingsWidget(NULL),
       m_wm(NULL), m_chemWrap(NULL), m_wrapperChemToAvo(NULL),
-      m_updateActionDisplay(false), m_updateInfoDeviceDisplay(false),
       m_drawObject(NULL), m_renderText(NULL), m_distAngleDiedre(NULL)
   {
+    m_updateActionDisplay.fetchAndStoreRelaxed(0) ;
+    m_updateInfoDeviceDisplay.fetchAndStoreRelaxed(0) ;
+
     QAction *action = activateAction() ;
     if( action != NULL )
     {
-      action->setIcon(QIcon(QString::fromUtf8(":/wmtool/inputdevice/wiimote.png"))) ;
+      action->setIcon(QIcon(QString::fromUtf8(":/wmtool/wiimote.png"))) ;
       action->setToolTip(tr("Wiimote Tool")) ;
-      //action->setShortcut(Qt::Key_F1) ;    
+      //action->setShortcut(Qt::Key_F1) ;
     }
   }
 
@@ -55,6 +57,45 @@ namespace Avogadro
   {
     // Delete by Avogadro: see settingsWidgetDestroyed() method.
     //delete m_settingsWidget ;
+
+    // Desallocate in 1st (using m_chemWrap and m_wm)
+    if( m_wrapperChemToAvo != NULL )
+    {
+      delete m_wrapperChemToAvo ;
+      m_wrapperChemToAvo = NULL ;
+    }
+
+    // Then (using m_wm)
+    if( m_chemWrap != NULL )
+    {
+      delete m_chemWrap ;
+      m_chemWrap = NULL ;
+    }
+
+    // Finally (using nothing).
+    if( m_wm != NULL )
+    {
+      delete m_wm ;
+      m_wm = NULL ;
+    }
+
+    if( m_drawObject != NULL )
+    {
+      delete m_drawObject ;
+      m_drawObject = NULL ;
+    }
+
+    if( m_renderText != NULL )
+    {
+      delete m_renderText ;
+      m_renderText = NULL ;
+    }
+
+    if( m_distAngleDiedre != NULL )
+    {
+      delete m_distAngleDiedre ;
+      m_distAngleDiedre = NULL ;
+    }
   }
 
 
@@ -141,90 +182,113 @@ namespace Avogadro
     */
   bool WmTool::paint( GLWidget *widget )
   {
-    /*
-    if( m_updateInfoDeviceDisplay )
-	    mutex updateInfoDevice = false ;
-    if( m_updateActionDisplay )
-	    mutex updateAction = false ;
-      */
+    if( m_widget != NULL )
+    {
+      if( !widget->hasFocus() )
+        widget->setFocus() ;
 
+      m_drawObject->drawCenter() ;
+      m_drawObject->drawBarycenter() ;
+      
+      if( m_updateActionDisplay == 1 )
+      {
+        m_updateActionDisplay.fetchAndStoreRelaxed(0) ;
 
-    if( !widget->hasFocus() )
-      widget->setFocus() ;
+        // Paint distance, diedre & dihedral.
+        m_distAngleDiedre->drawDistDiedre() ;
 
-    m_renderText->drawMsg() ;
-    m_renderText->drawWmInfo() ;
+        // Paint atoms & bond being created.
+        //if( m_drawBeginAtom || m_drawEndAtom || m_drawBond )
+          m_drawObject->drawBondAtom() ;
 
-    // Paint distance, diedre & dihedral.
-    m_distAngleDiedre->drawDistDiedre() ;
+        m_drawObject->drawSelectRect() ;
+      }
 
-    // Paint atoms & bond being created.
-    //if( m_drawBeginAtom || m_drawEndAtom || m_drawBond )
-      m_drawObject->drawBondAtom() ;
-    m_drawObject->drawCenter() ;
-    m_drawObject->drawBarycenter() ;
-    m_drawObject->drawCursor() ;
-    m_drawObject->drawSelectRect() ;
+      if( m_updateInfoDeviceDisplay == 1 )
+      {
+        m_updateInfoDeviceDisplay.fetchAndStoreRelaxed(0) ;
 
-    return true ;
+        m_renderText->drawMsg() ;
+        m_renderText->drawWmInfo() ;
+      }
+
+      m_drawObject->drawCursor() ;
+
+      return true ;
+    }
+    else
+      return false ;
   }
 
 
   void WmTool::initAndStart( GLWidget *widget )
   {
-    if( m_widget == NULL )
+    if( widget != NULL )
     {
       m_widget = widget ;
 
       // See settingsWidget() method
       //m_settingsWidget = new SettingsWidget() ;
 
+      if( m_wrapperChemToAvo != NULL )
+        delete m_wrapperChemToAvo ;
+      if( m_chemWrap != NULL )
+        delete m_chemWrap ;
+      if( m_wm != NULL )
+        delete m_wm ;
+
       m_wm = new InputDevice::WmDevice() ;
       m_chemWrap = new WITD::ChemicalWrap( m_wm ) ;
       m_wrapperChemToAvo = new WrapperChemicalCmdToAvoAction( m_widget, m_chemWrap, m_wm ) ;
 
-      m_drawObject = new DrawObject( m_widget ) ;
-      m_renderText = new RenderText( m_widget ) ;
-      m_distAngleDiedre = new DistanceAngleDiedre( m_widget ) ;
+      if( m_drawObject == NULL )
+        m_drawObject = new DrawObject( m_widget ) ;
+      if( m_renderText == NULL )
+        m_renderText = new RenderText( m_widget ) ;
+      if( m_distAngleDiedre == NULL )
+        m_distAngleDiedre = new DistanceAngleDiedre( m_widget ) ;
 
       connectSignals() ;
-    }
 
-    if( m_wm->connectAndStart() && m_chemWrap->connectAndStart() )
-      applyActions() ;
+      if( m_wm->connectAndStart() && m_chemWrap->connectAndStart() )
+      {
+        m_settingsWidget->resetWidget() ;
+        emit actionsApplied() ;
+      }
+    }
   }
 
   void WmTool::applyActions()
   {
-    if( m_widget != NULL )
+    if( m_widget!=NULL && m_wrapperChemToAvo!=NULL )
     {
-      mytoolbox::dbgMsg( "WmExtension::wmActions : Signal received" ) ;
+      //mytoolbox::dbgMsg( "WmExtension::wmActions : Signal received" ) ;
       //m_widget->getQuickRender() ; ??? Test if is activate and desactivate it !
 
+      // Get actions.
       WITD::ChemicalWrapData_from *dataFrom=m_chemWrap->getWrapperDataFrom() ; // POP Data !
-      WITD::ChemicalWrapData_from::wrapperActions_t wa ;
-      //bool upWa=dataFrom.getWrapperAction( wa ) ;
-      wa = dataFrom->getWrapperAction() ;
-      int state = wa.actionsWrapper ;
 
-      //if( m_wmIsConnected == true )
-      //{
+      if( dataFrom != NULL )
+      { // Transform actions.
+
+        WITD::ChemicalWrapData_from::wrapperActions_t wa ;
+        wa = dataFrom->getWrapperAction() ; //bool upWa=dataFrom.getWrapperAction( wa ) ;
+        int state = wa.actionsWrapper ;
+
         switchToThisTool( state ) ;
+        m_wrapperChemToAvo->transformWrapperActionToAvoAction( dataFrom ) ;
 
-        if( m_wrapperChemToAvo != NULL )
-          m_wrapperChemToAvo->transformWrapperActionToAvoAction( dataFrom ) ;
-      //}
+        delete dataFrom ;
+
+        // Actions applied, updating display authorized.
+        m_updateActionDisplay.fetchAndStoreRelaxed(1) ;
+      }
+
+      // Actions applied, checking the input devive buffer authorize.
+      emit actionsApplied() ;
     }
   }
 
-  void WmTool::waitNewAction()
-  {
-    m_mutex.lock() ;
-    m_updateActionDisplay = true ;
-    m_mutex.unlock() ;
-
-    emit actionsApplied() ;
-  }
 
   void WmTool::switchToThisTool( int state )
   {
@@ -259,6 +323,15 @@ namespace Avogadro
     {
       bool isConnect=false ;
 
+      isConnect = connect( this, SIGNAL(actionsApplied()), m_chemWrap, SLOT(setOnActionsApplied()) ) ;
+      if( !isConnect )
+        mytoolbox::dbgMsg( "Problem connection signal : WmTool.actionsApplied() -> m_chemWrap.setOnActionsApplied() !!" ) ;
+
+      isConnect = connect( m_chemWrap, SIGNAL(newActions()), this, SLOT(applyActions()) ) ;
+      if( !isConnect )
+        mytoolbox::dbgMsg( "Problem connection signal : m_chemWrap.newActions() -> WmTool.applyActions() !!" ) ;
+
+
       MoleculeManipulation *mm=m_wrapperChemToAvo->getMoleculeManip() ;
       ContextMenuToAvoAction *cm=m_wrapperChemToAvo->getContextMenu() ;
       PeriodicTableView *pt=cm->getPeriodicTable() ;
@@ -269,7 +342,7 @@ namespace Avogadro
         mytoolbox::dbgMsg( "Problem connection signal : ContextMenuToAvoAction.initiatedCalculDistDiedre() -> m_distAngleDiedre.setCalculDistDiedre() !!" ) ;
 
       isConnect = connect( cm, SIGNAL(displayedMsg(QList<QString>,QPoint)),
-                           m_renderText, SLOT(setDisplayMsg(QList<QString>,QPoint)) ) ;
+                           m_renderText, SLOT(setMsg(QList<QString>,QPoint)) ) ;
       if( !isConnect )
         mytoolbox::dbgMsg( "Problem connection signal : ContextMenuToAvoAction.displayedMsg() -> m_renderText.setDisplayMsg() !!" ) ;
 
@@ -282,14 +355,14 @@ namespace Avogadro
         mytoolbox::dbgMsg( "Problem connection signal : m_periodicTable.elementChanged() -> m_renderText.setAtomicNumberCurrent() !!" ) ;
 
       isConnect = connect( m_distAngleDiedre, SIGNAL(askDistDiedre()), 
-                                m_wrapperChemToAvo, SLOT(receiveRequestToCalculDistance()) ) ;
+                           m_wrapperChemToAvo, SLOT(receiveRequestToCalculDistance()) ) ;
       if( !isConnect )
         mytoolbox::dbgMsg( "Problem connection signal : m_distAngleDiedre.askDistDiedre() -> m_wrapperChemToAvo.receiveRequestToCalculDistance() !!" ) ;
 
-      isConnect = connect( m_wrapperChemToAvo, SIGNAL(setCalculDistDiedre(Atom*)), 
-                           m_distAngleDiedre, SLOT(addAtom(Atom*)) ) ;
+      isConnect = connect( m_wrapperChemToAvo, SIGNAL(sendAtomToCalculDistDiedre(Avogadro::Atom*)), 
+                           m_distAngleDiedre, SLOT(addAtom(Avogadro::Atom*)) ) ;
       if( !isConnect )
-        mytoolbox::dbgMsg( "Problem connection signal : m_wrapperChemToAvo.setCalculDistDiedre() -> m_distAngleDiedre.calculDistDiedre() !!" ) ;
+        mytoolbox::dbgMsg( "Problem connection signal : m_wrapperChemToAvo.sendAtomToCalculDistDiedre() -> m_distAngleDiedre.calculDistDiedre() !!" ) ;
 
       isConnect = connect( m_wrapperChemToAvo, SIGNAL(renderedSelectRect(bool,QPoint,QPoint)), 
                            m_drawObject, SLOT(setSelectRect(bool,QPoint,QPoint)) ) ;
@@ -311,14 +384,19 @@ namespace Avogadro
         mytoolbox::dbgMsg( "Problem connection signal : m_settingsWidget->m_wmPointSizeFontSlider.valueChanged() -> m_wrapperChemToAvo->getContextMenu().setFontSizeContextMenu() !!" ) ;
 
       isConnect = connect( m_settingsWidget->getCheckboxVibration(), SIGNAL(stateChanged(int)),
-                           mm, SLOT(setHasAddedHydrogen(int)) ) ;
+                           this, SLOT(setWmVibrationNow(int)) ) ;
       if( !isConnect )
-        mytoolbox::dbgMsg( "Problem connection signal : m_settingsWidget->getCheckboxVibration().stateChanged() -> m_wrapperChemToAvo->getMoleculeManip().setActivatedVibration() !!" ) ;
+        mytoolbox::dbgMsg( "Problem connection signal : m_settingsWidget->getCheckboxVibration().stateChanged() -> wmTool.setWmVibrationNow() !!" ) ;
 
       isConnect = connect( m_settingsWidget->getSliderIRSensitive(), SIGNAL(valueChanged(int)),
-                                this, SLOT(changedIrSensitiveRedirect(int)) ) ;
+                           this, SLOT(setIRSensitiveNow(int)) ) ;
       if( !isConnect )
-        mytoolbox::dbgMsg( "Problem connection signal : m_irSensitiveSlider.valueChanged() -> wmTool.changedIrSensitiveRedirect() !!" ) ;
+        mytoolbox::dbgMsg( "Problem connection signal : m_irSensitiveSlider.valueChanged() -> wmTool.setIRSensitiveNow() !!" ) ;
+
+      isConnect = connect( m_settingsWidget->getCheckboxSleepThread(), SIGNAL(stateChanged(int)),
+                           this, SLOT(setSleepThreadNow(int)) ) ;
+      if( !isConnect )
+        mytoolbox::dbgMsg( "Problem connection signal : m_settingsWidget->getCheckboxVibration().stateChanged() -> wmTool.setWmVibrationNow() !!" ) ;
     }
   }
 

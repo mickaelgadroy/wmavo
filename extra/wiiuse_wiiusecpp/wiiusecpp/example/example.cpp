@@ -61,6 +61,8 @@ void HandleEvent(CWiimote &wm)
 
     sprintf(prefixString, "Controller [%i]: ", wm.GetID());
 
+    if(wm.Buttons.isJustChanged()) printf("%s State of Wiimote buttons changed\n", prefixString);
+
     if(wm.Buttons.isPressed(CButtons::BUTTON_A)) printf("%s A pressed\n", prefixString);
     if(wm.Buttons.isPressed(CButtons::BUTTON_B)) printf("%s B pressed\n", prefixString);
     if(wm.Buttons.isPressed(CButtons::BUTTON_UP))printf("%s Up pressed\n", prefixString);
@@ -122,7 +124,7 @@ void HandleEvent(CWiimote &wm)
         }
     }
 
-    int exType = wm.ExpansionDevice.GetType();
+    int exType = wm.ExpansionDevice.GetType() ;
     if(exType == wm.ExpansionDevice.TYPE_NUNCHUK)
     {
         float pitch, roll, yaw, a_pitch, a_roll;
@@ -132,6 +134,7 @@ void HandleEvent(CWiimote &wm)
 
         sprintf(prefixString, "Nunchuk [%i]: ", wm.GetID());
 
+        if(nc.Buttons.isJustChanged()) printf("%s State of Wiimote buttons changed\n", prefixString);
         if(nc.Buttons.isPressed(CNunchukButtons::BUTTON_C))printf("%s C pressed\n", prefixString);
         if(nc.Buttons.isPressed(CNunchukButtons::BUTTON_Z))printf("%s Z pressed\n", prefixString);
 
@@ -318,9 +321,9 @@ int main(int argc, char** argv)
         // The data are received in continuous when the accelerometer values are on.
         // So the received data is late ... Worse, latency appears.
         #ifndef WIN32
-        usleep(200000);
+        //usleep(200000);
         #else
-        Sleep(20);
+        //Sleep(20);
         #endif
         
         //Poll the wiimotes to get the status like pitch or roll

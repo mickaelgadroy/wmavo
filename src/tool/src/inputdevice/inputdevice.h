@@ -30,7 +30,6 @@
 
 #include "warning_disable_begin.h"
 #include <iostream>
-
 #include <QObject>
 #include "warning_disable_end.h"
 
@@ -65,6 +64,7 @@ namespace InputDevice
     virtual unsigned int getDeviceType()=0 ;
     virtual DeviceData_from* getDeviceDataFrom()=0 ;
     inline bool isConnected(){return m_isConnected;} ;
+    virtual bool hasDeviceDataAvailable()=0 ;
 
   protected :
     bool m_isConnected ;

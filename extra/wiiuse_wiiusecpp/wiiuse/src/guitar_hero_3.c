@@ -66,9 +66,7 @@ int guitar_hero_3_handshake(struct wiimote_t* wm, struct guitar_hero_3_t* gh3, b
 	 *	calibration data on the device.
 	 */
 
-	gh3->btns = 0;
-	gh3->btns_held = 0;
-	gh3->btns_released = 0;
+  wiiuse_init_btns_t( &(gh3->btns) ) ;
 	gh3->whammy_bar = 0.0f;
 
 	/* decrypt data */
@@ -136,12 +134,14 @@ void guitar_hero_3_disconnected(struct guitar_hero_3_t* gh3) {
  */
 void guitar_hero_3_event(struct guitar_hero_3_t* gh3, byte* msg) {
 	int i;
+  short now=0 ;
 
 	/* decrypt data */
 	for (i = 0; i < 6; ++i)
 		msg[i] = (msg[i] ^ 0x17) + 0x17;
 
-	guitar_hero_3_pressed_buttons(gh3, BIG_ENDIAN_SHORT(*(short*)(msg + 4)));
+  now = BIG_ENDIAN_SHORT(*(short*)(msg + 4)) ;
+	guitar_hero_3_pressed_buttons(gh3, now);
 
 	/* whammy bar */
 	gh3->whammy_bar = (msg[3] - GUITAR_HERO_3_WHAMMY_BAR_MIN) / (float)(GUITAR_HERO_3_WHAMMY_BAR_MAX - GUITAR_HERO_3_WHAMMY_BAR_MIN);
@@ -157,16 +157,9 @@ void guitar_hero_3_event(struct guitar_hero_3_t* gh3, byte* msg) {
  *	@param cc		A pointer to a classic_ctrl_t structure.
  *	@param msg		The message byte specified in the event packet.
  */
-static void guitar_hero_3_pressed_buttons(struct guitar_hero_3_t* gh3, short now) {
+static void guitar_hero_3_pressed_buttons(struct guitar_hero_3_t* gh3, short now) 
+{
 	/* message is inverted (0 is active, 1 is inactive) */
 	now = ~now & GUITAR_HERO_3_BUTTON_ALL;
-
-	/* pressed now & were pressed, then held */
-	gh3->btns_held = (now & gh3->btns);
-
-	/* were pressed or were held & not pressed now, then released */
-	gh3->btns_released = ((gh3->btns | gh3->btns_held) & ~now);
-
-	/* buttons pressed now */
-	gh3->btns = now;
+  wiiuse_init_pressed_buttons(&(gh3->btns), now) ;
 }

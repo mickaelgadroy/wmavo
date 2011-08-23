@@ -41,7 +41,7 @@
 #include "events.h"
 #include "nunchuk.h"
 
-static void nunchuk_pressed_buttons(struct nunchuk_t* nc, byte now);
+static void nunchuk_pressed_buttons(struct nunchuk_t* nc, short now);
 
 /**
  *	@brief Handle the handshake data from the nunchuk.
@@ -56,9 +56,7 @@ int nunchuk_handshake(struct wiimote_t* wm, struct nunchuk_t* nc, byte* data, un
 	int i;
 	int offset = 0;
 
-	nc->btns = 0;
-	nc->btns_held = 0;
-	nc->btns_released = 0;
+  wiiuse_init_btns_t( &(nc->btns) ) ;
 
 	/* set the smoothing to the same as the wiimote */
 	nc->flags = &wm->flags;
@@ -136,15 +134,18 @@ void nunchuk_disconnected(struct nunchuk_t* nc) {
  *	@param nc		A pointer to a nunchuk_t structure.
  *	@param msg		The message specified in the event packet.
  */
-void nunchuk_event(struct nunchuk_t* nc, byte* msg) {
+void nunchuk_event(struct nunchuk_t* nc, byte* msg) 
+{
 	int i;
+  short now=0 ;
 
 	/* decrypt data */
 	for (i = 0; i < 6; ++i)
 		msg[i] = (msg[i] ^ 0x17) + 0x17;
 
-	/* get button states */
-	nunchuk_pressed_buttons(nc, msg[5]);
+  /* get button states */
+  now = *(short*)(msg + 5) ;
+	nunchuk_pressed_buttons(nc, now);
 
 	/* calculate joystick state */
 	calc_joystick_state(&nc->js, msg[0], msg[1]);
@@ -165,18 +166,11 @@ void nunchuk_event(struct nunchuk_t* nc, byte* msg) {
  *	@param nc		Pointer to a nunchuk_t structure.
  *	@param msg		The message byte specified in the event packet.
  */
-static void nunchuk_pressed_buttons(struct nunchuk_t* nc, byte now) {
+static void nunchuk_pressed_buttons(struct nunchuk_t* nc, short now)
+{
 	/* message is inverted (0 is active, 1 is inactive) */
 	now = ~now & NUNCHUK_BUTTON_ALL;
-
-	/* pressed now & were pressed, then held */
-	nc->btns_held = (now & nc->btns);
-
-	/* were pressed or were held & not pressed now, then released */
-	nc->btns_released = ((nc->btns | nc->btns_held) & ~now);
-
-	/* buttons pressed now */
-	nc->btns = now;
+  wiiuse_init_pressed_buttons(&(nc->btns), now) ;
 }
 
 

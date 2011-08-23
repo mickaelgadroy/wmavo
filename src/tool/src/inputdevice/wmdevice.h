@@ -32,6 +32,7 @@
 #include "wiwo_sem.h"
 #include "qthread_ex.h"
 #include "wiiusecpp.h"
+#include <QTime>
 
 #if defined WIN32 || defined _WIN32
   #include "wiiusecpp.h"
@@ -83,10 +84,13 @@ namespace InputDevice
     bool getLED( int &LED ) ;
     void setLED( int LED ) ;
 
+    bool getHasSleepThread( bool &sleepThread ) ;
+    void setHasSleepThread( bool sleepThread ) ;
+
     void operator=( const WmDeviceData_to& wmDataTo ) ;
 
     inline void resetUpdate()
-    { m_updateRumble=false ; m_updateLED=false;} ;
+    { m_updateRumble=false ; m_updateLED=false; m_updateSleepThread=false; } ;
 
     void initAttributsToZero() ;
 
@@ -96,6 +100,9 @@ namespace InputDevice
 
     int m_setLED ;
     bool m_updateLED ;
+
+    bool m_setSleepThread ;
+    bool m_updateSleepThread ;
   } ;
 
     
@@ -113,6 +120,8 @@ namespace InputDevice
     WmDeviceData_from* getDeviceDataFrom() ; //< Blocking call.
     void setDeviceDataTo( const WmDeviceData_to& wmDataTo ) ; //< Blocking call.
 
+    bool hasDeviceDataAvailable() ;
+
     bool connectAndStart() ;
     void stopPoll() ;
 
@@ -121,6 +130,7 @@ namespace InputDevice
     bool connectNc() ;
     bool updateDataFrom() ;
     bool updateDataTo() ;
+    bool reduceSentData( CWiimote &wm ) ;
 
     // Delete m_wii (use many times).
     void deleteWii() ;
@@ -133,8 +143,8 @@ namespace InputDevice
     /**
       * @name Manage Wiimote data.
       * @{ */
-    WIWO_sem<WmDeviceData_from*> *m_cirBufferFrom ;
-    WIWO_sem<WmDeviceData_to*> *m_cirBufferTo ;
+    WIWO_sem<WmDeviceData_from*> *m_cirBufferFrom ; //< (object)
+    WIWO_sem<WmDeviceData_to*> *m_cirBufferTo ; //< (object)
     // @}
 
     /**
@@ -142,8 +152,11 @@ namespace InputDevice
       * @{ */
     QThread_ex m_deviceThread ;
     QMutex m_mutex ; // Secure Poll() with rumble feature.
-    bool m_isRunning ;
-    // @}
+    bool m_isRunning ; // If the thread is working.
+    QAtomicInt m_threadFinished ; // If the thread is out of treatment loop.
+    bool m_hasSleepThread ; 
+      //< If the thread sleeps (less CPU use, but can lag) or yields (more CPU use, but no lag).
+    // @} 
 
     /**
       * @name Wiimote things.
@@ -153,6 +166,14 @@ namespace InputDevice
     CNunchuk *m_nc ; // (shortcut)
     WmRumble *m_rumble ; // (object)
     bool m_hasWm, m_hasNc ; ///< Have Wiimote and/or Nunchuk ?
+    // @}
+
+    /**
+      * @name Try to reduce outcoming data.
+      * @{ */
+    CWiimote::EventTypes m_previousEvent ;
+    QTime m_time ;
+    int m_t1, m_t2 ;
     // @}
   };
 

@@ -150,7 +150,7 @@ typedef enum ir_position_t {
  *	@param button	The button you are interested in.
  *	@return 1 if the button is pressed, 0 if not.
  */
-#define IS_PRESSED(dev, button)		((dev->btns & button) == button)
+#define IS_PRESSED(dev, button)		((dev->btns.btns & button) == button)
 
 /**
  *	@brief Check if a button is being held.
@@ -158,7 +158,7 @@ typedef enum ir_position_t {
  *	@param button	The button you are interested in.
  *	@return 1 if the button is held, 0 if not.
  */
-#define IS_HELD(dev, button)			((dev->btns_held & button) == button)
+#define IS_HELD(dev, button)			((dev->btns.btns_held & button) == button)
 
 /**
  *	@brief Check if a button is released on this event.					\n\n
@@ -169,7 +169,7 @@ typedef enum ir_position_t {
  *	@return 1 if the button is released, 0 if not.
  *
  */
-#define IS_RELEASED(dev, button)		((dev->btns_released & button) == button)
+#define IS_RELEASED(dev, button)		((dev->btns.btns_released & button) == button)
 
 /**
  *	@brief Check if a button has just been pressed this event.
@@ -178,6 +178,13 @@ typedef enum ir_position_t {
  *	@return 1 if the button is pressed, 0 if not.
  */
 #define IS_JUST_PRESSED(dev, button)	(IS_PRESSED(dev, button) && !IS_HELD(dev, button))
+
+/**
+ *	@brief Check if, at least, one button has just been changed this event.
+ *	@param dev		Pointer to a wiimote_t or expansion structure.
+ *	@return 1 if one button is changed, 0 if not.
+ */
+#define IS_JUST_CHANGED(dev)	(dev->btns.btns != dev->btns.btns_previous)
 
 /**
  *	@brief Return the IR sensitivity level.
@@ -281,6 +288,17 @@ typedef struct vec3b_t {
 typedef struct vec3f_t {
 	float x, y, z;
 } vec3f_t;
+
+/**
+ *	@struct btns_t
+ *	@brief Buttons information (pressed, held, released, previous).
+ */
+typedef struct btns_t {
+	short btns;           /**< what buttons have just been pressed	*/
+	short btns_held;      /**< what buttons are being held down		*/
+	short btns_released;  /**< what buttons were just released this*/
+  short btns_previous;  /**< what previous pressed buttons state	*/
+} btns_t;
 
 
 /**
@@ -448,9 +466,7 @@ typedef struct nunchuk_t {
 
 	int* flags;						/**< options flag (points to wiimote_t.flags) */
 
-	byte btns;						/**< what buttons have just been pressed	*/
-	byte btns_held;					/**< what buttons are being held down		*/
-	byte btns_released;				/**< what buttons were just released this	*/
+  struct btns_t btns ;  /**< buttons state */
 
 	float orient_threshold;			/**< threshold for orient to generate an event */
 	int accel_threshold;			/**< threshold for accel to generate an event */
@@ -466,9 +482,7 @@ typedef struct nunchuk_t {
  *	@brief Classic controller expansion device.
  */
 typedef struct classic_ctrl_t {
-	short btns;						/**< what buttons have just been pressed	*/
-	short btns_held;				/**< what buttons are being held down		*/
-	short btns_released;			/**< what buttons were just released this	*/
+	struct btns_t btns ;  /**< buttons state */
 
 	float r_shoulder;				/**< right shoulder button (range 0-1)		*/
 	float l_shoulder;				/**< left shoulder button (range 0-1)		*/
@@ -483,12 +497,8 @@ typedef struct classic_ctrl_t {
  *	@brief Guitar Hero 3 expansion device.
  */
 typedef struct guitar_hero_3_t {
-	short btns;						/**< what buttons have just been pressed	*/
-	short btns_held;				/**< what buttons are being held down		*/
-	short btns_released;			/**< what buttons were just released this	*/
-
+	struct btns_t btns ;  /**< buttons state */
 	float whammy_bar;				/**< whammy bar (range 0-1)					*/
-
 	struct joystick_t js;			/**< joystick calibration					*/
 } guitar_hero_3_t;
 
@@ -606,9 +616,7 @@ typedef struct wiimote_t {
 
 	WCONST struct ir_t ir;					/**< IR data								*/
 
-	WCONST unsigned short btns;				/**< what buttons have just been pressed	*/
-	WCONST unsigned short btns_held;		/**< what buttons are being held down		*/
-	WCONST unsigned short btns_released;	/**< what buttons were just released this	*/
+	WCONST struct btns_t btns ;  /**< buttons state */
 
 	WCONST float orient_threshold;			/**< threshold for orient to generate an event */
 	WCONST int accel_threshold;				/**< threshold for accel to generate an event */
@@ -651,6 +659,7 @@ WIIUSE_EXPORT extern const char* wiiuse_version();
 WIIUSE_EXPORT extern void wiiuse_init_vec2b_t( struct vec2b_t *v ) ;
 WIIUSE_EXPORT extern void wiiuse_init_vec3b_t( struct vec3b_t *v ) ;
 WIIUSE_EXPORT extern void wiiuse_init_vec3f_t( struct vec3f_t *v ) ;
+WIIUSE_EXPORT extern void wiiuse_init_btns_t( struct btns_t *v ) ;
 WIIUSE_EXPORT extern void wiiuse_init_orient_t( struct orient_t *v ) ;
 WIIUSE_EXPORT extern void wiiuse_init_gforce_t( struct gforce_t *v ) ;
 WIIUSE_EXPORT extern void wiiuse_init_accel_t( struct accel_t *v ) ;
@@ -669,6 +678,7 @@ WIIUSE_EXPORT extern void wiiuse_rumble(struct wiimote_t* wm, int status);
 WIIUSE_EXPORT extern void wiiuse_toggle_rumble(struct wiimote_t* wm);
 WIIUSE_EXPORT extern void wiiuse_set_leds(struct wiimote_t* wm, int leds);
 WIIUSE_EXPORT extern void wiiuse_motion_sensing(struct wiimote_t* wm, int status);
+WIIUSE_EXPORT extern void wiiuse_init_pressed_buttons(struct btns_t* b, short now) ;
 WIIUSE_EXPORT extern int wiiuse_read_data(struct wiimote_t* wm, byte* buffer, unsigned int offset, unsigned short len);
 WIIUSE_EXPORT extern int wiiuse_write_data(struct wiimote_t* wm, unsigned int addr, byte* data, byte len);
 WIIUSE_EXPORT extern void wiiuse_status(struct wiimote_t* wm);

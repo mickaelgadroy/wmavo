@@ -172,9 +172,12 @@ void DrawObject::drawCenter()
   */
 void DrawObject::drawBarycenter()
 {
-  QColor color( 50, 255, 100 ) ;
-  float radius=0.1f ;
-  drawSphereFill( radius, m_moleculeManip->getBarycenterMolecule(), color ) ;
+  if( m_moleculeManip != NULL )
+  {
+    QColor color( 50, 255, 100 ) ;
+    float radius=0.1f ;
+    drawSphereFill( radius, m_moleculeManip->getBarycenterMolecule(), color ) ;
+  }
 }
 
 

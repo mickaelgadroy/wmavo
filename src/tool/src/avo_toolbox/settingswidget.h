@@ -49,6 +49,9 @@ public :
   inline QSlider* getSliderIRSensitive(){ return m_irSensitiveSlider ; } ;
   inline QSlider* getSliderPointSizeFont(){ return m_wmPointSizeFontSlider ; } ;
   inline QCheckBox* getCheckboxVibration(){ return m_checkBoxActivateVibration ; } ;
+  inline QCheckBox* getCheckboxSleepThread(){ return m_checkBoxActivateSleepThread ; } ;
+
+  void resetWidget() ;
 
 private :
 
@@ -59,6 +62,7 @@ private :
   QSlider *m_irSensitiveSlider ; // (object)
   QSlider *m_wmPointSizeFontSlider ; // (object)
   QCheckBox *m_checkBoxActivateVibration ; // (object)
+  QCheckBox *m_checkBoxActivateSleepThread ; // (object)
 
 } ;
 

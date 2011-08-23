@@ -60,8 +60,9 @@ public :
   inline void popFront( T& obj_out )
   {
     m_usedData.acquire() ;
-    obj_out = WIWO::getBack() ;
-    WIWO::popBack() ;
+    obj_out = WIWO::getFront() ;
+    (*this)[0] = 0 ; // !!
+    WIWO::popFront() ;
     m_freeData.release() ;
   } ;
   // @}

@@ -30,17 +30,19 @@ CButtonBaseData::CButtonBaseData() :
 CButtonBaseData::CButtonBaseData( const CButtonBase &cbb ) :
   mpBtns(0), mpBtnsHeld(0), mpBtnsReleased(0)
 {
-  if( cbb.mpBtnsPtr != NULL ) mpBtns = *((int*)cbb.mpBtnsPtr) ;
-  if( cbb.mpBtnsHeldPtr != NULL ) mpBtnsHeld = *((int*)cbb.mpBtnsHeldPtr) ;
-  if( cbb.mpBtnsReleasedPtr != NULL ) mpBtnsReleased = *((int*)cbb.mpBtnsReleasedPtr) ;
+  if( cbb.mpBtnsPtr != NULL ) mpBtns = *(cbb.mpBtnsPtr) ;
+  if( cbb.mpBtnsHeldPtr != NULL ) mpBtnsHeld = *(cbb.mpBtnsHeldPtr) ;
+  if( cbb.mpBtnsReleasedPtr != NULL ) mpBtnsReleased = *(cbb.mpBtnsReleasedPtr) ;
+  if( cbb.mpBtnsPreviousPtr != NULL ) mpBtnsPrevious = *(cbb.mpBtnsPreviousPtr) ;
 }
 
 CButtonBaseData::~CButtonBaseData(){}
-int CButtonBaseData::isPressed(int Button)   { return (mpBtns & Button) == Button; }
-int CButtonBaseData::isHeld(int Button)      { return (mpBtnsHeld & Button) == Button; }
-int CButtonBaseData::isReleased(int Button)  { return (mpBtnsReleased & Button) == Button; }
-int CButtonBaseData::isJustPressed(int Button){ return (((mpBtns & Button)==Button) && ((mpBtnsHeld & Button)!=Button)) ; }
-int CButtonBaseData::isJustChanged()          { return (mpBtnsHeld & mpBtns) == mpBtns; }
+short CButtonBaseData::getBtnsState()          { return mpBtns ; }
+bool CButtonBaseData::isPressed(int Button)    { return (mpBtns & Button) == Button; }
+bool CButtonBaseData::isHeld(int Button)       { return (mpBtnsHeld & Button) == Button; }
+bool CButtonBaseData::isReleased(int Button)   { return (mpBtnsReleased & Button) == Button; }
+bool CButtonBaseData::isJustPressed(int Button){ return (((mpBtns & Button)==Button) && ((mpBtnsHeld & Button)!=Button)) ; }
+bool CButtonBaseData::isJustChanged()          { return mpBtns != mpBtnsPrevious ; }
 
 CButtonsData::CButtonsData() : CButtonBaseData() {}
 CButtonsData::CButtonsData( const CButtons &cb ) : CButtonBaseData(cb) {}

@@ -410,12 +410,12 @@ namespace Avogadro
 
     if( m_molecule!=NULL && pos!=NULL )
     {
-      a = addAtom( pos, atomicNumber ) ;
+      a = addAtomWithoutHA( pos, atomicNumber ) ;
 
       if( a!=NULL && bondedAtom!=NULL )
       {
         if( !bondedAtom->isHydrogen() || (bondedAtom->isHydrogen() && bondedAtom->valence()<1) )
-          addBond( a, bondedAtom, (short)order ) ;
+          addBondWithoutHA( a, bondedAtom, (short)order ) ;
       }
       else
         mytoolbox::dbgMsg( "Bug in MoleculeManipulation::addAtom() : NULL-object non expected." ) ;
@@ -501,7 +501,7 @@ namespace Avogadro
     */
   Atom* MoleculeManipulation::addAtomWithHA( Eigen::Vector3d *pos, int atomicNumber )
   {
-    Atom *a=addAtom( pos, atomicNumber ) ;
+    Atom *a=addAtomWithoutHA( pos, atomicNumber ) ;
 
     if( a != NULL )
     { // Construct an OBMol, call AddHydrogens() and translate the changes
@@ -529,12 +529,12 @@ namespace Avogadro
     Atom *a=NULL ;
 
     if( bondedAtom==NULL || (bondedAtom->isHydrogen() && bondedAtom->valence()>0) )
-      a = addAtom( pos, atomicNumber ) ;
+      a = addAtomWithoutHA( pos, atomicNumber ) ;
     else
     {
       if( !bondedAtom->isHydrogen() )
         removeHydrogen_p( bondedAtom ) ;
-      a = addAtom( pos, atomicNumber, bondedAtom, order ) ;
+      a = addAtomWithoutHA( pos, atomicNumber, bondedAtom, order ) ;
     }
 
     if( a != NULL )
@@ -593,8 +593,8 @@ namespace Avogadro
       Atom *a1=NULL, *a2=NULL ;
       Bond *b=NULL ;
 
-      a1 = addAtom( pos1, atomicNumber1 ) ;
-      a2 = addAtom( pos2, atomicNumber2 ) ;
+      a1 = addAtomWithoutHA( pos1, atomicNumber1 ) ;
+      a2 = addAtomWithoutHA( pos2, atomicNumber2 ) ;
 
       if( a1!=NULL || a2!=NULL )
         addedPrim = new PrimitiveList() ;
@@ -607,7 +607,7 @@ namespace Avogadro
 
       if( a1!=NULL && a2!=NULL && order>0 )
       {
-        b = addBond( a1, a2, (short)order ) ;
+        b = addBondWithoutHA( a1, a2, (short)order ) ;
 
         if( b != NULL )
           addedPrim->append( static_cast<Primitive*>(b) ) ;
@@ -630,7 +630,7 @@ namespace Avogadro
     */
   PrimitiveList* MoleculeManipulation::addAtomsWithHA( Eigen::Vector3d *pos1, int atomicNumber1, Eigen::Vector3d *pos2, int atomicNumber2, int order )
   {
-    PrimitiveList *addedPrim=addAtoms( pos1, atomicNumber1, pos2, atomicNumber2, order ) ;
+    PrimitiveList *addedPrim=addAtomsWithoutHA( pos1, atomicNumber1, pos2, atomicNumber2, order ) ;
 
     if( addedPrim != NULL )
     {
@@ -729,7 +729,7 @@ namespace Avogadro
         && (!a1->isHydrogen() || (a1->isHydrogen()&&a1->valence()==0))
         && (!a2->isHydrogen() || (a2->isHydrogen()&&a2->valence()==0))
       )
-      b = addBond( a1, a2, order ) ;
+      b = addBondWithoutHA( a1, a2, order ) ;
 
     if( b != NULL )
     {
@@ -1051,7 +1051,7 @@ namespace Avogadro
         if( !oldAtom->isHydrogen() )
         {
           // "Copy" atom of the fragment.
-          newAtom = addAtom( const_cast<Eigen::Vector3d*>(oldAtom->pos()), oldAtom->atomicNumber() ) ;
+          newAtom = addAtomWithoutHA( const_cast<Eigen::Vector3d*>(oldAtom->pos()), oldAtom->atomicNumber() ) ;
 
           // Store for the bonds.
           newAtomList.append( newAtom ) ;
@@ -1092,7 +1092,7 @@ namespace Avogadro
           if( a3!=NULL && a4!=NULL )
           {
             // "Copy" bond of the fragment.
-            newBond = addBond( a3, a4, oldBond->order() ) ;
+            newBond = addBondWithoutHA( a3, a4, oldBond->order() ) ;
 
             // Store for the return of the function.
             addedPrim->append( newBond ) ;
@@ -1137,7 +1137,7 @@ namespace Avogadro
       foreach( Atom *oldAtom, fragment->atoms() )
       {
         // "Copy" atom of the fragment.
-        newAtom = addAtom( const_cast<Eigen::Vector3d*>(oldAtom->pos()), oldAtom->atomicNumber() ) ;
+        newAtom = addAtomWithoutHA( const_cast<Eigen::Vector3d*>(oldAtom->pos()), oldAtom->atomicNumber() ) ;
 
         // Store for the bonds.
         newAtomList.append( newAtom ) ;
@@ -1174,7 +1174,7 @@ namespace Avogadro
         if( a3!=NULL && a4!=NULL )
         {
           // "Copy" bond of the fragment.
-          newBond = addBond( a3, a4, oldBond->order() ) ;
+          newBond = addBondWithoutHA( a3, a4, oldBond->order() ) ;
 
           // Store for the return of the function.
           addedPrim->append( newBond ) ;
@@ -1254,7 +1254,7 @@ namespace Avogadro
           if( hydrogen->neighbors().size() > 0 )
           {
             startAtom = m_molecule->atomById( hydrogen->neighbors()[0] ) ;
-            removeAtom( hydrogen ) ;
+            removeAtomWithoutHA( hydrogen ) ;
           }
         }
 
@@ -1285,7 +1285,7 @@ namespace Avogadro
             {
               // the first bonded atom to this "H".
               endAtom = m_molecule->atomById( hydrogen->neighbors()[0] ) ;
-              removeAtom( hydrogen ) ;
+              removeAtomWithoutHA( hydrogen ) ;
               nbAtomInFrag-- ;
             }
           }
@@ -1386,7 +1386,7 @@ namespace Avogadro
           if( hydrogen->neighbors().size() > 0 )
           {
             startAtom = m_molecule->atomById( hydrogen->neighbors()[0] ) ;
-            removeAtom( hydrogen ) ;
+            removeAtomWithoutHA( hydrogen ) ;
           }
         }
 
@@ -1418,7 +1418,7 @@ namespace Avogadro
             {
               // the first bonded atom to this "H".
               endAtom = m_molecule->atomById( hydrogen->neighbors()[0] ) ;
-              removeAtom( hydrogen ) ;
+              removeAtomWithoutHA( hydrogen ) ;
               nbAtomInFrag-- ;
             }
           }
@@ -1719,7 +1719,7 @@ namespace Avogadro
 
         // Remove current atom and its Hydrogens.
         removeHydrogen_p( atom ) ;
-        removeAtom( atom ) ;
+        removeAtomWithoutHA( atom ) ;
 
         // Adjust the others atoms.
         OpenBabel::OBMol obmol=m_molecule->OBMol() ;
@@ -1733,7 +1733,7 @@ namespace Avogadro
         Atom *n=m_molecule->atomById( atom->neighbors()[0] ) ;
 
         if( n!=NULL && n->isHydrogen() )
-          removeAtom( atom ) ;
+          removeAtomWithoutHA( atom ) ;
       }
     }
   }
@@ -1815,7 +1815,7 @@ namespace Avogadro
     if( m_molecule!=NULL && atoms!=NULL && atoms->size()>0 )
     {
       foreach( Atom* a, *atoms )
-        removeAtom( a ) ;
+        removeAtomWithoutHA( a ) ;
     }
   }
 
@@ -1831,7 +1831,7 @@ namespace Avogadro
       foreach( Primitive* p, *atoms )
       {
         if( p!=NULL && p->type()==Primitive::AtomType )
-          removeAtom( static_cast<Atom*>(p) ) ;
+          removeAtomWithoutHA( static_cast<Atom*>(p) ) ;
       }
     }
   }
@@ -1847,7 +1847,7 @@ namespace Avogadro
     {
       QList<Primitive*> pl=atoms->subList(Primitive::AtomType) ;
       if( atoms->size() > 0 )
-        removeAtoms( &pl ) ;
+        removeAtomsWithoutHA( &pl ) ;
     }
   }
 
@@ -1917,7 +1917,7 @@ namespace Avogadro
       foreach( Atom* a, *atoms )
       {
         removeHydrogen_p( a ) ;
-        removeAtom( a ) ;
+        removeAtomWithoutHA( a ) ;
       }
 
       // Adjust Hydrogen for the old neighbors.
@@ -2005,7 +2005,7 @@ namespace Avogadro
         {
           a = static_cast<Atom*>(p) ;
           removeHydrogen_p( a ) ;
-          removeAtom( a ) ;
+          removeAtomWithoutHA( a ) ;
         }
       }
 
@@ -2083,10 +2083,11 @@ namespace Avogadro
       {
         if( !(a1->isHydrogen() || a2->isHydrogen()) )
         {
-          removeBond( bond ) ;
+          removeBondWithoutHA( bond ) ;
 
+          removeHydrogen_p( a1 ) ;
+          removeHydrogen_p( a2 ) ;
           OpenBabel::OBMol obmol=m_molecule->OBMol() ;
-
           addHydrogen_p( &obmol, a1 ) ;
           addHydrogen_p( &obmol, a2 ) ;
 
@@ -2251,7 +2252,7 @@ namespace Avogadro
       foreach( Atom *atom, m_molecule->atoms() )
       {
         if( atom->isHydrogen() )
-          removeAtom( atom ) ;
+          removeAtomWithoutHA( atom ) ;
       }
     }
   }
@@ -2358,7 +2359,7 @@ namespace Avogadro
                 h = addAtomWithoutHA( oba ) ;
 
                 if( h != NULL )
-                  addBond( atom, h, 1 ) ;
+                  addBondWithoutHA( atom, h, 1 ) ;
               }
             }
           }
@@ -2401,7 +2402,7 @@ namespace Avogadro
             {
               if( nbrAtom->isHydrogen() )
               {
-                removeAtom( nbrAtom ) ;
+                removeAtomWithoutHA( nbrAtom ) ;
                 if( !hasRemoveH ) hasRemoveH=true ;
               }
             }

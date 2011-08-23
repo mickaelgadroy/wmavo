@@ -67,7 +67,8 @@ namespace InputDevice
   WmDeviceData_to::WmDeviceData_to()
     : DeviceData_to(),
       m_setRumble(NULL), m_updateRumble(false),
-      m_setLED(0), m_updateLED(false)
+      m_setLED(0), m_updateLED(false),
+      m_setSleepThread(PLUGIN_WM_SLEEPTHREAD_ONOFF), m_updateSleepThread(false)
   {
     m_setRumble = new RumbleSettings() ;
   }
@@ -75,7 +76,8 @@ namespace InputDevice
   WmDeviceData_to::WmDeviceData_to( RumbleSettings* rumble, int LED )
     : DeviceData_to(), 
       m_setRumble(rumble), m_updateRumble(true),
-      m_setLED(LED), m_updateLED(false)
+      m_setLED(LED), m_updateLED(false),
+      m_setSleepThread(PLUGIN_WM_SLEEPTHREAD_ONOFF), m_updateSleepThread(false)
   {
     if( rumble == NULL )
       m_setRumble = new RumbleSettings() ;
@@ -84,10 +86,12 @@ namespace InputDevice
   WmDeviceData_to::WmDeviceData_to( const WmDeviceData_to& data )
     : DeviceData_to(), 
       m_updateRumble(true),
-      m_updateLED(false)
+      m_updateLED(false),
+      m_updateSleepThread(false)
   {
     m_setLED = data.m_setLED ;
     *m_setRumble = *(data.m_setRumble) ;
+    m_setSleepThread = data.m_setSleepThread ;
   }
 
   WmDeviceData_to::~WmDeviceData_to()
@@ -127,7 +131,20 @@ namespace InputDevice
     m_setLED = LED ; 
   }
 
-  
+  bool WmDeviceData_to::getHasSleepThread( bool &sleepThread )
+  {
+    bool up=m_updateSleepThread ;
+    m_updateSleepThread = false ; 
+    sleepThread = m_setSleepThread ; 
+    return up ;
+  }
+
+  void WmDeviceData_to::setHasSleepThread( bool sleepThread )
+  {
+    m_updateSleepThread = true ;
+    m_setSleepThread = sleepThread ;
+  }
+
   void WmDeviceData_to::operator=( const WmDeviceData_to& wmDataTo )
   {
     if( this!=&wmDataTo && m_setRumble!=wmDataTo.m_setRumble )
@@ -139,38 +156,48 @@ namespace InputDevice
       m_updateRumble = wmDataTo.m_updateRumble ;
       m_setLED = wmDataTo.m_setLED ;
       m_updateLED = wmDataTo.m_updateLED ;
+      m_setSleepThread = wmDataTo.m_setSleepThread ;
+      m_updateSleepThread = wmDataTo.m_updateSleepThread ;
     }
   }
 
   void WmDeviceData_to::initAttributsToZero()
+  {
+    if( m_setRumble != NULL )
     {
-      if( m_setRumble != NULL )
-      {
-        delete m_setRumble ;
-        m_setRumble = NULL ;
-      }
-      
-      m_setRumble = new RumbleSettings() ;
-      m_updateRumble = false ;
-      m_setLED = 0 ;
-      m_updateLED = false ;
-    } ;
+      delete m_setRumble ;
+      m_setRumble = NULL ;
+    }
+    
+    m_setRumble = new RumbleSettings() ;
+    m_updateRumble = false ;
+    m_setLED = 0 ;
+    m_updateLED = false ;
+    m_setSleepThread = false ;
+    m_updateSleepThread = false ;
+  } ;
 
   
   WmDevice::WmDevice()
     : Device(),
       m_cirBufferFrom(NULL), m_cirBufferTo(NULL),
-      m_isRunning(false),
+      m_isRunning(false), m_hasSleepThread(PLUGIN_WM_SLEEPTHREAD_ONOFF),
       m_wii(NULL), m_wm(NULL), m_nc(NULL),
       m_rumble(NULL), 
-      m_hasWm(false), m_hasNc(false)
+      m_hasWm(false), m_hasNc(false), m_previousEvent(CWiimote::EVENT_NONE),
+      m_t1(0), m_t2(0)
   {
     m_cirBufferFrom = new WIWO_sem<WmDeviceData_from*>( CIRBUFFER_DEFAULT_SIZE ) ;
     m_cirBufferTo = new WIWO_sem<WmDeviceData_to*>( CIRBUFFER_DEFAULT_SIZE ) ;
+    m_threadFinished.fetchAndStoreRelaxed(1) ;
+    m_deviceThread.setPriority( QThread::LowPriority ) ;
+    m_time.start() ;
   }
 
   WmDevice::~WmDevice()
   {
+    stopPoll() ;
+
     if( m_cirBufferFrom != NULL )
     {
       delete m_cirBufferFrom ;
@@ -201,27 +228,66 @@ namespace InputDevice
     m_nc = NULL ;
     m_hasWm = false ;
     m_hasNc = false ;
-  };
+  }
+
+
+  bool WmDevice::hasDeviceDataAvailable()
+  {
+    if( m_isRunning && m_cirBufferFrom!=NULL )
+      return !(m_cirBufferFrom->isEmpty()) ;
+    else
+      return false ;
+  }
+
 
   /**
     * Get the last state data of Wiimote (blocking call).
     */
   WmDeviceData_from* WmDevice::getDeviceDataFrom()
   { 
-    WmDeviceData_from *data=NULL ;
-    m_cirBufferFrom->popFront( data ) ;
-    return data ;
+    if( m_isRunning && m_cirBufferFrom!=NULL )
+    {
+      WmDeviceData_from *data=NULL ;
+      m_cirBufferFrom->popFront( data ) ;
+      return data ;
+    }
+
+    return NULL ;
   }
 
   /**
     * Set the last wanted state for Wiimote (blocking call).
     */
   void WmDevice::setDeviceDataTo( const WmDeviceData_to& wmDataTo )
-  { 
-    WmDeviceData_to *data=new WmDeviceData_to() ;
-    *data = wmDataTo ;
-    m_cirBufferTo->pushBack(data) ;
+  {
+    if( m_isRunning && m_cirBufferTo!=NULL )
+    {
+      WmDeviceData_to *data=new WmDeviceData_to() ;
+      *data = wmDataTo ;
+      m_cirBufferTo->pushBack(data) ;
+    }
   }
+
+
+  bool WmDevice::connectAndStart()
+  {
+    if( connectWm() > 0 )
+    { // Running!
+
+      bool isConnect=this->connect( &m_deviceThread, SIGNAL(started()), SLOT(runPoll()) ) ;
+      if( !isConnect )
+        mytoolbox::dbgMsg( "Problem connection signal : m_deviceThread.started() -> WmDevice.runPoll() !!" ) ;
+      this->moveToThread( &m_deviceThread ) ;
+
+      m_threadFinished.fetchAndStoreRelaxed(0) ;
+      m_deviceThread.start() ;
+
+      return true ;
+    }
+    else
+      return false ;
+  }
+
 
   /**
     * Realize the connection of the Wiimote :
@@ -267,6 +333,8 @@ namespace InputDevice
       m_wm->SetLEDs( CWiimote::LED_1 ) ; // Light LED 1.
       m_wm->IR.SetMode( CIR::ON ) ; // Activate IR.
       m_wm->IR.SetSensitivity(WMAVO_IRSENSITIVITY) ;
+      m_wm->SetMotionSensingMode(CWiimote::ON) ;
+      //m_wm->Accelerometer.SetAccelThreshold(3); // 5 by default.
 
       // For continue comm. (already with IR enable)
       //m_wm->SetFlags( CWiimote::FLAG_CONTINUOUS, 0x0 ) ;
@@ -280,14 +348,15 @@ namespace InputDevice
       #else
       usleep(200000);    
       #endif
-      //wiimote->SetRumbleMode(CWiimote::OFF); !!! (wiimote) should come directly from wiimote_t !!!
+      //wiimote->SetRumbleMode(CWiimote::OFF); !!! 
+      // (wiimote) should come directly from wiimote_t !!!
       m_wm->SetRumbleMode(CWiimote::OFF);
 
       // Activate the advanced rumble feature.
       m_rumble = new WmRumble(this) ;
       m_rumble->setRumbleEnabled( true ) ;
 
-      // Connect (=Get) the nunchuk.
+      // Connect (== Get) the nunchuk.
       connectNc() ;
     }
 
@@ -308,42 +377,84 @@ namespace InputDevice
   }
 
 
-  bool WmDevice::connectAndStart()
-  {
-    if( connectWm() > 0 )
-    { // Running!
-
-      this->connect( &m_deviceThread, SIGNAL(started()), SLOT(runPoll()) ) ;
-      this->moveToThread( &m_deviceThread ) ;
-      m_deviceThread.start() ;
-      return true ;
-    }
-    else
-      return false ;
-  }
-
   void WmDevice::runPoll()
   {
     if( m_hasWm )
     {
+      bool hasUpdateFrom=false ;
+      bool hasUpdateTo=false ;
       m_isRunning = true ;
 
       // Update local data.
       while( m_isRunning )
       {
-        updateDataFrom() ;
-        updateDataTo() ;
+        hasUpdateFrom = false ;
+        hasUpdateTo = false ;
+
+        // Check if there are some works.
+        hasUpdateFrom = updateDataFrom() ; // Poll directly the Wiimote, not blocking call.
+
+        if( !m_cirBufferTo->isEmpty() )
+          hasUpdateTo = true ;
+        
+        if( hasUpdateFrom || hasUpdateTo )
+        { // Working.
+          if( hasUpdateTo )
+            updateDataTo() ;
+        }
+
+        // Sleeping ...
+        // Later : See to realize it only after 10 rounds.
+        // Idem for the runPoll() method.
+        // Idem for m_actionsAreApplied.fetchAndStoreRelaxed(0) ;
+        // Let the buffer to load a little.
+        if( m_hasSleepThread )
+          m_deviceThread.msleep(PLUGIN_WM_SLEEPTHREAD_TIME) ;
+        else
+          m_deviceThread.yieldCurrentThread() ;
+          // With m_deviceThread.setPriority( QThread::LowPriority ) ;
       }
 
-      // Let to restart the connection properly.
-      deleteWii() ;
+      m_threadFinished.fetchAndStoreRelaxed(1) ;
+    }
+    else
+    {
+      m_threadFinished.fetchAndStoreRelaxed(1) ;
+      m_isRunning = false ;
     }
   }
 
   void WmDevice::stopPoll()
   {
-    // Stop the working thread.
-    m_isRunning = false ;
+    if( m_isRunning )
+    {
+      // Stop the working thread.
+      m_isRunning = false ;
+      while( m_threadFinished == 0 ) ;
+
+      WmDeviceData_from *dataFrom=NULL ;
+      WmDeviceData_to *dataTo=NULL ;
+
+      while( !m_cirBufferFrom->isEmpty() )
+      {
+        m_cirBufferFrom->popFront(dataFrom) ;
+        if( dataFrom != NULL )
+        {
+          delete dataFrom ;
+          dataFrom = NULL ;
+        }
+      }
+
+      while( !m_cirBufferTo->isEmpty() )
+      {
+        m_cirBufferTo->popFront(dataTo) ;
+        if( dataTo != NULL )
+        {
+          delete dataTo ;
+          dataTo = NULL ;
+        }
+      }
+    }
 
     // Stop the event loop thread (run() method).
     m_deviceThread.quit() ;
@@ -375,7 +486,7 @@ namespace InputDevice
         case CWiimote::EVENT_UNEXPECTED_DISCONNECT :
           mytoolbox::dbgMsg( "--- DISCONNECTED ---" ) ;
           stopPoll() ;
-          break;
+          break ;
 
         case CWiimote::EVENT_NUNCHUK_INSERTED:
           connectNc() ;
@@ -400,8 +511,25 @@ namespace InputDevice
 
       if( updateButton || updateAcc || updateIR )
       {
-        m_cirBufferFrom->pushBack( new WmDeviceData_from(m_wm->copyData()) ) ;
-        r = true ;
+        // Reduce data quantities.
+        // In the future, when the out of the input device is standard, move or
+        // copy this method in the wrapper.
+        if( reduceSentData( *m_wm ) )
+        {
+          // 1st stategy : If no place, no push data.
+          if( !m_cirBufferFrom->isFull() )
+          {
+            WmDeviceData_from *wm=new WmDeviceData_from(m_wm->copyData()) ;
+            if( wm==NULL || wm->getDeviceData()==NULL
+                || wm->getDeviceData()->GetBatteryLevel() < 0  
+                || wm->getDeviceData()->IR.GetNumDots()<0 
+                || wm->getDeviceData()->IR.GetNumDots()>4 )
+              printf("Error data : WmDeviceData_from *wm!=NULL && no allocated ...\n") ;
+            m_cirBufferFrom->pushBack( wm ) ;
+            r = true ;
+          }
+        }
+
       }
     }
 
@@ -420,8 +548,16 @@ namespace InputDevice
       if( data != NULL )
       {
         RumbleSettings rumble ;
-        if( data->getRumble(rumble) )
+        bool hasSleepThread=false ;
+        bool hasUpdated=false ;
+
+        hasUpdated = data->getRumble(rumble) ;
+        if( hasUpdated )
           m_rumble->setSettings(rumble) ;
+
+        hasUpdated = data->getHasSleepThread( hasSleepThread ) ;
+        if( hasUpdated )
+          m_hasSleepThread = hasSleepThread ;
 
         delete data ;
         r = true ;
@@ -429,6 +565,55 @@ namespace InputDevice
     }
 
     return r ;
+  }
+
+  bool WmDevice::reduceSentData( CWiimote &wm )
+  {
+    bool hasChanged=false ;
+    int timeOut=0 ;
+
+    // If( current state != previous state )
+      // Save & send.
+    // else
+      // Wait 10 ms before to send data.
+
+    m_t2 = m_time.elapsed() ;
+    timeOut = m_t2 - m_t1 ;
+
+    // TimeOut ?
+    if( timeOut > PLUGIN_WM_TIMEOUT_BEFORE_SENDDATA )
+    {
+      m_t1 = m_t2 ;
+      hasChanged = true ;
+    }
+
+    if( !hasChanged )
+    { // Action Wiimote ?
+      
+      if( wm.GetEvent()!=m_previousEvent || wm.Buttons.isJustChanged() )
+        hasChanged = true ;
+    }
+
+    if( !hasChanged )
+    { // Action Nunchuk ?
+
+      int exType = wm.ExpansionDevice.GetType();
+      if( exType == wm.ExpansionDevice.TYPE_NUNCHUK ) 
+      {
+        if( wm.ExpansionDevice.Nunchuk.Buttons.isJustChanged() )
+          hasChanged = true ;
+      }
+    }
+
+    // Has changed ?
+    if( hasChanged )
+    { // YES, update data.
+
+      m_previousEvent = wm.GetEvent() ;
+      return true ;
+    }
+    else // NO, no update.
+      return false ;
   }
 
 }

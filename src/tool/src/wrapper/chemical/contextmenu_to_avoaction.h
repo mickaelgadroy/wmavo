@@ -117,6 +117,7 @@ namespace Avogadro
 
   private :
 
+    void buildActionForCM() ; ///< To create the QAction object for the context menu.
     void buildContextMenu() ; ///< To manipulate a context menu in Avogadro.
     bool connectMainQActionSignal() ; ///< Connect the trigger signals of QAction to their methods.
 

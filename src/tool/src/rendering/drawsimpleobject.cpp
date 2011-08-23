@@ -271,29 +271,34 @@ void DrawSimpleObject::drawRect( const QPoint &p1, const QPoint &p2, const QColo
 void DrawSimpleObject::drawRect( float sx, float sy, float ex, float ey, const QColor* color )
 {
 
-  int rBg=0, gBg=0, bBg=0, aBg=0 ;
-  int rLimit=0, gLimit=0, bLimit=0 ;
+  unsigned char rBg=0, gBg=0, bBg=0, aBg=0 ;
+  unsigned char rLimit=0, gLimit=0, bLimit=0 ;
+  QColor bgColor=m_widget->background() ;
+  unsigned char rWBg=0, gWBg=0, bWBg=0 ;
+
+  rWBg = unsigned char(bgColor.red()) ;
+  gWBg = unsigned char(bgColor.green()) ;
+  bWBg = unsigned char(bgColor.blue()) ;
 
   if( color == NULL )
   { // Calculate the inverse color.
-
-    QColor bgColor=m_widget->background() ;
     
-    rBg = 255 - bgColor.red() ;
-    gBg = 255 - bgColor.green() ;
-    bBg = 255 - bgColor.blue() ;
-    aBg = 100 ;
+    rBg = 255 - rWBg ;
+    gBg = 255 - gWBg ;
+    bBg = 255 - bWBg ;
+    aBg = 150 ;
   }
   else
   {
-    rBg=color->red() ; bBg=color->blue() ; gBg=color->green() ; aBg=color->alpha() ;
+    rBg=unsigned char(color->red()) ; bBg=unsigned char(color->blue()) ; 
+    gBg=unsigned char(color->green()) ; aBg=unsigned char(color->alpha()) ;
   }
 
   //printf( "%d %d %d - %d %d %d\n", rBg, gBg, bBg, bgColor.red(), bgColor.green(), bgColor.blue() ) ;
 
-  rLimit = rBg/2 ;
-  gLimit = gBg/2 ;
-  bLimit = bBg/2 ;
+  rLimit = ( rBg>=rWBg ? rBg-rWBg : rWBg-rBg ) >> 1 ; // /2
+  gLimit = ( gBg>=gWBg ? gBg-gWBg : gWBg-gBg ) >> 1 ;
+  bLimit = ( bBg>=bWBg ? bBg-bWBg : bWBg-bBg ) >> 1 ;
 
   glPushMatrix();
   glLoadIdentity();
@@ -321,7 +326,7 @@ void DrawSimpleObject::drawRect( float sx, float sy, float ex, float ey, const Q
   glDisable(GL_LIGHTING) ;
   glDisable(GL_CULL_FACE) ;
 
-  glColor4i( rBg, gBg, bBg, aBg ) ;
+  glColor4ub( rBg, gBg, bBg, aBg ) ;
 
   glBegin(GL_POLYGON);
     glVertex3d(startPos[0],startPos[1],startPos[2]);
@@ -333,7 +338,7 @@ void DrawSimpleObject::drawRect( float sx, float sy, float ex, float ey, const Q
   startPos[2] += 0.0001;
   glDisable(GL_BLEND);
 
-  glColor3i( rLimit, gLimit, bLimit ) ;
+  glColor3ub( rLimit, gLimit, bLimit ) ;
   glBegin(GL_LINE_LOOP);
     glVertex3d(startPos[0],startPos[1],startPos[2]);
     glVertex3d(startPos[0],endPos[1],startPos[2]);
@@ -400,7 +405,7 @@ void DrawSimpleObject::drawCircle( double posX,   double posY,   double posZ,
   */
 void DrawSimpleObject::drawSphereLine( float radius, const Eigen::Vector3d& from, const QColor &color )
 {
-  drawSphere( m_gluQuadricGluLine, radius, from, color ) ;
+  this->drawSphere( m_gluQuadricGluLine, radius, from, color ) ;
 }
 
 
@@ -412,7 +417,7 @@ void DrawSimpleObject::drawSphereLine( float radius, const Eigen::Vector3d& from
   */
 void DrawSimpleObject::drawSphereFill( float radius, const Eigen::Vector3d& from, const QColor &color )
 {
-  drawSphere( m_gluQuadricGluFill, radius, from, color, 5, 5 ) ;
+  this->drawSphere( m_gluQuadricGluFill, radius, from, color, 5, 5 ) ;
 }
 
 

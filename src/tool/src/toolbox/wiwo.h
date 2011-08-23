@@ -55,8 +55,8 @@ public :
 
   inline int getSizeCycle(){ return sizeWIWO ; } ;
   inline T getFront(){ return buffer[head] ; } ;
-  inline T getBack(){ return buffer[(head+nbUsedCase-1)%sizeWIWO] ; } ;
-  inline int getNbUsedCase(){ return nbUsedCase ; }
+  inline T getBack(){ return (nbUsedCase<=0?buffer[head]:buffer[(head+nbUsedCase-1)%sizeWIWO]) ; } ;
+  inline int getNbUsedCase(){ return (nbUsedCase<=0?0:nbUsedCase) ; }
   inline void RAZ(){ nbUsedCase = 0 ; } ;
 
 
@@ -83,7 +83,7 @@ public :
     if( nbUsedCase < sizeWIWO )
     {
       nbUsedCase++ ;
-      buffer[(head+nbUsedCase) % sizeWIWO] = obj ;
+      buffer[(head+nbUsedCase-1) % sizeWIWO] = obj ;
       return true ;
     }
     else
@@ -115,7 +115,6 @@ public :
   {
     if( nbUsedCase > 0 )
       nbUsedCase -- ;
-
   } ;
 
   /**

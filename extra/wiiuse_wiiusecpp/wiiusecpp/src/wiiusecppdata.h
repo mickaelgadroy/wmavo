@@ -37,16 +37,19 @@ public:
   CButtonBaseData( const CButtonBase &cbb ) ;
   ~CButtonBaseData() ;
 
-  int isPressed(int Button) ;
-  int isHeld(int Button) ;
-  int isReleased(int Button) ;
-  int isJustPressed(int Button) ;
-  int isJustChanged() ;
+  short getBtnsState() ;
+
+  bool isPressed(int Button) ;
+  bool isHeld(int Button) ;
+  bool isReleased(int Button) ;
+  bool isJustPressed(int Button) ;
+  bool isJustChanged() ;
 
 private:
-  int mpBtns ;				/**< what buttons have just been pressed	*/
-  int mpBtnsHeld ;		/**< what buttons are being held down		*/
-  int mpBtnsReleased ;/**< what buttons were just released this	*/
+  short mpBtns ;				/**< what buttons have just been pressed	*/
+  short mpBtnsHeld ;		/**< what buttons are being held down		*/
+  short mpBtnsReleased ;/**< what buttons were just released this	*/
+  short mpBtnsPrevious ;/**< what previous pressed buttons state	*/
 };
 
 

@@ -71,7 +71,7 @@ namespace Avogadro
   // Signal.
   signals:
 
-    void setCalculDistDiedre( Atom *anAtom ) ;
+    void sendAtomToCalculDistDiedre( Avogadro::Atom *anAtom ) ;
      ///< Send to the WmTool class some informations for the distance calculation.
 
     /**

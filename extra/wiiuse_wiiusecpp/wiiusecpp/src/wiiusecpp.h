@@ -53,27 +53,30 @@ class CWiimoteData ;
 class CButtonBase
 {
   friend class CButtonBaseData ;
+  friend class CWii ;
 
 public:
-    CButtonBase(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr);
+    CButtonBase(short *ButtonsPtr, short *ButtonsHeldPtr, short *ButtonsReleasedPtr, short *ButtonsPreviousPtr );
     virtual ~CButtonBase() ;
 
-    int isPressed(int Button);
-    int isHeld(int Button);
-    int isReleased(int Button);
-    int isJustPressed(int Button);
-    int isJustChanged() ;
+    inline short getBtnsState(){ return *mpBtnsPtr ; } ;
+    bool isPressed(int Button);
+    bool isHeld(int Button);
+    bool isReleased(int Button);
+    bool isJustPressed(int Button);
+    bool isJustChanged() ;
 
 protected:
     CButtonBase() ;
     CButtonBase( const CButtonBase& bb ) ;
 
 private:
-    virtual inline short Cast(void *Ptr) {return *((short *)(Ptr));}
+    //virtual inline short Cast(void *Ptr) {return *((short *)(Ptr));}
 
-    void *mpBtnsPtr;
-    void *mpBtnsHeldPtr;
-    void *mpBtnsReleasedPtr;
+    short *mpBtnsPtr;
+    short *mpBtnsHeldPtr;
+    short *mpBtnsReleasedPtr;
+    short *mpBtnsPreviousPtr;
 };
 
 class CButtons : public CButtonBase
@@ -98,7 +101,7 @@ public:
         BUTTON_ALL = WIIMOTE_BUTTON_ALL
     };
 
-    CButtons(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr);
+    CButtons(short *ButtonsPtr, short *ButtonsHeldPtr, short *ButtonsReleasedPtr, short *ButtonsPreviousPtr );
     virtual ~CButtons() ;
 
 private :
@@ -118,7 +121,7 @@ public:
         BUTTON_ALL = NUNCHUK_BUTTON_ALL
     };
 
-    CNunchukButtons(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr);
+    CNunchukButtons(short *ButtonsPtr, short *ButtonsHeldPtr, short *ButtonsReleasedPtr, short *ButtonsPreviousPtr );
     virtual ~CNunchukButtons() ;
 
 protected :
@@ -126,7 +129,7 @@ protected :
     CNunchukButtons( const CNunchukButtons& cnb ) ;
 
 private:
-    short Cast(void *Ptr) {return (short)(*((byte *)(Ptr)));} // Inlined using the different type.
+    //short Cast(void *Ptr) {return (short)(*((byte *)(Ptr)));} // Inlined using the different type.
 };
 
 class CClassicButtons : public CButtonBase
@@ -155,7 +158,7 @@ public:
         BUTTON_ALL = CLASSIC_CTRL_BUTTON_ALL
     };
 
-    CClassicButtons(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr);
+    CClassicButtons(short *ButtonsPtr, short *ButtonsHeldPtr, short *ButtonsReleasedPtr, short *ButtonsPreviousPtr );
     virtual ~CClassicButtons() ;
 
 private :
@@ -182,7 +185,7 @@ public:
         BUTTON_ALL = GUITAR_HERO_3_BUTTON_ALL
     };
 
-    CGH3Buttons(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr);
+    CGH3Buttons(short *ButtonsPtr, short *ButtonsHeldPtr, short *ButtonsReleasedPtr, short *ButtonsPreviousPtr);
     virtual ~CGH3Buttons() ;
 
 private :

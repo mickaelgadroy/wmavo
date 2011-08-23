@@ -48,6 +48,7 @@
 #include <avogadro/tool.h>
 #include <QAction>
 #include <QMutex>
+#include <QAtomicInt>
 
 /*
 QT_BEGIN_NAMESPACE
@@ -135,9 +136,45 @@ namespace Avogadro
 
     inline void setIRSensitiveNow( int sensitive )
     {
-      WITD::ChemicalWrapData_to chemDataTo ;
-      chemDataTo.setIRSensitive(sensitive) ;
-      m_chemWrap->setWrapperDataTo( chemDataTo ) ;
+      if( m_chemWrap != NULL )
+      {
+        WITD::ChemicalWrapData_to chemDataTo ;
+        chemDataTo.setIRSensitive(sensitive) ;
+        m_chemWrap->setWrapperDataTo( chemDataTo ) ;
+      }
+    } ;
+
+    inline void setWmVibrationNow( int enable )
+    {
+      if( m_wm != NULL )
+      {
+        InputDevice::WmDeviceData_to wmDataTo ;
+        InputDevice::RumbleSettings rumble ;
+
+        if( enable > 0 )
+          rumble.setEnable( true ) ;
+        else
+          rumble.setEnable( false ) ;
+
+        wmDataTo.setRumble( rumble ) ;
+        m_wm->setDeviceDataTo( wmDataTo ) ;
+      }
+    } ;
+
+    inline void setSleepThreadNow( int enable )
+    {
+      if( m_wm != NULL )
+      {
+        bool hasSleepThread=(enable>0?true:false) ;
+        InputDevice::WmDeviceData_to wmDataTo ;
+        WrapperInputToDomain::ChemicalWrapData_to chemWrapTo ;
+
+        wmDataTo.setHasSleepThread(hasSleepThread) ;
+        chemWrapTo.setHasSleepThread(hasSleepThread) ;
+
+        m_wm->setDeviceDataTo( wmDataTo ) ;
+        m_chemWrap->setWrapperDataTo( chemWrapTo ) ;
+      }
     } ;
 
   // Signals.
@@ -150,9 +187,8 @@ namespace Avogadro
     /**
       * Miscellaneous 
       * @{ */
-    GLWidget *m_widget ;
-    SettingsWidget *m_settingsWidget ;
-    QMutex m_mutex ;
+    GLWidget *m_widget ; //< (shortcut)
+    SettingsWidget *m_settingsWidget ; //< (object)
     // @}
 
     /**
@@ -176,16 +212,15 @@ namespace Avogadro
     /**
       * Apply Actions.
       * @{ */
-    bool m_updateActionDisplay ;
-    bool m_updateInfoDeviceDisplay ;
+    QAtomicInt m_updateActionDisplay, m_updateInfoDeviceDisplay ;
     //@}
 
     /**
       * Paint/Draw objects.
       * @{ */
-    DrawObject *m_drawObject ;
-    RenderText *m_renderText ;
-    DistanceAngleDiedre *m_distAngleDiedre ;
+    DrawObject *m_drawObject ; //< (object)
+    RenderText *m_renderText ; //< (object)
+    DistanceAngleDiedre *m_distAngleDiedre ; //< (object)
     // @}
 
   };

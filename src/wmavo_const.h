@@ -51,6 +51,10 @@
 
 #define CIRBUFFER_DEFAULT_SIZE 20
 
+#define PLUGIN_WM_SLEEPTHREAD_ONOFF true 
+#define PLUGIN_WM_SLEEPTHREAD_TIME 10 // ms
+#define PLUGIN_WM_TIMEOUT_BEFORE_SENDDATA 10 // ms
+
 
 ///**********************************************************
 /// Specific for wmextension.h.

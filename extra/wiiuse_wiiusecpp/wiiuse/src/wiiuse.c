@@ -115,6 +115,17 @@ void wiiuse_init_vec3f_t( struct vec3f_t *v )
   }
 }
 
+void wiiuse_init_btns_t( struct btns_t *v )
+{
+  if( v != NULL )
+  {
+    v->btns = 0 ;
+    v->btns_held = 0 ;
+    v->btns_previous = 0 ;
+    v->btns_released = 0 ;
+  }
+}
+
 void wiiuse_init_orient_t( struct orient_t *v )
 {
   if( v != NULL )
@@ -220,10 +231,9 @@ void wiiuse_init_nunchuk_t( struct nunchuk_t *v )
     wiiuse_init_vec3b_t( &(v->accel) ) ;
     wiiuse_init_orient_t( &(v->orient) ) ;
     wiiuse_init_gforce_t( &(v->gforce) ) ;
+    wiiuse_init_btns_t( &(v->btns) ) ;
     v->flags = NULL ;
-    v->btns = 0 ;
-    v->btns_held = 0 ;
-    v->btns_released = 0 ;
+    
     v->orient_threshold = 0 ;
     v->accel_threshold = 0 ;
   }
@@ -235,9 +245,7 @@ void wiiuse_init_classic_ctrl_t( struct classic_ctrl_t *v )
   {
     wiiuse_init_joystick_t( &(v->ljs) ) ;
     wiiuse_init_joystick_t( &(v->rjs) ) ;
-    v->btns = 0 ;
-    v->btns_held = 0 ;
-    v->btns_released = 0 ;
+    wiiuse_init_btns_t( &(v->btns) ) ;
     v->r_shoulder = 0 ;
     v->l_shoulder = 0 ;
   }
@@ -248,9 +256,7 @@ void wiiuse_init_guitar_hero_3_t( struct guitar_hero_3_t *v )
   if( v != NULL )
   {
     wiiuse_init_joystick_t( &(v->js) ) ;
-    v->btns = 0 ;
-    v->btns_held = 0 ;
-    v->btns_released = 0 ;
+    wiiuse_init_btns_t( &(v->btns) ) ;
     v->whammy_bar = 0 ;
   }
 }
@@ -394,9 +400,7 @@ void wiiuse_disconnected(struct wiimote_t* wm) {
 	wm->state = WIIMOTE_INIT_STATES;
 	wm->read_req = NULL;
 	wm->handshake_state = 0;
-	wm->btns = 0;
-	wm->btns_held = 0;
-	wm->btns_released = 0;
+  wiiuse_init_btns_t( &(wm->btns) ) ;
 	memset(wm->event_buf, 0, sizeof(wm->event_buf));
 
 	wm->event = WIIUSE_DISCONNECT;
@@ -492,6 +496,32 @@ void wiiuse_motion_sensing(struct wiimote_t* wm, int status) {
 
 	wiiuse_set_report_type(wm);
 }
+
+
+/**
+ *	@brief Find what buttons are pressed.
+ *
+ *	@param btns		Pointer to a btns_t structure.
+ *	@param msg		The message byte specified in the event packet.
+ */
+void wiiuse_init_pressed_buttons(struct btns_t* b, short now) 
+{
+  if( b != NULL )
+  {
+    // Save state.
+    b->btns_previous = b->btns ;
+
+	  /* pressed now & were pressed, then held */
+	  b->btns_held = (now & b->btns);
+
+	  /* were pressed or were held & not pressed now, then released */
+	  b->btns_released = ((b->btns | b->btns_held) & ~now);
+
+	  /* buttons pressed now */
+	  b->btns = now ;
+  }
+}
+
 
 
 /**

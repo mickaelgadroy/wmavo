@@ -63,6 +63,7 @@ void handle_event(struct wiimote_t* wm) {
   if (IS_RELEASED(wm, WIIMOTE_BUTTON_A))		printf("A released\n");
   if (IS_JUST_PRESSED(wm, WIIMOTE_BUTTON_A))		printf("A just pressed\n");
   if (IS_HELD(wm, WIIMOTE_BUTTON_A))		printf("A is held\n");
+  if (IS_JUST_CHANGED(wm))		printf("Wiimote buttons are just changed \n");
 
 	if (IS_PRESSED(wm, WIIMOTE_BUTTON_B))		printf("B pressed\n");
 	if (IS_PRESSED(wm, WIIMOTE_BUTTON_UP))		printf("UP pressed\n");
@@ -157,6 +158,7 @@ void handle_event(struct wiimote_t* wm) {
 		/* nunchuk */
 		struct nunchuk_t* nc = (nunchuk_t*)&wm->exp.nunchuk;
 
+    if (IS_JUST_CHANGED(nc))		printf("Nunchuck buttons are just changed \n");
 		if (IS_PRESSED(nc, NUNCHUK_BUTTON_C))		printf("Nunchuk: C pressed\n");
 		if (IS_PRESSED(nc, NUNCHUK_BUTTON_Z))		printf("Nunchuk: Z pressed\n");
 
@@ -281,7 +283,7 @@ void handle_ctrl_status(struct wiimote_t* wm) {
  *	This can happen if the POWER button is pressed, or
  *	if the connection is interrupted.
  */
-void handle_disconnect(wiimote* wm) {
+void handle_disconnect(wiimote_t* wm) {
 	printf("\n\n--- DISCONNECTED [wiimote id %i] ---\n", wm->unid);
 }
 
@@ -299,7 +301,7 @@ void test(struct wiimote_t* wm, byte* data, unsigned short len) {
  *	that occur on either device.
  */
 int main(int argc, char** argv) {
-	wiimote** wiimotes;
+	wiimote_t** wiimotes;
 	int found, connected;
   int nbWiimote=MAX_WIIMOTES ;
   int i=0 ;

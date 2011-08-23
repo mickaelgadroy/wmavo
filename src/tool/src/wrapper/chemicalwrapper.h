@@ -34,6 +34,11 @@
 #include "wiiusecppdata.h"
 #include "wmtochem.h"
 
+#include "warning_disable_begin.h"
+#include <QAtomicInt>
+#include <QEventLoop>
+#include "warning_disable_end.h"
+
 namespace WrapperInputToDomain
 {
   class ChemicalWrapData_from : public WrapperData_from
@@ -62,6 +67,9 @@ namespace WrapperInputToDomain
     inline bool getIRSensitive( int &irSensitive_out )
     { bool up=m_updateIRSensitive ; m_updateIRSensitive=false ;
       irSensitive_out = m_irSensitive ; return up ; } ;
+    inline bool getHasSleepThread( bool &hasSleepThread_out )
+    { bool up=m_updateSleepThread ; m_updateSleepThread=false ;
+      hasSleepThread_out = m_hasSleepThread ; return up ; } ;
 
     inline void setOperatingMode( int opMode )
     { m_operatingMode = opMode ; m_updateOpMode = true ; } ;
@@ -69,9 +77,12 @@ namespace WrapperInputToDomain
     { m_menuMode = mode ; m_updateMenuMode = true ; } ;
     inline void setIRSensitive( int sensitive )
     { m_irSensitive = sensitive ; m_updateIRSensitive = true ; } ;
+    inline void setHasSleepThread( bool hasSleepThread )
+    { m_hasSleepThread = hasSleepThread ; m_updateSleepThread = true ; } ;
 
     inline void resetUpdate()
-    { m_updateOpMode=false; m_updateMenuMode=false; m_updateIRSensitive=false; }
+    { m_updateOpMode=false; m_updateMenuMode=false; 
+      m_updateIRSensitive=false; m_updateSleepThread=false; }
 
   private :
     int m_operatingMode ;
@@ -82,6 +93,9 @@ namespace WrapperInputToDomain
 
     int m_irSensitive ;
     bool m_updateIRSensitive ;
+
+    bool m_hasSleepThread ;
+    bool m_updateSleepThread ;
   };
 
 
@@ -105,26 +119,33 @@ namespace WrapperInputToDomain
     bool updateDataFrom() ;
     bool updateDataTo() ;
 
-  public slots :
+  private slots :
     void runPoll() ;
+
+  public slots :
+    void setOnActionsApplied() ;
 
   signals :
     void newActions() ;
+    void runRunPoll() ;
 
   protected :
     /**
       * @name Manage Chemical data.
       * @{ */
-    InputDevice::Device *m_dev ;
-    WmToChem *m_wmToChem ;
-    WIWO_sem<ChemicalWrapData_from*> *m_cirBufferFrom ;
-    WIWO_sem<ChemicalWrapData_to*> *m_cirBufferTo ;
+    InputDevice::Device *m_dev ; //< (shortcut)
+    WmToChem *m_wmToChem ; //< (object)
+    WIWO_sem<ChemicalWrapData_from*> *m_cirBufferFrom ; //< (object)
+    WIWO_sem<ChemicalWrapData_to*> *m_cirBufferTo ; //< (object)
+    QAtomicInt m_actionsAreApplied ; 
     // @}
 
     /** @name Manage thread.
       * @{ */
     QThread_ex m_wrapperThread ;
     bool m_isRunning ;
+    QAtomicInt m_threadFinished ;
+    bool m_hasSleepThread ;
     // @}
   };
 

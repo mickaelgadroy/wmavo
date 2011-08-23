@@ -64,14 +64,8 @@
 #include <QDir>
 
 #include <openbabel/mol.h>
-//#include <openbabel/math/vector3.h>
-#include <openbabel/griddata.h>
-#include <openbabel/grid.h>
-#include <openbabel/generic.h>
-#include <openbabel/forcefield.h>
-#include <openbabel/obiter.h>
-#include <openbabel/obconversion.h>
 #include <openbabel/builder.h>
+#include <openbabel/obconversion.h>
 
 #include "warning_disable_end.h"
 

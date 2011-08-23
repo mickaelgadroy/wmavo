@@ -60,9 +60,7 @@ int classic_ctrl_handshake(struct wiimote_t* wm, struct classic_ctrl_t* cc, byte
 	int i;
 	int offset = 0;
 
-	cc->btns = 0;
-	cc->btns_held = 0;
-	cc->btns_released = 0;
+  wiiuse_init_btns_t( &(cc->btns) ) ;
 	cc->r_shoulder = 0;
 	cc->l_shoulder = 0;
 
@@ -140,12 +138,14 @@ void classic_ctrl_disconnected(struct classic_ctrl_t* cc) {
 void classic_ctrl_event(struct classic_ctrl_t* cc, byte* msg) {
 	int i, lx, ly, rx, ry;
 	byte l, r;
+  short now=0 ;
 
 	/* decrypt data */
 	for (i = 0; i < 6; ++i)
 		msg[i] = (msg[i] ^ 0x17) + 0x17;
 
-	classic_ctrl_pressed_buttons(cc, BIG_ENDIAN_SHORT(*(short*)(msg + 4)));
+  now = BIG_ENDIAN_SHORT(*(short*)(msg + 4)) ;
+	classic_ctrl_pressed_buttons(cc, now);
 
 	/* left/right buttons */
 	l = (((msg[2] & 0x60) >> 2) | ((msg[3] & 0xE0) >> 5));
@@ -175,16 +175,9 @@ void classic_ctrl_event(struct classic_ctrl_t* cc, byte* msg) {
  *	@param cc		A pointer to a classic_ctrl_t structure.
  *	@param msg		The message byte specified in the event packet.
  */
-static void classic_ctrl_pressed_buttons(struct classic_ctrl_t* cc, short now) {
+static void classic_ctrl_pressed_buttons(struct classic_ctrl_t* cc, short now)
+{
 	/* message is inverted (0 is active, 1 is inactive) */
-	now = ~now & CLASSIC_CTRL_BUTTON_ALL;
-
-	/* pressed now & were pressed, then held */
-	cc->btns_held = (now & cc->btns);
-
-	/* were pressed or were held & not pressed now, then released */
-	cc->btns_released = ((cc->btns | cc->btns_held) & ~now);
-
-	/* buttons pressed now */
-	cc->btns = now;
+	now = ~now & CLASSIC_CTRL_BUTTON_ALL ;
+  wiiuse_init_pressed_buttons(&(cc->btns), now) ;
 }

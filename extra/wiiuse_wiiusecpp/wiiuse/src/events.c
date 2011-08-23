@@ -428,16 +428,8 @@ void wiiuse_pressed_buttons(struct wiimote_t* wm, byte* msg)
   
   //if( msg!=NULL && now )
   //  printf( "msg[0]:%X msg[1]:%X now:%X\n", msg[0], msg[1], now ) ;
-  
 
-	/* pressed now & were pressed, then held */
-	wm->btns_held = (now & wm->btns);
-
-	/* were pressed or were held & not pressed now, then released */
-	wm->btns_released = ((wm->btns | wm->btns_held) & ~now);
-
-	/* buttons pressed now */
-	wm->btns = now ;
+  wiiuse_init_pressed_buttons(&(wm->btns), now) ;
 }
 
 
@@ -789,7 +781,7 @@ void disable_expansion(struct wiimote_t* wm) {
  */
 static void save_state(struct wiimote_t* wm) {
 	/* wiimote */
-	wm->lstate.btns = wm->btns;
+  wm->lstate.btns = wm->btns.btns;
 	wm->lstate.accel = wm->accel;
 
 	/* ir */
@@ -804,7 +796,7 @@ static void save_state(struct wiimote_t* wm) {
 		case EXP_NUNCHUK:
 			wm->lstate.exp_ljs_ang = wm->exp.nunchuk.js.ang;
 			wm->lstate.exp_ljs_mag = wm->exp.nunchuk.js.mag;
-			wm->lstate.exp_btns = wm->exp.nunchuk.btns;
+      wm->lstate.exp_btns = wm->exp.nunchuk.btns.btns;
 			wm->lstate.exp_accel = wm->exp.nunchuk.accel;
 			break;
 
@@ -815,14 +807,14 @@ static void save_state(struct wiimote_t* wm) {
 			wm->lstate.exp_rjs_mag = wm->exp.classic.rjs.mag;
 			wm->lstate.exp_r_shoulder = wm->exp.classic.r_shoulder;
 			wm->lstate.exp_l_shoulder = wm->exp.classic.l_shoulder;
-			wm->lstate.exp_btns = wm->exp.classic.btns;
+      wm->lstate.exp_btns = wm->exp.classic.btns.btns;
 			break;
 
 		case EXP_GUITAR_HERO_3:
 			wm->lstate.exp_ljs_ang = wm->exp.gh3.js.ang;
 			wm->lstate.exp_ljs_mag = wm->exp.gh3.js.mag;
 			wm->lstate.exp_r_shoulder = wm->exp.gh3.whammy_bar;
-			wm->lstate.exp_btns = wm->exp.gh3.btns;
+      wm->lstate.exp_btns = wm->exp.gh3.btns.btns ;
 			break;
 
 		case EXP_NONE:
@@ -838,7 +830,7 @@ static void save_state(struct wiimote_t* wm) {
  */
 static int state_changed(struct wiimote_t* wm) {
 
-	#define STATE_CHANGED(a, b)		if (a != b)				return 1 ;
+	#define STATE_CHANGED(a, b)		if (a != b)				return 1
 
 	#define CROSS_THRESH(last, now, thresh)										\
 				do {															\
@@ -876,7 +868,7 @@ static int state_changed(struct wiimote_t* wm) {
 
 
   // buttons
- 	STATE_CHANGED(wm->lstate.btns, wm->btns) ;
+  STATE_CHANGED(wm->lstate.btns, wm->btns.btns) ;
 
 	// ir
 	if (WIIUSE_USING_IR(wm)) {
@@ -900,7 +892,7 @@ static int state_changed(struct wiimote_t* wm) {
 		{
 			STATE_CHANGED(wm->lstate.exp_ljs_ang, wm->exp.nunchuk.js.ang);
 			STATE_CHANGED(wm->lstate.exp_ljs_mag, wm->exp.nunchuk.js.mag);
-			STATE_CHANGED(wm->lstate.exp_btns, wm->exp.nunchuk.btns);
+      STATE_CHANGED(wm->lstate.exp_btns, wm->exp.nunchuk.btns.btns);
 
 			CROSS_THRESH(wm->lstate.exp_orient, wm->exp.nunchuk.orient, wm->exp.nunchuk.orient_threshold);
 			CROSS_THRESH_XYZ(wm->lstate.exp_accel, wm->exp.nunchuk.accel, wm->exp.nunchuk.accel_threshold);
@@ -914,7 +906,7 @@ static int state_changed(struct wiimote_t* wm) {
 			STATE_CHANGED(wm->lstate.exp_rjs_mag, wm->exp.classic.rjs.mag);
 			STATE_CHANGED(wm->lstate.exp_r_shoulder, wm->exp.classic.r_shoulder);
 			STATE_CHANGED(wm->lstate.exp_l_shoulder, wm->exp.classic.l_shoulder);
-			STATE_CHANGED(wm->lstate.exp_btns, wm->exp.classic.btns);
+			STATE_CHANGED(wm->lstate.exp_btns, wm->exp.classic.btns.btns);
 			break;
 		}
 		case EXP_GUITAR_HERO_3:
@@ -922,7 +914,7 @@ static int state_changed(struct wiimote_t* wm) {
 			STATE_CHANGED(wm->lstate.exp_ljs_ang, wm->exp.gh3.js.ang);
 			STATE_CHANGED(wm->lstate.exp_ljs_mag, wm->exp.gh3.js.mag);
 			STATE_CHANGED(wm->lstate.exp_r_shoulder, wm->exp.gh3.whammy_bar);
-			STATE_CHANGED(wm->lstate.exp_btns, wm->exp.gh3.btns);
+			STATE_CHANGED(wm->lstate.exp_btns, wm->exp.gh3.btns.btns);
 			break;
 		}
 		case EXP_NONE:
