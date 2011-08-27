@@ -35,6 +35,7 @@
 #include "variousfeatures.h"
 
 #include "wmavo_const.h"
+#include "wiwo.h"
 #include "chemicalwrapper.h"
 #include "wmdevice.h"
 #include "wmrumble.h"
@@ -103,6 +104,7 @@ namespace Avogadro
       * @name Transform the wrapper actions to the Avogadro actions.
       * @{ */
     void transformWrapperActionToAvoAction( WITD::ChemicalWrapData_from *data ) ;
+    void transformWrapperActionToAvoUpdate( int state ) ;
 
     void transformWrapperActionToMoveMouse( int state, const QPoint& posCursor ) ;
 
@@ -219,6 +221,13 @@ namespace Avogadro
     bool m_testEventPress ;
     QPoint *m_p ;
     QMouseEvent *m_me1, *m_me2, *m_me3 ;
+    // @}
+
+    /**
+      * @name Count nb update by second (used with breakpoint).
+      * @{ */
+    WIWO<unsigned int> *m_nbUpdate1, *m_nbUpdate2, *m_nbUpdate3 ;
+    unsigned int m_t1, m_t2 ;
     // @}
 
     /**

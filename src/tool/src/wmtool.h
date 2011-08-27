@@ -35,6 +35,7 @@
 
 #include "warning_disable_begin.h"
 #include "wmavo_const.h"
+#include "wiwo.h"
 
 #include "settingswidget.h"
 #include "drawobject.h"
@@ -49,6 +50,7 @@
 #include <QAction>
 #include <QMutex>
 #include <QAtomicInt>
+#include <QTime>
 
 /*
 QT_BEGIN_NAMESPACE
@@ -221,6 +223,14 @@ namespace Avogadro
     DrawObject *m_drawObject ; //< (object)
     RenderText *m_renderText ; //< (object)
     DistanceAngleDiedre *m_distAngleDiedre ; //< (object)
+    // @}
+
+    /**
+      * Count nb actions by seconds (used with breakpoint).
+      * @{ */
+    WIWO<unsigned int> *m_nbUpdateTool, *m_nbUpdatePaint ;
+    QTime m_time ;
+    unsigned int m_t1Tool, m_t2Tool, m_t1Paint, m_t2Paint ;
     // @}
 
   };

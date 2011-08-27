@@ -39,10 +39,15 @@ namespace Avogadro
       Tool(parent),
       m_widget(NULL), m_settingsWidget(NULL),
       m_wm(NULL), m_chemWrap(NULL), m_wrapperChemToAvo(NULL),
-      m_drawObject(NULL), m_renderText(NULL), m_distAngleDiedre(NULL)
+      m_drawObject(NULL), m_renderText(NULL), m_distAngleDiedre(NULL),
+      m_t1Paint(0), m_t2Paint(0), m_t1Tool(0), m_t2Tool(0)
   {
     m_updateActionDisplay.fetchAndStoreRelaxed(0) ;
     m_updateInfoDeviceDisplay.fetchAndStoreRelaxed(0) ;
+    m_time.start() ;
+
+    m_nbUpdateTool = new WIWO<unsigned int>(20) ;
+    m_nbUpdatePaint = new WIWO<unsigned int>(20) ;
 
     QAction *action = activateAction() ;
     if( action != NULL )
@@ -95,6 +100,18 @@ namespace Avogadro
     {
       delete m_distAngleDiedre ;
       m_distAngleDiedre = NULL ;
+    }
+
+    if( m_nbUpdateTool != NULL )
+    {
+      delete( m_nbUpdateTool ) ;
+      m_nbUpdateTool = NULL ;
+    }
+
+    if( m_nbUpdatePaint != NULL )
+    {
+      delete( m_nbUpdatePaint ) ;
+      m_nbUpdatePaint = NULL ;
     }
   }
 
@@ -184,9 +201,26 @@ namespace Avogadro
   {
     if( m_widget != NULL )
     {
+      
       if( !widget->hasFocus() )
         widget->setFocus() ;
 
+      // Count nb action by second.
+      {
+        m_t2Paint = m_time.elapsed() ;
+        if( (m_t2Paint-m_t1Paint) > 1000 )
+        {
+          m_t1Paint = m_t2Paint ;
+          m_nbUpdatePaint->pushFront(0) ;
+          (*m_nbUpdatePaint)[0]++ ;
+        }
+        else
+        {
+          (*m_nbUpdatePaint)[0]++ ;
+        }
+      }
+
+      // Drawing ...
       m_drawObject->drawCenter() ;
       m_drawObject->drawBarycenter() ;
       
@@ -218,6 +252,7 @@ namespace Avogadro
     }
     else
       return false ;
+
   }
 
 
@@ -263,7 +298,20 @@ namespace Avogadro
     if( m_widget!=NULL && m_wrapperChemToAvo!=NULL )
     {
       //mytoolbox::dbgMsg( "WmExtension::wmActions : Signal received" ) ;
-      //m_widget->getQuickRender() ; ??? Test if is activate and desactivate it !
+
+      // Count nb action by second (used with breakpoint).
+      m_t2Tool = m_time.elapsed() ;
+      if( (m_t2Tool-m_t1Tool) > 1000 )
+      {
+        m_t1Tool = m_t2Tool ;
+        m_nbUpdateTool->pushFront(0) ;
+        (*m_nbUpdateTool)[0]++ ;
+      }
+      else
+      {
+        (*m_nbUpdateTool)[0]++ ;
+      }
+
 
       // Get actions.
       WITD::ChemicalWrapData_from *dataFrom=m_chemWrap->getWrapperDataFrom() ; // POP Data !

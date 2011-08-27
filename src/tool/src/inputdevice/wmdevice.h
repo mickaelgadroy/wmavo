@@ -156,24 +156,33 @@ namespace InputDevice
     QAtomicInt m_threadFinished ; // If the thread is out of treatment loop.
     bool m_hasSleepThread ; 
       //< If the thread sleeps (less CPU use, but can lag) or yields (more CPU use, but no lag).
+    int m_nbActionRealized ; // To limit the number of sleep calling.
     // @} 
 
     /**
       * @name Wiimote things.
       * @{ */
-    CWii *m_wii ; ///< Manage the Wiimotes. (object)
-    CWiimote *m_wm ; ///< Manage the first Wiimote. (shortcut)
+    CWii *m_wii ; ///< Manage the Wiimote needs (connect ...). (object)
+    CWiimote *m_wm ; ///< Manage the Wiimote (press A ...). (shortcut)
     CNunchuk *m_nc ; // (shortcut)
     WmRumble *m_rumble ; // (object)
     bool m_hasWm, m_hasNc ; ///< Have Wiimote and/or Nunchuk ?
     // @}
 
     /**
-      * @name Try to reduce outcoming data.
+      * @name Try to reduce output data.
       * @{ */
     CWiimote::EventTypes m_previousEvent ;
     QTime m_time ;
     int m_t1, m_t2 ;
+    // @}
+
+    /**
+      * Count nb actions by seconds (used with breakpoint).
+      * @{ */
+    WIWO<unsigned int> *m_nbUpdate, *m_nbUpdate2 ;
+    unsigned int m_t1Update, m_t2Update ; // For the runPoll() method.
+    unsigned int m_t1Update2, m_t2Update2 ; // For the updateDataFrom() method.
     // @}
   };
 

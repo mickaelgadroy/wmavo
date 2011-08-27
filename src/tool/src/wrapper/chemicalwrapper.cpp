@@ -47,7 +47,8 @@ namespace WrapperInputToDomain
   }
 
   ChemicalWrap::ChemicalWrap( InputDevice::Device *dev ) 
-    : m_dev(dev), m_isRunning(false), m_hasSleepThread(PLUGIN_WM_SLEEPTHREAD_ONOFF)
+    : m_dev(dev), m_isRunning(false), m_hasSleepThread(PLUGIN_WM_SLEEPTHREAD_ONOFF), 
+      m_nbActionRealized(0), m_actionsGlobalPrevious(0), m_actionsWrapperPrevious(0)
   {
     m_cirBufferFrom = new WIWO_sem<ChemicalWrapData_from*>( CIRBUFFER_DEFAULT_SIZE ) ;
     m_cirBufferTo = new WIWO_sem<ChemicalWrapData_to*>( CIRBUFFER_DEFAULT_SIZE ) ;
@@ -128,37 +129,78 @@ namespace WrapperInputToDomain
   {
     if( m_dev != NULL )
     {
-      bool needUpdateDataFrom=false ;
       bool needUpdateDataTo=false ;
+      bool needUpdateDataFrom=false ;
+      bool displayIsFinished=false ;
+      ChemicalWrapData_from *chemData=NULL ;
+
       m_isRunning = true ;
 
       while( m_isRunning )
       {
-        needUpdateDataFrom = false ;
-        needUpdateDataTo = false ;
+        displayIsFinished = (m_actionsAreApplied==0?false:true) ;
 
-        // Check if there are some works.
-        if( m_actionsAreApplied==1 
-            && m_dev->hasDeviceDataAvailable() )
-          needUpdateDataFrom = true ;
+        // Something need update.
+        if( m_dev->hasDeviceDataAvailable() )
+          chemData = updateDataFrom() ;
+        else
+          chemData = NULL ;
 
         if( !m_cirBufferTo->isEmpty() )
-          needUpdateDataTo = true ;
+          needUpdateDataTo = updateDataTo() ;
+        else
+          needUpdateDataTo = false ;
 
-        if( needUpdateDataFrom || needUpdateDataTo )
+        if( !m_cirBufferFrom->isEmpty() )
+          needUpdateDataFrom = true ;
+        else
+          needUpdateDataFrom = false ;
+
+
+        if( chemData!=NULL || needUpdateDataFrom || needUpdateDataTo )
         { // Working ...
 
-          if( needUpdateDataFrom && updateDataFrom() )
-            m_actionsAreApplied.fetchAndStoreRelaxed(0) ;
+          if( chemData != NULL )
+          {
+            if( !reduceSentData(displayIsFinished, chemData) )
+              delete chemData ;
+            else
+            {
+              // 1st stategy : If no place, no push data.
+              if( !m_cirBufferFrom->isFull() )
+                m_cirBufferFrom->pushBack( chemData ) ;
+              else
+                delete chemData ;
+            }
+          }
 
-          if( needUpdateDataTo )
-            updateDataTo() ;
+          if( needUpdateDataFrom && displayIsFinished )
+          {
+            m_actionsAreApplied.fetchAndStoreRelaxed(0) ;
+            emit newActions() ;
+          }
+
+          //if( needUpdateDataTo )
+            // Nothing to do.
+            
         }
         else
         { // Sleeping ...
 
           if( m_hasSleepThread )
-            m_wrapperThread.msleep(PLUGIN_WM_SLEEPTHREAD_TIME) ;
+          {            
+            m_nbActionRealized ++ ;
+
+            if( m_nbActionRealized > PLUGIN_WM_SLEEPTHREAD_NBTIME_BEFORE_SLEEP )
+            {
+              m_nbActionRealized = 0 ;
+              m_wrapperThread.msleep(PLUGIN_WM_SLEEPTHREAD_TIME) ;
+            }
+            else
+            {
+              m_wrapperThread.yieldCurrentThread() ;
+            }
+          }
           else
             m_wrapperThread.yieldCurrentThread() ;
             // With m_deviceThread.setPriority( QThread::LowPriority ) ;
@@ -221,9 +263,9 @@ namespace WrapperInputToDomain
     m_wrapperThread.quit() ;
   }
 
-  bool ChemicalWrap::updateDataFrom()
+  ChemicalWrapData_from* ChemicalWrap::updateDataFrom()
   {
-    bool r=false ;
+    ChemicalWrapData_from *r=NULL ;
     CWiimoteData *wmData=NULL ;
 
     if( m_dev != NULL )
@@ -277,18 +319,8 @@ namespace WrapperInputToDomain
         chemData->distBetweenSources = (int)m_wmavo->getWiimote()->IR.GetDistance() ;
         */
 
-        // 1st stategy : If no place, no push data.
-        if( !m_cirBufferFrom->isFull() )
-        {
-          m_cirBufferFrom->pushBack( chemData ) ;
-          emit newActions() ;
-          r = true ;
-        }
-        else
-          delete chemData ;
+        r = chemData ;
       }
-      else
-        r = false ;
 
       if( wmData != NULL )
         delete wmData ;
@@ -342,6 +374,39 @@ namespace WrapperInputToDomain
     }
 
     return r ;
+  }
+
+  /**
+    * Reduce the number of data to output. Inform if the data is interesting or not.
+    * @return TRUE if data is newed ; FALSE if data is useless.
+    */
+  bool ChemicalWrap::reduceSentData( bool displayIsFinished, WrapperData_from *chemData )
+  {
+    bool dataIsInteresting=false ;
+
+    if( chemData != NULL )
+    {
+      if( displayIsFinished )
+      { // If display not working, add some works if available.
+
+        dataIsInteresting = true ;
+      }
+      else
+      { // If display working, do not add works if possible.
+
+        WrapperData_from::wrapperActions_t wa=chemData->getWrapperAction() ;
+
+        if( m_actionsGlobalPrevious!=wa.actionsGlobal 
+            || m_actionsWrapperPrevious!=wa.actionsWrapper )
+        {
+          dataIsInteresting = true ;
+          m_actionsGlobalPrevious = wa.actionsGlobal ;
+          m_actionsWrapperPrevious = wa.actionsWrapper ;
+        }
+      }
+    }
+
+    return dataIsInteresting ;
   }
 
 }

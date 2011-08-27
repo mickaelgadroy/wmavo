@@ -182,16 +182,19 @@ namespace InputDevice
     : Device(),
       m_cirBufferFrom(NULL), m_cirBufferTo(NULL),
       m_isRunning(false), m_hasSleepThread(PLUGIN_WM_SLEEPTHREAD_ONOFF),
+      m_nbActionRealized(0),
       m_wii(NULL), m_wm(NULL), m_nc(NULL),
       m_rumble(NULL), 
       m_hasWm(false), m_hasNc(false), m_previousEvent(CWiimote::EVENT_NONE),
-      m_t1(0), m_t2(0)
+      m_t1(0), m_t2(0), m_t1Update(0), m_t2Update(0), m_t1Update2(0), m_t2Update2(0)
   {
     m_cirBufferFrom = new WIWO_sem<WmDeviceData_from*>( CIRBUFFER_DEFAULT_SIZE ) ;
     m_cirBufferTo = new WIWO_sem<WmDeviceData_to*>( CIRBUFFER_DEFAULT_SIZE ) ;
     m_threadFinished.fetchAndStoreRelaxed(1) ;
     m_deviceThread.setPriority( QThread::LowPriority ) ;
     m_time.start() ;
+    m_nbUpdate = new WIWO<unsigned int>(20) ;
+    m_nbUpdate2 = new WIWO<unsigned int>(20) ;
   }
 
   WmDevice::~WmDevice()
@@ -214,6 +217,18 @@ namespace InputDevice
     {
       delete m_rumble ;
       m_rumble = NULL ;
+    }
+
+    if( m_nbUpdate != NULL )
+    {
+      delete m_nbUpdate ;
+      m_nbUpdate = NULL ;
+    }
+
+    if( m_nbUpdate2 != NULL )
+    {
+      delete m_nbUpdate2 ;
+      m_nbUpdate2 = NULL ;
     }
 
     deleteWii() ;
@@ -388,6 +403,20 @@ namespace InputDevice
       // Update local data.
       while( m_isRunning )
       {
+        // Count nb action by second (used with breakpoint).
+        m_t2Update = m_time.elapsed() ;
+        if( (m_t2Update-m_t1Update) > 1000 )
+        {
+          m_t1Update = m_t2Update ;
+          m_nbUpdate->pushFront(0) ;
+          (*m_nbUpdate)[0]++ ;
+        }
+        else
+        {
+          (*m_nbUpdate)[0]++ ;
+        }
+
+
         hasUpdateFrom = false ;
         hasUpdateTo = false ;
 
@@ -404,12 +433,20 @@ namespace InputDevice
         }
 
         // Sleeping ...
-        // Later : See to realize it only after 10 rounds.
-        // Idem for the runPoll() method.
-        // Idem for m_actionsAreApplied.fetchAndStoreRelaxed(0) ;
-        // Let the buffer to load a little.
         if( m_hasSleepThread )
-          m_deviceThread.msleep(PLUGIN_WM_SLEEPTHREAD_TIME) ;
+        {
+          m_nbActionRealized ++ ;
+
+          if( m_nbActionRealized > PLUGIN_WM_SLEEPTHREAD_NBTIME_BEFORE_SLEEP )
+          {
+            m_nbActionRealized = 0 ;
+            m_deviceThread.msleep(PLUGIN_WM_SLEEPTHREAD_TIME) ;
+          }
+          else
+          {
+            m_deviceThread.yieldCurrentThread() ;
+          }
+        }
         else
           m_deviceThread.yieldCurrentThread() ;
           // With m_deviceThread.setPriority( QThread::LowPriority ) ;
@@ -476,7 +513,7 @@ namespace InputDevice
       //Poll the wiimotes to get the status like pitch or roll
       if( updateButton )
       {
-        switch( m_wm->GetEvent())
+        switch( m_wm->GetEvent() )
         {
         case CWiimote::EVENT_EVENT :
           isPoll = true ;
@@ -514,8 +551,21 @@ namespace InputDevice
         // Reduce data quantities.
         // In the future, when the out of the input device is standard, move or
         // copy this method in the wrapper.
-        if( reduceSentData( *m_wm ) )
+        if( reduceSentData(*m_wm) )
         {
+          // Count nb action by second (used with breakpoint).
+          m_t2Update2 = m_time.elapsed() ;
+          if( (m_t2Update2-m_t1Update2) > 1000 )
+          {
+            m_t1Update2 = m_t2Update2 ;
+            m_nbUpdate2->pushFront(0) ;
+            (*m_nbUpdate2)[0]++ ;
+          }
+          else
+          {
+            (*m_nbUpdate2)[0]++ ;
+          }
+
           // 1st stategy : If no place, no push data.
           if( !m_cirBufferFrom->isFull() )
           {
@@ -524,7 +574,7 @@ namespace InputDevice
                 || wm->getDeviceData()->GetBatteryLevel() < 0  
                 || wm->getDeviceData()->IR.GetNumDots()<0 
                 || wm->getDeviceData()->IR.GetNumDots()>4 )
-              printf("Error data : WmDeviceData_from *wm!=NULL && no allocated ...\n") ;
+                mytoolbox::dbgMsg("Error data : WmDeviceData_from *wm!=NULL && no allocated ...") ;
             m_cirBufferFrom->pushBack( wm ) ;
             r = true ;
           }
@@ -567,6 +617,10 @@ namespace InputDevice
     return r ;
   }
 
+  /**
+    * Reduce the number of data to output. Inform if the data is interesting or not.
+    * @return TRUE if data is newed ; FALSE if data is useless.
+    */
   bool WmDevice::reduceSentData( CWiimote &wm )
   {
     bool hasChanged=false ;
@@ -590,7 +644,8 @@ namespace InputDevice
     if( !hasChanged )
     { // Action Wiimote ?
       
-      if( wm.GetEvent()!=m_previousEvent || wm.Buttons.isJustChanged() )
+      if( wm.GetEvent()!=CWiimote::EVENT_NONE 
+          && (wm.GetEvent()!=m_previousEvent || wm.Buttons.isJustChanged()) )
         hasChanged = true ;
     }
 

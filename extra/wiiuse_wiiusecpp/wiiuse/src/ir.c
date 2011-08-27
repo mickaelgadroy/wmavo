@@ -1206,7 +1206,7 @@ static void interpret_ir_data3(struct wiimote_t* wm)
 
   wm->ir.deltaz = deltaDistFinal ;
   wm->ir.distance += wm->ir.deltaz ; //sqrt(a*a + b*b) ;
-  wm->ir.z = 0 ;//1023.0f - wm->ir.distance ;
+  wm->ir.z = 1 ;//1023.0f - wm->ir.distance ;
 
   // Update yaw.
   if( wm->ir.distance != 0 )

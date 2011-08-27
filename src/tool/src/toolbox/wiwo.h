@@ -75,7 +75,7 @@ public :
   /**
    * Copy the data at the back of the circular buffer.
    * <br/>Working "as a stack", if there is no place => not add in the buffer.
-   * <br/>To work as a LIFO, use getBack()/popBack(). To work as a FIFO, use getFront()/popFront().
+   * <br/>With pushBack() method, to work as a LIFO, use getBack()/popBack(). To work as a FIFO, use getFront()/popFront().
    * @param obj Object of T type to store.
    */
   inline bool pushBack( T obj )
@@ -93,8 +93,8 @@ public :
 
   /**
    * Copy the data at the front of the circular buffer.
-   * <br/>Working "as a queue", if there is no place => overwrite the last element.
-   * <br/>To work as a LIFO, use getFront()/popFront(). To work as a FIFO, use getBack()/popBack().
+   * <br/>Working "as a queue", if there is no place => overwrite the first incomming element.
+   * <br/>With pushFront() method, to work as a LIFO, use getFront()/popFront(). To work as a FIFO, use getBack()/popBack().
    * @param obj Object of T type to store.
    */
   inline void pushFront( T obj )

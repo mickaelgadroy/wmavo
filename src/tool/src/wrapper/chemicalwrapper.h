@@ -116,8 +116,9 @@ namespace WrapperInputToDomain
     void stopPoll() ;
 
   private :
-    bool updateDataFrom() ;
+    ChemicalWrapData_from* updateDataFrom() ;
     bool updateDataTo() ;
+    bool reduceSentData( bool displayIsFinished, WrapperData_from *chemData ) ;
 
   private slots :
     void runPoll() ;
@@ -127,17 +128,17 @@ namespace WrapperInputToDomain
 
   signals :
     void newActions() ;
-    void runRunPoll() ;
+    //void runRunPoll() ;
 
   protected :
-    /**
-      * @name Manage Chemical data.
+    /** @name Manage Chemical data.
       * @{ */
     InputDevice::Device *m_dev ; //< (shortcut)
     WmToChem *m_wmToChem ; //< (object)
     WIWO_sem<ChemicalWrapData_from*> *m_cirBufferFrom ; //< (object)
     WIWO_sem<ChemicalWrapData_to*> *m_cirBufferTo ; //< (object)
     QAtomicInt m_actionsAreApplied ; 
+    int m_actionsGlobalPrevious, m_actionsWrapperPrevious ; // Save previous state to reduce output data.
     // @}
 
     /** @name Manage thread.
@@ -146,6 +147,7 @@ namespace WrapperInputToDomain
     bool m_isRunning ;
     QAtomicInt m_threadFinished ;
     bool m_hasSleepThread ;
+    int m_nbActionRealized ; // To limit the number of sleep calling.
     // @}
   };
 

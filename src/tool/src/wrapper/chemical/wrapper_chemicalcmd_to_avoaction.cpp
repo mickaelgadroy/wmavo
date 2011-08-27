@@ -36,7 +36,7 @@
 namespace Avogadro
 {
 
-  const Eigen::Vector3d WrapperChemicalCmdToAvoAction::m_vect3d0(Eigen::Vector3d(0., 0., 0.)) ; ;
+  const Eigen::Vector3d WrapperChemicalCmdToAvoAction::m_vect3d0(Eigen::Vector3d(0., 0., 0.)) ;
   Eigen::Transform3d WrapperChemicalCmdToAvoAction::m_transf3d0 ;
   const QPoint WrapperChemicalCmdToAvoAction::m_qpoint0(QPoint(0,0)) ;
   const double WrapperChemicalCmdToAvoAction::m_PI180=M_PI/180.0 ;
@@ -73,14 +73,23 @@ namespace Avogadro
     m_me1 = new QMouseEvent(QEvent::MouseButtonPress, *m_p, Qt::LeftButton, Qt::NoButton, Qt::NoModifier) ;
     m_me2 = new QMouseEvent(QEvent::MouseMove, *m_p, Qt::NoButton, Qt::LeftButton, Qt::NoModifier) ;
     m_me3 = new QMouseEvent(QEvent::MouseButtonRelease, *m_p, Qt::LeftButton, Qt::NoButton, Qt::NoModifier) ;
+
+    m_time.start() ;
+    m_nbUpdate1 = new WIWO<unsigned int>(20) ;
+    m_nbUpdate2 = new WIWO<unsigned int>(20) ;
+    m_nbUpdate3 = new WIWO<unsigned int>(20) ;
   }
 
   WrapperChemicalCmdToAvoAction::~WrapperChemicalCmdToAvoAction()
   {
-    if( m_me1 != NULL ) delete( m_me1 ) ;
-    if( m_me2 != NULL ) delete( m_me2 ) ;
-    if( m_me3 != NULL ) delete( m_me3 ) ;
-    if( m_p != NULL ) delete( m_p ) ;
+    if( m_me1 != NULL ){ delete( m_me1 ) ; m_me1=NULL ; }
+    if( m_me2 != NULL ){ delete( m_me2 ) ; m_me2=NULL ; }
+    if( m_me3 != NULL ){ delete( m_me3 ) ; m_me3=NULL ; }
+    if( m_p != NULL ){ delete( m_p ) ; m_p=NULL ; }
+
+    if( m_nbUpdate1 != NULL ){ delete( m_nbUpdate1 ) ; m_nbUpdate1=NULL ; }
+    if( m_nbUpdate2 != NULL ){ delete( m_nbUpdate2 ) ; m_nbUpdate2=NULL ; }
+    if( m_nbUpdate3 != NULL ){ delete( m_nbUpdate3 ) ; m_nbUpdate3=NULL ; }
   }
 
   MoleculeManipulation* WrapperChemicalCmdToAvoAction::getMoleculeManip()
@@ -147,6 +156,12 @@ namespace Avogadro
 
     transformWrapperActionToUseContextMenu( state, posCursor ) ;
 
+    transformWrapperActionToAvoUpdate( state ) ;
+  }
+
+
+  void WrapperChemicalCmdToAvoAction::transformWrapperActionToAvoUpdate( int state )
+  {
     //
     // Update Avogadro to see modification.
 
@@ -1217,37 +1232,43 @@ namespace Avogadro
 
       //mytoolbox::dbgMsg( "WrapperChemicalCmdToAvoAction::updateForAvoActions2" ;
 
-      // 1. No quick render.
-      //m_widget->update() ;
 
-      // 2. No compile : mouseMove is protected.
-      // Call directly GLWidget->mouseMove signal.
-      //emit m_widget->mouseMove(&me) ;
-
-      // 3. Call directly Tool->mouseMouseEvent. No quick render.
-      //m_widget->tool()->mouseMoveEvent( m_widget, &me) ;
-      //m_widget->tool()->mouseMoveEvent( m_widget->current(), &me) ;
-
-      // 4. Try Fake mouse event. WORKS !!!
-      if( !m_testEventPress )
+      if( !m_widget->quickRender() )
       {
-        m_testEventPress = true ;
-        QApplication::sendEvent( m_widget->m_current, m_me1 ) ;
+        // 1. No quick render.
+        m_widget->update() ;
       }
+      else
+      {
+        // 2. No compile : mouseMove is protected.
+        // Call directly GLWidget->mouseMove signal.
+        //emit m_widget->mouseMove(&me) ;
 
-      QApplication::sendEvent( m_widget->m_current, m_me2 ) ;
-      
+        // 3. Call directly Tool->mouseMouseEvent. No quick render.
+        //m_widget->tool()->mouseMoveEvent( m_widget, &me) ;
+        //m_widget->tool()->mouseMoveEvent( m_widget->current(), &me) ;
 
-      // Install something else.
-      // 5. Try Fake mouse event.
-      //qTestEventList events;
-      //events.addMouseMove(p,1);
-      //events.simulate(m_widget);
+        // 4. Try Fake mouse event. WORKS !!!
+        if( !m_testEventPress )
+        {
+          m_testEventPress = true ;
+          QApplication::sendEvent( m_widget->m_current, m_me1 ) ;
+        }
+
+        QApplication::sendEvent( m_widget->m_current, m_me2 ) ;
+        
+
+        // Install something else.
+        // 5. Try Fake mouse event.
+        //qTestEventList events;
+        //events.addMouseMove(p,1);
+        //events.simulate(m_widget);
+      }
     }
     else
     {
       // 4. Finish fake mouse event.
-      if( m_testEventPress )
+      if( m_widget->quickRender() && m_testEventPress )
       {
         m_testEventPress = false ;
         QApplication::sendEvent( m_widget->m_current, m_me3 ) ;
