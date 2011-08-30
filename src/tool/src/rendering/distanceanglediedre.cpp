@@ -27,8 +27,12 @@
 const double DistanceAngleDiedre::m_PI180=m_PI/180.0 ;
 const double DistanceAngleDiedre::m_180PI=180.0/m_PI ;
 
-const QString DistanceAngleDiedre::m_angstromStr=QString::fromUtf8( " Å" ) ;
-const QString DistanceAngleDiedre::m_degreeStr=QString::fromUtf8( "°" ) ;
+const QChar DistanceAngleDiedre::m_angstromChar = 0x00C5 ; // Å
+const QChar DistanceAngleDiedre::m_degreeChar = 0x00B0 ; // °
+const QString DistanceAngleDiedre::m_angstromStr=QString( DistanceAngleDiedre::m_angstromChar ) ;
+const QString DistanceAngleDiedre::m_degreeStr=QString( DistanceAngleDiedre::m_degreeChar ) ;
+//const QString DistanceAngleDiedre::m_angstromStr=QString::fromUtf8( DistanceAngleDiedre::m_degreeChar. ) ;
+//const QString DistanceAngleDiedre::m_degreeStr=QString::fromUtf8( "" ) ;
 
 
 DistanceAngleDiedre::DistanceAngleDiedre( Avogadro::GLWidget *widget )
@@ -392,7 +396,7 @@ void DistanceAngleDiedre::drawDistDiedre()
         m_nbHPixelDist += (fontMetricDisDiedreInfo.width(msg)+WMTOOL_SPACING_H_WORDGRP) ;
 
         // Text position for angle.
-        msg = QString(tr("Angle         :")) ;
+        msg = QString(tr("Angle(s)      :")) ;
         drawTextOnXY( QPoint(m_nbHPixelAngle, wh-m_nbVPixelAngle), 
                       msg, m_fontDistDiedreInfo, QColor(255,255,255) ) ;
         m_nbHPixelAngle += (fontMetricDisDiedreInfo.width(msg)+WMTOOL_SPACING_H_WORDGRP) ;

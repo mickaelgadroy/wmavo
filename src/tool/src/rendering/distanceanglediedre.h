@@ -101,8 +101,8 @@ class DistanceAngleDiedre : public DrawSimpleObject
       * @{ */
     static const double m_PI180 ; // 3.14/180 for degree to radian.
     static const double m_180PI ; // 180/3.14 for radian to degree.
-    static const QString m_angstromStr ;
-    static const QString m_degreeStr ;
+    static const QString m_angstromStr, m_degreeStr ;
+    static const QChar m_angstromChar, m_degreeChar ;
     // @}
 
   public:

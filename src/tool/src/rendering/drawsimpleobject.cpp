@@ -225,6 +225,20 @@ void DrawSimpleObject::print3DStereoPossibilities()
   */
 void DrawSimpleObject::drawLine( const Eigen::Vector3d& begin, const Eigen::Vector3d& end, const QColor &colorBegin, const QColor &colorEnd, float lineWidth )
 {
+  unsigned char r, g, b, a ;
+  unsigned char r2, g2, b2, a2 ;
+
+  r = unsigned char( colorBegin.red() ) ;
+  g = unsigned char( colorBegin.green() ) ;
+  b = unsigned char( colorBegin.blue() ) ;
+  a = unsigned char( colorBegin.alpha() ) ;
+  
+  r2 = unsigned char( colorEnd.red() ) ;
+  g2 = unsigned char( colorEnd.green() ) ;
+  b2 = unsigned char( colorEnd.blue() ) ;
+  a2 = unsigned char( colorEnd.alpha() ) ;
+
+
   glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
 
   // If active, do not paint the atom !!!
@@ -236,9 +250,9 @@ void DrawSimpleObject::drawLine( const Eigen::Vector3d& begin, const Eigen::Vect
   glLineWidth( lineWidth ) ;
 
   glBegin( GL_LINES ) ;
-    glColor4i( colorBegin.red(), colorBegin.green(), colorBegin.blue(), colorBegin.alpha() ) ;
+    glColor4ub( r, g, b, a ) ;
     glVertex3d( begin[0], begin[1], begin[2] ) ;
-    glColor4i( colorEnd.red(), colorEnd.green(), colorEnd.blue(), colorEnd.alpha() ) ;
+    glColor4ub( r2, g2, b2, a2 ) ;
     glVertex3d( end[0], end[1], end[2] ) ;
   glEnd() ;
 
@@ -375,21 +389,27 @@ void DrawSimpleObject::drawCircle( double posX,   double posY,   double posZ,
                                    double dirX,   double dirY,   double dirZ,
                                    float radius, const QColor color )
 {
-  glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
-  glColor4i( color.red(), color.blue(), color.green(), color.alpha() ) ;
-
   float maxCircle=(float)(2.0*m_PI);
   float step=(float)(m_PI/10.0) ;
-  double a=0, b=0 ;
+  double a=0, b=0, x=0, y=0, z=0 ;
+  unsigned char red, green, blue , alpha ;
+
+  red = unsigned char( color.red() ) ;
+  green = unsigned char( color.green() ) ;
+  blue = unsigned char( color.blue() ) ;
+  alpha = unsigned char( color.alpha() ) ;
+  
+  glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
+  glColor4ub( red, green, blue, alpha ) ;
 
   glBegin( GL_LINE_LOOP ) ;
   for( float i=0 ; i<maxCircle ; i+=step )
   {
     a = radius * cosf(i) ;
     b = radius * sinf(i) ;
-    double x = posX + rightX * a + upX * b + -1.0*dirX ;
-    double y = posY + rightY * a + upY * b + -1.0*dirY ;
-    double z = posZ + rightZ * a + upZ * b + -1.0*dirZ ;
+    x = posX + rightX * a + upX * b + -1.0*dirX ;
+    y = posY + rightY * a + upY * b + -1.0*dirY ;
+    z = posZ + rightZ * a + upZ * b + -1.0*dirZ ;
     glVertex3d( x, y, z ) ;
   }
   glEnd() ;
@@ -431,6 +451,13 @@ void DrawSimpleObject::drawSphereFill( float radius, const Eigen::Vector3d& from
   */
 void DrawSimpleObject::drawSphere( GLUquadric* type, float radius, const Eigen::Vector3d& from, const QColor &color, int slices, int stacks )
 {
+  unsigned char r, g, b, a ;
+
+  r = unsigned char( color.red() ) ;
+  g = unsigned char( color.green() ) ;
+  b = unsigned char( color.blue() ) ;
+  a = unsigned char( color.alpha() ) ;
+  
   // Init & Save.
   glPushMatrix() ;
   glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
@@ -440,7 +467,7 @@ void DrawSimpleObject::drawSphere( GLUquadric* type, float radius, const Eigen::
 
   // If no active, do not change color !!!
   glDisable(GL_LIGHTING) ;
-  glColor4i( color.red(), color.blue(), color.green(), color.alpha() ) ;
+  glColor4ub( r, g, b, a ) ;
 
   glTranslated( from[0], from[1], from[2] ) ;
   glRotatef( 22, 1, 0 , 0 ) ; // Just not to see the sphere at the bottom ...
@@ -467,8 +494,15 @@ void DrawSimpleObject::drawTextOnXYZ( const QPoint& pos, const QString &msg, con
 {
   if( m_widget!=NULL )
   {
+    unsigned char r, g, b, a ;
+
+    r = unsigned char( color.red() ) ;
+    g = unsigned char( color.green() ) ;
+    b = unsigned char( color.blue() ) ;
+    a = unsigned char( color.alpha() ) ;
+    
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
-    glColor4i( color.red(), color.blue(), color.green(), color.alpha() ) ;
+    glColor4ub( r, g, b, a ) ;
 
     if( m_qglwidget != NULL )
       m_qglwidget->renderText( pos.x(), pos.y(), 0, msg, font ) ;
@@ -491,8 +525,15 @@ void DrawSimpleObject::drawTextOnXYZ( const Eigen::Vector3d& pos, const QString 
 {
   if( m_widget!=NULL )
   {
+    unsigned char r, g, b, a ;
+
+    r = unsigned char( color.red() ) ;
+    g = unsigned char( color.green() ) ;
+    b = unsigned char( color.blue() ) ;
+    a = unsigned char( color.alpha() ) ;
+    
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
-    glColor4i( color.red(), color.blue(), color.green(), color.alpha() ) ;
+    glColor4ub( r, g, b, a ) ;
 
     if( m_qglwidget != NULL )
       m_qglwidget->renderText( pos[0], pos[1], pos[2], msg, font ) ;
@@ -516,8 +557,15 @@ void DrawSimpleObject::drawTextOnXY( const QPoint& pos, const QString &msg, cons
 {
   if( m_widget != NULL )
   {
+    unsigned char r, g, b, a ;
+
+    r = unsigned char( color.red() ) ;
+    g = unsigned char( color.green() ) ;
+    b = unsigned char( color.blue() ) ;
+    a = unsigned char( color.alpha() ) ;
+    
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
-    glColor4i( color.red(), color.blue(), color.green(), color.alpha() ) ;
+    glColor4ub( r, g, b, a ) ;
 
     if( m_qglwidget != NULL )
       m_qglwidget->renderText( pos.x(), pos.y(), msg, font ) ;
@@ -532,7 +580,7 @@ void DrawSimpleObject::drawTextOnXY( const QPoint& pos, const QString &msg, cons
 /**
   * Draw a sphere in the render zone on XY-axis (based on screen-coordinate).
   * @param pos The position of text.
-  * @param msg Message to display
+  * @param msg Message to display.
   * @param font Font ...
   * @param color RGBA components.
   */
@@ -540,8 +588,15 @@ void DrawSimpleObject::drawTextOnXY( const Eigen::Vector3d& pos, const QString &
 {
   if( m_widget!=NULL )
   {
+    unsigned char r, g, b, a ;
+
+    r = unsigned char( color.red() ) ;
+    g = unsigned char( color.green() ) ;
+    b = unsigned char( color.blue() ) ;
+    a = unsigned char( color.alpha() ) ;
+    
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
-    glColor4i( color.red(), color.blue(), color.green(), color.alpha() ) ;
+    glColor4ub( r, g, b, a ) ;
 
     if( m_qglwidget!=NULL )
     {
