@@ -35,11 +35,13 @@
 #define WIIUSECPP_GUNIT_TO_MS2UNIT 9.80665 /**< Constant to convert g unit to m.s^-2 unit. */
 #define WIIUSECPP_ACC_NB_SAVED_VALUES 10 //< Number saved values in the mpValuesInTime attribut (CAccelerometer class) (3 is a minimum!).
 
-#ifdef _WIN32
+// If you want change <wiiusecpp.h> <-> "wiiusecpp.h"
+// do not forget to do the same in the makefile.
+//#ifdef _WIN32
 #include "wiiuse.h"
-#else
-#include <wiiuse.h>
-#endif
+//#else
+//#include <wiiuse.h>
+//#endif
 
 #include <vector>
 #include <deque> // ~list
@@ -236,26 +238,35 @@ public:
     /* Initiate like that :
       Accelerometer( (accel_t*) &(wmPtr->accel_calib), (vec3b_t*) &(wmPtr->accel),
                      (int*) &(wmPtr->accel_threshold), (orient_t*) &(wmPtr->orient),
+
                      (float*) &(wmPtr->orient_threshold), (gforce_t*) &(wmPtr->gforce) )
+
     */
 
     ~CAccelerometer() ;
 
     /**
+
       * Enable the calculation of values contained in the mpValuesInTime attribut.
+
       * The calculation is realised when some getter method is called like GetGForce*, GetJerk*, GetDistance* ...
       */
     void setNeedUpdateValuesInTime( bool update ) ;
 
     /**
       * wiiuse.accel_t.st_alpha
+
       * Use to smooth the angle values when flags FLAGS_SMOOTHING is on.
+
       * @return Old value of alpha.
+
       */
     float SetSmoothAlpha(float Alpha);
 
     /**
+
       * wiiuse.wiimote_t.orient_threshold
+
       * Threshold ((fr:)seuil) for orient to generate an event.
       * @{
       */
@@ -264,33 +275,45 @@ public:
     // @}
 
     /**
+
       * wiiuse.wiimote_t.accel_threshold
       * Threshold for accel to generate an event.
+
       * @{*/
     int GetAccelThreshold();
     void SetAccelThreshold(int Threshold);
     // @}
 
     /**
+
       * wiiuse.orient_t.roll .pitch .yaw
       * Get value for pitch, roll (and yaw when it is possible).
+
       * This value can be smooth when flags FLAGS_SMOOTHING is on.
+
       */
     void GetOrientation(float &Pitch, float &Roll, float &Yaw);
     
     /**
+
       * wiiuse.orient_t.roll .pitch
+
       * Get value for pitch, roll.
+
       * This value are unsmoothed.
+
       */
     void GetRawOrientation(float &Pitch, float &Roll);
 
     /** wiiuse.accel_t.cal_zero.x .y .z : the "zero g"
       * wiiuse.accel_t.cal_g.x .y .z    : the result of ("one g" - "zero g")
+
       *
       * Represent the accel calibrated values get from the Wiimote.
       * This data are necessary to get acc values in g unit from the hex values 
+
       * provide ((fr:)fournie) of the Wiimote.
+
       * Here, it provide just for informations.
       * The acc calibrated zero values represent where are the "zero g" position.
       * The acc calibrated one values represent where are the "one g" position.
@@ -300,8 +323,10 @@ public:
     // @}
 
     /*
+
      * wiiuse.gforce_t.x .y .z
      * Get GForce on 3 axes.
+
      * @{*/
     void GetGForceInG(double &X, double &Y, double &Z) ; //< in g unit.
     double GetGForceInG() ; //< in g unit.
@@ -311,10 +336,13 @@ public:
     // @}
     
     /**
+
       * Difference between the last and the current gForce values.
       * It lets to know the user movement in theory ...
+
       * This acceleration represents the derivative of the GForce => a jerk (m.s^-3).
       * jerk == the rate of change of acceleration => da/dt
+
       * http://en.wikipedia.org/wiki/Jerk_%28physics%29
       * Nota Bene: this method need be called twice before to get "good" values.
       * @{ */
@@ -331,6 +359,7 @@ public:
 
     /*
      * An estimation of the traveled distance in m.
+
      * @{*/
     void GetDistance(double &X, double &Y, double &Z) ;
     double GetDistance() ;
@@ -393,7 +422,9 @@ private:
     // @}
 
     /**
+
       * Methods to calculate velocity, distance and position.
+
       * @{ */
     void calculateByPhysicBasicFormula_p( values_t &t ) ;
     void calculateFromTailorFormulaWithNonConstantTime_p( values_t &t ) ;
@@ -707,9 +738,10 @@ private:
 
     bool mpIsConnected ;
     bool mpIsPolled ;
-    bool mpIsPolledIR ;
-    bool mpIsPolledAcc ;
+
     bool mpIsPolledButton ;
+    bool mpIsPolledAcc ;
+    bool mpIsPolledIR ;
 };
 
 class CWii

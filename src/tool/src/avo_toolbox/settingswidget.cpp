@@ -2,13 +2,6 @@
 /*******************************************************************************
   Copyright (C) 2010,2011 Mickael Gadroy
 
-  Some portions :
-  Copyright (C) 2007 Donald Ephraim Curtis
-  Copyright (C) 2007-2009 Marcus D. Hanwell
-  Copyright (C) 2008,2009 Tim Vandermeersch
-  Copyright (C) 2007 by Geoffrey R. Hutchison
-  Copyright (C) 2006,2007 by Benoit Jacob
-
   This file is part of WmAvo (WiiChem project)
   WmAvo - Integrate the Wiimote and the Nunchuk in Avogadro software for the
   handling of the atoms and the camera.

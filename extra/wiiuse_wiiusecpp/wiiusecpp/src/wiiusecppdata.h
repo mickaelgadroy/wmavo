@@ -23,12 +23,13 @@
 #ifndef WIIUSECPPDATA_H_
 #define WIIUSECPPDATA_H_
 
-
-#ifdef _WIN32
+// If you want change <wiiusecpp.h> <-> "wiiusecpp.h"
+// do not forget to do the same in the makefile.
+//#ifdef _WIN32
 #include "wiiusecpp.h"
-#else
-#include <wiiusecpp.h>
-#endif
+//#else
+//#include <wiiusecpp.h>
+//#endif
 
 class CButtonBaseData
 {
@@ -341,9 +342,10 @@ private:
 
   bool mpIsConnected ;
   bool mpIsPolled ;
-  bool mpIsPolledIR ;
-  bool mpIsPolledAcc ;
   bool mpIsPolledButton ;
+  bool mpIsPolledAcc ;
+  bool mpIsPolledIR ;
+
 };
 
 #endif

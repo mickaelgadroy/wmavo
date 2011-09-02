@@ -228,15 +228,15 @@ void DrawSimpleObject::drawLine( const Eigen::Vector3d& begin, const Eigen::Vect
   unsigned char r, g, b, a ;
   unsigned char r2, g2, b2, a2 ;
 
-  r = unsigned char( colorBegin.red() ) ;
-  g = unsigned char( colorBegin.green() ) ;
-  b = unsigned char( colorBegin.blue() ) ;
-  a = unsigned char( colorBegin.alpha() ) ;
+  r = (unsigned char)( colorBegin.red() ) ;
+  g = (unsigned char)( colorBegin.green() ) ;
+  b = (unsigned char)( colorBegin.blue() ) ;
+  a = (unsigned char)( colorBegin.alpha() ) ;
   
-  r2 = unsigned char( colorEnd.red() ) ;
-  g2 = unsigned char( colorEnd.green() ) ;
-  b2 = unsigned char( colorEnd.blue() ) ;
-  a2 = unsigned char( colorEnd.alpha() ) ;
+  r2 = (unsigned char)( colorEnd.red() ) ;
+  g2 = (unsigned char)( colorEnd.green() ) ;
+  b2 = (unsigned char)( colorEnd.blue() ) ;
+  a2 = (unsigned char)( colorEnd.alpha() ) ;
 
 
   glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
@@ -290,9 +290,9 @@ void DrawSimpleObject::drawRect( float sx, float sy, float ex, float ey, const Q
   QColor bgColor=m_widget->background() ;
   unsigned char rWBg=0, gWBg=0, bWBg=0 ;
 
-  rWBg = unsigned char(bgColor.red()) ;
-  gWBg = unsigned char(bgColor.green()) ;
-  bWBg = unsigned char(bgColor.blue()) ;
+  rWBg = (unsigned char)(bgColor.red()) ;
+  gWBg = (unsigned char)(bgColor.green()) ;
+  bWBg = (unsigned char)(bgColor.blue()) ;
 
   if( color == NULL )
   { // Calculate the inverse color.
@@ -304,8 +304,8 @@ void DrawSimpleObject::drawRect( float sx, float sy, float ex, float ey, const Q
   }
   else
   {
-    rBg=unsigned char(color->red()) ; bBg=unsigned char(color->blue()) ; 
-    gBg=unsigned char(color->green()) ; aBg=unsigned char(color->alpha()) ;
+    rBg=(unsigned char)(color->red()) ; bBg=(unsigned char)(color->blue()) ; 
+    gBg=(unsigned char)(color->green()) ; aBg=(unsigned char)(color->alpha()) ;
   }
 
   //printf( "%d %d %d - %d %d %d\n", rBg, gBg, bBg, bgColor.red(), bgColor.green(), bgColor.blue() ) ;
@@ -394,10 +394,10 @@ void DrawSimpleObject::drawCircle( double posX,   double posY,   double posZ,
   double a=0, b=0, x=0, y=0, z=0 ;
   unsigned char red, green, blue , alpha ;
 
-  red = unsigned char( color.red() ) ;
-  green = unsigned char( color.green() ) ;
-  blue = unsigned char( color.blue() ) ;
-  alpha = unsigned char( color.alpha() ) ;
+  red = (unsigned char)( color.red() ) ;
+  green = (unsigned char)( color.green() ) ;
+  blue = (unsigned char)( color.blue() ) ;
+  alpha = (unsigned char)( color.alpha() ) ;
   
   glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
   glColor4ub( red, green, blue, alpha ) ;
@@ -453,10 +453,10 @@ void DrawSimpleObject::drawSphere( GLUquadric* type, float radius, const Eigen::
 {
   unsigned char r, g, b, a ;
 
-  r = unsigned char( color.red() ) ;
-  g = unsigned char( color.green() ) ;
-  b = unsigned char( color.blue() ) ;
-  a = unsigned char( color.alpha() ) ;
+  r = (unsigned char)( color.red() ) ;
+  g = (unsigned char)( color.green() ) ;
+  b = (unsigned char)( color.blue() ) ;
+  a = (unsigned char)( color.alpha() ) ;
   
   // Init & Save.
   glPushMatrix() ;
@@ -496,10 +496,10 @@ void DrawSimpleObject::drawTextOnXYZ( const QPoint& pos, const QString &msg, con
   {
     unsigned char r, g, b, a ;
 
-    r = unsigned char( color.red() ) ;
-    g = unsigned char( color.green() ) ;
-    b = unsigned char( color.blue() ) ;
-    a = unsigned char( color.alpha() ) ;
+    r = (unsigned char)( color.red() ) ;
+    g = (unsigned char)( color.green() ) ;
+    b = (unsigned char)( color.blue() ) ;
+    a = (unsigned char)( color.alpha() ) ;
     
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
     glColor4ub( r, g, b, a ) ;
@@ -527,10 +527,10 @@ void DrawSimpleObject::drawTextOnXYZ( const Eigen::Vector3d& pos, const QString 
   {
     unsigned char r, g, b, a ;
 
-    r = unsigned char( color.red() ) ;
-    g = unsigned char( color.green() ) ;
-    b = unsigned char( color.blue() ) ;
-    a = unsigned char( color.alpha() ) ;
+    r = (unsigned char)( color.red() ) ;
+    g = (unsigned char)( color.green() ) ;
+    b = (unsigned char)( color.blue() ) ;
+    a = (unsigned char)( color.alpha() ) ;
     
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
     glColor4ub( r, g, b, a ) ;
@@ -559,10 +559,10 @@ void DrawSimpleObject::drawTextOnXY( const QPoint& pos, const QString &msg, cons
   {
     unsigned char r, g, b, a ;
 
-    r = unsigned char( color.red() ) ;
-    g = unsigned char( color.green() ) ;
-    b = unsigned char( color.blue() ) ;
-    a = unsigned char( color.alpha() ) ;
+    r = (unsigned char)( color.red() ) ;
+    g = (unsigned char)( color.green() ) ;
+    b = (unsigned char)( color.blue() ) ;
+    a = (unsigned char)( color.alpha() ) ;
     
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
     glColor4ub( r, g, b, a ) ;
@@ -590,10 +590,10 @@ void DrawSimpleObject::drawTextOnXY( const Eigen::Vector3d& pos, const QString &
   {
     unsigned char r, g, b, a ;
 
-    r = unsigned char( color.red() ) ;
-    g = unsigned char( color.green() ) ;
-    b = unsigned char( color.blue() ) ;
-    a = unsigned char( color.alpha() ) ;
+    r = (unsigned char)( color.red() ) ;
+    g = (unsigned char)( color.green() ) ;
+    b = (unsigned char)( color.blue() ) ;
+    a = (unsigned char)( color.alpha() ) ;
     
     glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
     glColor4ub( r, g, b, a ) ;

@@ -51,7 +51,7 @@ public :
     m_pushMutex.lock() ;
     m_freeData.acquire() ;
 
-    WIWO::pushBack( obj ) ;
+    WIWO<T>::pushBack( obj ) ;
 
     m_usedData.release() ;
     m_pushMutex.unlock() ;
@@ -60,9 +60,9 @@ public :
   inline void popFront( T& obj_out )
   {
     m_usedData.acquire() ;
-    obj_out = WIWO::getFront() ;
-    (*this)[0] = 0 ; // !!
-    WIWO::popFront() ;
+    obj_out = WIWO<T>::getFront() ;
+    (*this)[0] = 0 ; // !! To test. Sometime, a the final plugin return a wrong value ...
+    WIWO<T>::popFront() ;
     m_freeData.release() ;
   } ;
   // @}

@@ -367,8 +367,10 @@ CExpansionDevice::ExpTypes CExpansionDeviceData::GetType(){ return (CExpansionDe
 CWiimoteData::CWiimoteData() :
   mpUnid(0), mpLEDs(0), mpBattery(0), 
   mpEvent(CWiimote::EVENT_NONE), mpState(0), mpFlags(0),
-  mpIsConnected(false), mpIsPolled(false), mpIsPolledButton(false),
-  mpIsPolledAcc(false), mpIsPolledIR(false)
+  mpIsConnected(false), mpIsPolled(false), 
+  mpIsPolledButton(false),
+  mpIsPolledAcc(false), 
+  mpIsPolledIR(false)
 {}
 
 CWiimoteData::CWiimoteData( const CWiimote &cw ) :
@@ -383,7 +385,7 @@ CWiimoteData::CWiimoteData( const CWiimote &cw ) :
     mpEvent = (CWiimote::EventTypes)cw.mpWiimotePtr->event ;
     mpState = cw.mpWiimotePtr->state ;
     mpFlags = cw.mpWiimotePtr->flags ;
-    mpIsPolled = cw.mpIsConnected ;
+    mpIsConnected = cw.mpIsConnected ;
     mpIsPolled = cw.mpIsPolled ;
     mpIsPolledButton = cw.mpIsPolledButton ;
     mpIsPolledAcc = cw.mpIsPolledAcc ;

@@ -21,7 +21,6 @@ CFLAGS = -Wall -pipe -fPIC -funroll-loops
 ifeq ($(debug),1)
 	OBJ_PREFIX = debug
 	CFLAGS += -g -pg -DWITH_WIIUSE_DEBUG
-
 else
 	OBJ_PREFIX = release
 	CFLAGS += -O2

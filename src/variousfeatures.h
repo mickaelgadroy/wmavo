@@ -29,9 +29,10 @@
 #include <QString>
 #include <iostream>
 #include <sstream>
+#include <string>
 
 #if WIN32 || _WIN32
-#define NOMINMAX // To avoid Eigen compilation fatal error.
+//#define NOMINMAX // To avoid Eigen compilation fatal error.
 // The preprocessor symbols 'min' or 'max' are defined. If you are compiling on Windows, 
 // do #define NOMINMAX to prevent windows.h from defining these symbols.
 #include <windows.h>
@@ -58,12 +59,14 @@ namespace mytoolbox
     #else
     qDebug() << msg ;
     #endif
+    
+    fflush(stdout);
   }
 
   inline void dbgMsg( const QList<QString> &msg )
   {
     #ifdef WIN32
-    QString msgComplete ;
+    QString msgComplete ;s
     foreach( QString m, msg )
       msgComplete.append( m ) ;
       
@@ -71,6 +74,8 @@ namespace mytoolbox
     #else
     qDebug() << msg ;
     #endif
+    
+    fflush(stdout);
   }
 
   inline void dbgMsg( const std::ostringstream &msg )
@@ -81,15 +86,43 @@ namespace mytoolbox
     #else
     qDebug() << msg_c ;
     #endif
+    
+    fflush(stdout);
   }
 
   inline void dbgMsg( char *msg )
   {
     #ifdef WIN32
     printf( "%s\n", msg ) ;
+    ffl
     #else
     qDebug() << msg ;
     #endif
+    
+    fflush(stdout);
+  }
+  
+  inline void dbgMsg( const char *msg )
+  {
+    #ifdef WIN32
+    printf( "%s\n", msg ) ;
+    #else
+    qDebug() << msg ;
+    #endif
+    
+    fflush(stdout);
+  }
+  
+  
+  inline void dbgMsg( const std::string msg )
+  {
+    #ifdef WIN32
+    printf( "%s\n", msg.c_str() ) ;
+    #else
+    qDebug() << msg.c_str() ;
+    #endif
+    
+    fflush(stdout);
   }
 
 

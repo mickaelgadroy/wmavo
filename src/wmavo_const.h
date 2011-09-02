@@ -28,6 +28,10 @@
 #ifndef __WMAVO_CONST_H__
 #define __WMAVO_CONST_H__
 
+#define __WMDEBUG_WMTOOL 1
+#define __WMDEBUG_CHEMWRAPPER 1
+#define __WMDEBUG_WMDEVICE 0
+
 
 ///**********************************************************
 /// Naming plugins, descriptions ...
@@ -54,7 +58,7 @@
 #define PLUGIN_WM_SLEEPTHREAD_ONOFF true 
 #define PLUGIN_WM_SLEEPTHREAD_TIME 8 // ms
 #define PLUGIN_WM_SLEEPTHREAD_NBTIME_BEFORE_SLEEP 5
-#define PLUGIN_WM_TIMEOUT_BEFORE_SENDDATA 14 // ms
+#define PLUGIN_WM_TIMEOUT_BEFORE_SENDDATA 17 // ms,  16.6ms ~=> 1frame/second
 
 
 ///**********************************************************
@@ -208,3 +212,4 @@
 #define WMTOOL_FONT_WEIGHT_DISTDIEDREATOM QFont::DemiBold
 
 #endif
+

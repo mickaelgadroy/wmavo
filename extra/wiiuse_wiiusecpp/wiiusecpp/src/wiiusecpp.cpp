@@ -266,17 +266,18 @@ CAccelerometer::CAccelerometer() :
 CAccelerometer::CAccelerometer( struct accel_t *AccelCalPtr, struct vec3b_t *AccelerationPtr, int *AccelThresholdPtr,
                                 struct orient_t *OrientationPtr, float *OrientationThresholdPtr,
                                 struct gforce_t *GForcePtr ) :
-  mpAccelCalibPtr(AccelCalPtr), mpAccelPtr(AccelerationPtr), mpOrientPtr(OrientationPtr),
-  mpGForcePtr(GForcePtr), mpAccelThresholdPtr(AccelThresholdPtr), mpOrientThresholdPtr(OrientationThresholdPtr),
-  mpUpdateOneMore(false)
+  mpAccelCalibPtr(AccelCalPtr), mpAccelPtr(AccelerationPtr),  mpAccelThresholdPtr(AccelThresholdPtr),
+  mpOrientPtr(OrientationPtr), mpOrientThresholdPtr(OrientationThresholdPtr),
+  mpGForcePtr(GForcePtr), mpUpdateOneMore(false)
 {
   initValuesInTime() ;
 }
 
 CAccelerometer::CAccelerometer( const CAccelerometer& ca ) :
-  mpAccelCalibPtr(ca.mpAccelCalibPtr), mpAccelPtr(ca.mpAccelPtr), mpOrientPtr(ca.mpOrientPtr),
-  mpGForcePtr(ca.mpGForcePtr), mpAccelThresholdPtr(ca.mpAccelThresholdPtr), mpOrientThresholdPtr(ca.mpOrientThresholdPtr),
-  mpUpdateOneMore(false)
+  mpAccelCalibPtr(ca.mpAccelCalibPtr), mpAccelPtr(ca.mpAccelPtr),
+  mpAccelThresholdPtr(ca.mpAccelThresholdPtr), 
+  mpOrientPtr(ca.mpOrientPtr), mpOrientThresholdPtr(ca.mpOrientThresholdPtr),
+  mpGForcePtr(ca.mpGForcePtr), mpUpdateOneMore(false)
 {
   initValuesInTime() ;
 }
@@ -516,10 +517,10 @@ bool CAccelerometer::calculateValues( bool mustBeCalculated )
                      t.gForceY*t.gForceY + 
                      t.gForceZ*t.gForceZ ) ;
 
-    double elapseX=t.gForceX-mpValuesInTime[0].gForceX ;
-    double elapseY=t.gForceY-mpValuesInTime[0].gForceY ;
-    double elapseZ=t.gForceZ-mpValuesInTime[0].gForceZ ;
-    double elapseNorm=sqrt( elapseX*elapseX + elapseY*elapseY + elapseZ*elapseZ ) ;
+    //double elapseX=t.gForceX-mpValuesInTime[0].gForceX ;
+    //double elapseY=t.gForceY-mpValuesInTime[0].gForceY ;
+    //double elapseZ=t.gForceZ-mpValuesInTime[0].gForceZ ;
+    //double elapseNorm=sqrt( elapseX*elapseX + elapseY*elapseY + elapseZ*elapseZ ) ;
 
    
     if( //elapseNorm<0.04 // Base values to init at zero.
@@ -623,8 +624,8 @@ void CAccelerometer::calculateFromTailorFormulaWithNonConstantTime_p( values_t &
   double dt2=mpValuesInTime[0].time-mpValuesInTime[1].time ;
   double dt1Sqr=dt1*dt1 ;
   double dt2Sqr=dt2*dt2 ;
-  double dt1Cube=dt1*dt1*dt1 ;
-  double dt2Cube=dt2*dt2*dt2 ;
+  //double dt1Cube=dt1*dt1*dt1 ;
+  //double dt2Cube=dt2*dt2*dt2 ;
   double dt1Plusdt2=dt1+dt2 ;
 
   // Jerk values (derivative of the GForce).
@@ -778,6 +779,7 @@ void CIRDot::GetRawCoordinate(int &X, int &Y)
   else
   {
     X = 0 ;
+
     Y = 0 ;
   }
 }
@@ -1223,7 +1225,9 @@ float CGuitarHero3::GetWhammyBar()
 
 CWiimote::CWiimote() : // SWIG insisted it exist for the vectors. Hopefully it will only be used for copy.
   IR(), Buttons(), Accelerometer( NULL, NULL, &mpTempInt, NULL, &mpTempFloat, NULL ),
-  ExpansionDevice(), mpWiimotePtr(NULL), mpTempInt(0), mpTempFloat(0)
+  ExpansionDevice(), mpWiimotePtr(NULL), mpTempInt(0), mpTempFloat(0),
+  mpIsConnected(false), mpIsPolled(false), mpIsPolledButton(false),
+  mpIsPolledAcc(false), mpIsPolledIR(false)
 {
   puts( "Constructor CWiimote par défaut" ) ;
 }
@@ -1481,13 +1485,13 @@ CWiimoteData* CWiimote::copyData()
 
 CWii::CWii() : mpWiimoteArray(NULL), mpWiimoteArraySize(0)
 {
-  puts( "Constructor CWii par défaut" ) ;
+  puts( "Constructor CWii by default" ) ;
   init( WIIUSECPP_DEFAULT_NUM_WM ) ;
 }
 
 CWii::CWii(int MaxNumWiimotes ) : mpWiimoteArray(NULL), mpWiimoteArraySize(0)
 {
-  puts( "Constructor CWii par arguments" ) ;
+  puts( "Constructor CWii by arguments" ) ;
   init( MaxNumWiimotes ) ;
 }
 
@@ -1621,7 +1625,14 @@ int CWii::Find(int Timeout)
 
 std::vector<CWiimote*>& CWii::Connect()
 {
-    wiiuse_connect((struct wiimote_t**) mpWiimoteArray, mpWiimoteArraySize);
+    wiiuse_connect((struct wiimote_t**) mpWiimoteArray, mpWiimoteArraySize) ;
+  
+    for( int i=0 ; i<mpWiimoteArraySize ; i++ ) // mpWiimotesVector.size()
+    {
+      mpWiimotesVector.at(i)->mpIsConnected = true ;
+      puts( " TRUEUUEU" ) ;
+      }
+      
     return mpWiimotesVector;
 }
 
@@ -1646,43 +1657,53 @@ int CWii::Poll( bool &updateButton_out, bool &updateAccelerometerData_out, bool 
 
     for( int i=0 ; i<mpWiimoteArraySize ; i++ )
     {
-      isUpdated = false ;
-
-      // Buttons updated.
-      isUpdated = mpWiimotesVector[i]->Buttons.isJustChanged() ;
-      if( isUpdated )
-        mpWiimotesVector[i]->mpIsPolledButton = true ;
-      else
-        mpWiimotesVector[i]->mpIsPolledButton = false ;
-
-      // Acc Updated.
-      if( poll )
-        isUpdated = mpWiimotesVector[i]->Accelerometer.calculateValues( true ) ;
-      else
-        isUpdated = mpWiimotesVector[i]->Accelerometer.calculateValues( false ) ;
-
-      if( isUpdated )
+      if( mpWiimotesVector[i]->GetEvent() == CWiimote::EVENT_DISCONNECT
+          || mpWiimotesVector[i]->GetEvent() == CWiimote::EVENT_UNEXPECTED_DISCONNECT )
       {
-        updateAccelerometerData_out = true ;
-        mpWiimotesVector[i]->mpIsPolledAcc = true ;
+        mpWiimotesVector[i]->mpIsConnected = false ;
       }
       else
-        mpWiimotesVector[i]->mpIsPolledAcc = false ;
-
-      // IR Updated.
-      mpWiimotesVector[i]->IR.GetCursorDelta(x,y,z) ;
-      if( x!=0 || y!=0 || z!=0 )
       {
-        updateIRData_out = true ;
-        mpWiimotesVector[i]->mpIsPolledIR = true ;
-      }
-      else
-        mpWiimotesVector[i]->mpIsPolledIR = false ;
+        isUpdated = false ;
 
-      if( mpWiimotesVector[i]->mpIsPolledButton
-          || mpWiimotesVector[i]->mpIsPolledAcc 
-          || mpWiimotesVector[i]->mpIsPolledIR )
-        mpWiimotesVector[i]->mpIsPolled = true ;
+        // Buttons updated.
+        isUpdated = mpWiimotesVector[i]->Buttons.isJustChanged() ;
+        if( isUpdated )
+          mpWiimotesVector[i]->mpIsPolledButton = true ;
+        else
+          mpWiimotesVector[i]->mpIsPolledButton = false ;
+
+        // Acc Updated.
+        if( poll )
+          isUpdated = mpWiimotesVector[i]->Accelerometer.calculateValues( true ) ;
+        else
+          isUpdated = mpWiimotesVector[i]->Accelerometer.calculateValues( false ) ;
+
+        if( isUpdated )
+        {
+          updateAccelerometerData_out = true ;
+          mpWiimotesVector[i]->mpIsPolledAcc = true ;
+        }
+        else
+          mpWiimotesVector[i]->mpIsPolledAcc = false ;
+
+        // IR Updated.
+        mpWiimotesVector[i]->IR.GetCursorDelta(x,y,z) ;
+        if( x!=0 || y!=0 || z!=0 )
+        {
+          updateIRData_out = true ;
+          mpWiimotesVector[i]->mpIsPolledIR = true ;
+        }
+        else
+          mpWiimotesVector[i]->mpIsPolledIR = false ;
+
+        if( mpWiimotesVector[i]->mpIsPolledButton
+            || mpWiimotesVector[i]->mpIsPolledAcc 
+            || mpWiimotesVector[i]->mpIsPolledIR )
+          mpWiimotesVector[i]->mpIsPolled = true ;
+        else
+          mpWiimotesVector[i]->mpIsPolled = false ;
+       }
     }
 
     return poll ;

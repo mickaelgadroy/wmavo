@@ -22,7 +22,7 @@
 *******************************************************************************/
 
 
-#include "WmToChem.h"
+#include "wmtochem.h"
 
 #if defined WIN32 || defined _WIN32
   #include "wiiusecpp.h"
@@ -154,6 +154,7 @@ bool WmToChem::convert( CWiimoteData *data )
       switch( m_wmData->GetEvent() )
       {
       case CWiimote::EVENT_EVENT :
+        //mytoolbox::dbgMsg( "--- EVENT_EVENT :)" ) ;
         isPoll = true ; break ;
 
       case CWiimote::EVENT_DISCONNECT :
@@ -254,6 +255,8 @@ bool WmToChem::convert( CWiimoteData *data )
         else
           lastUpdate = false ;
       }
+
+
       */
 
 

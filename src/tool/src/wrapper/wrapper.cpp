@@ -26,7 +26,7 @@
 namespace WrapperInputToDomain
 {
   WrapperData_from::WrapperData_from()
-    : m_wrapActions(), m_posPointed(), m_posCam()
+    : m_wrapActions(), m_posCam(), m_posPointed()
   {
   }
 

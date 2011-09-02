@@ -30,7 +30,7 @@
 #include "wrapper_chemicalcmd_to_avoaction.h"
 
 #include "wmtool.h"
-#include "moleculeManipulation.h"
+#include "moleculemanipulation.h"
 #include "contextmenu_to_avoaction.h"
 
 namespace Avogadro

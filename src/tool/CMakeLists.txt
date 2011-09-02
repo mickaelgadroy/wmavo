@@ -1,6 +1,11 @@
 
 set( PLUGIN_NAME wmtool )
 
+# None, Release, Debug ...
+# Windows : Debug and Release : ok
+# Linux : Release : ok, Debug : some librairies (like wiiuse) are not compiled for.
+set( CMAKE_BUILD_TYPE "Release" )
+
 # wmextension plugin source files.
 set( wmavoconst_include_dir ../ ) # .h (constants & revision)
 set( tool_include_dir src/ ) # .h (Tool extension)
@@ -19,24 +24,43 @@ set( wiiuse_lib_name wiiuse )
 set( wiiusecpp_lib_name wiiusecpp )
   
 
+#include(CheckTypeSize)
+#check_type_size("void*" CMAKE_SIZEOF_VOID_P BUILTIN_TYPES_ONLY)
+
 if( WIN32 )
 # Windows.
 
   # wiiuse/wiiusecpp libraries.
-  set( wiiuse_lib_dir "${wiiuse_dir}/lib_win32" ) # ".lib" for wiise/wiiusecpp (release mode)
-  set( wiiuse_libd_dir "${wiiuse_dir}/lib_win32/debug" ) # ".lib" for wiise/wiiusecpp (debug mode)
+  set( wiiuse_libdir "${wiiuse_dir}/lib_win32" )
+  set( wiiuse_libddir "${wiiuse_dir}/lib_win32/debug" )
 
 else() 
 # Unix ...
-  #set( wiiusecpp_include_dir /home/myck/install/linux/wiiusecpp/src ) # .h
   #set( wiiusecpp_lib_dir /usr/lib ) # ".lib"
-  #set( wiiusecpp_lib_name wiiusecpp )
   
   # wiiuse/wiiusecpp libraries.
-  set( wiiuse_lib_dir "${wiiuse_dir}/lib_nix64" ) # ".lib" for wiise/wiiusecpp (release mode)
+  #if( CMAKE_SIZEOF_VOID_P EQUAL 8 ) # 64 bits.
+    set( wiiuse_libdir "${wiiuse_dir}/lib_nix64" )
+    set( wiiuse_libddir "${wiiuse_dir}/lib_nix64/debug" )
+  #elseif( CMAKE_SIZEOF_VOID_P EQUAL 4 ) # 32 bits.
+  #  set( wiiuse_libdir "${wiiuse_dir}/lib_nix32" )
+  #  set( wiiuse_libddir "${wiiuse_dir}/lib_nix32/debug" )
+  #else() # Unknown.
+  #  message( FATAL_ERROR "Impossible to detect if your compiler is 32 or 64 bits, CMAKE_SIZEOF_VOID_P=" ${CMAKE_SIZEOF_VOID_P} )
+  #endif()
   
   set( OpenBabel2_include_DIR "/usr/include/openbabel-2.0/" )
 
+endif()
+
+if( "${CMAKE_BUILD_TYPE}" STREQUAL "Release" )
+  set( wiiuse_lib_dir ${wiiuse_libdir} )
+else()
+  set( wiiuse_lib_dir ${wiiuse_libddir} )
+endif()
+
+if( NOT EXISTS "${wiiuse_lib_dir}" )
+  message( FATAL_ERROR "No directory ${wiiuse_lib_dir} for wiiuse library (in extra/wiiuse_wiiusecpp)." )
 endif()
 
 
@@ -91,7 +115,7 @@ if( "${LINK_LIBS}" STREQUAL "avogadro" )
   target_link_libraries( ${PLUGIN_NAME} ${wiiusecpp_lib_name} )
   
   # To install wiiuse/wiiusecpp libraries (& other things)in the Avogadro bin.
-  file( GLOB wiiuse_files ${wiiuse_libd_dir}/*wiiuse* )
+  file( GLOB wiiuse_files ${wiiuse_lib_dir}/*wiiuse* )
   if( WIN32 ) 
     install( FILES ${wiiuse_files} DESTINATION ${BIN_INSTALL_DIR} )
    
@@ -100,6 +124,8 @@ if( "${LINK_LIBS}" STREQUAL "avogadro" )
   else()
     install( FILES ${wiiuse_files} DESTINATION "/usr/lib" )
   endif()
+  
+  message( STATUS "Copy " ${wiiuse_files} "->" ${BIN_INSTALL_DIR} ) 
   
 else()
 # In a stand alone compilation process.
@@ -211,7 +237,7 @@ else()
   include_directories( ${OPENBABEL2_INCLUDE_DIR} )
   
   # ".dll" directories.
-  link_directories( ${wiiuse_libd_dir} )
+  link_directories( ${wiiuse_lib_dir} )
   
   # Other files.
   include(${Avogadro_USE_FILE})
@@ -241,4 +267,8 @@ else()
   #set_target_properties(${PLUGIN_NAME} PROPERTIES
   #                      COMPILE_FLAGS "${NO_RTTI_FLAG}")
   
+  message( STATUS "Be careful, do not forget compile and install wiiuse librairies (in extra/wiiuse_wiiusecpp/" )
+  
+  
 endif()
+

@@ -40,7 +40,7 @@ namespace Avogadro
       m_widget(NULL), m_settingsWidget(NULL),
       m_wm(NULL), m_chemWrap(NULL), m_wrapperChemToAvo(NULL),
       m_drawObject(NULL), m_renderText(NULL), m_distAngleDiedre(NULL),
-      m_t1Paint(0), m_t2Paint(0), m_t1Tool(0), m_t2Tool(0)
+      m_t1Tool(0), m_t2Tool(0), m_t1Paint(0), m_t2Paint(0)
   {
     m_updateActionDisplay.fetchAndStoreRelaxed(0) ;
     m_updateInfoDeviceDisplay.fetchAndStoreRelaxed(0) ;
@@ -210,6 +210,10 @@ namespace Avogadro
         m_t2Paint = m_time.elapsed() ;
         if( (m_t2Paint-m_t1Paint) > 1000 )
         {
+          #if __WMDEBUG_WMTOOL
+          QString msg= tr("WmTool::paint()") + QString::number( (*m_nbUpdatePaint)[0] ) ;
+          mytoolbox::dbgMsg( msg ) ;
+          #endif
           m_t1Paint = m_t2Paint ;
           m_nbUpdatePaint->pushFront(0) ;
           (*m_nbUpdatePaint)[0]++ ;
@@ -289,6 +293,7 @@ namespace Avogadro
       {
         m_settingsWidget->resetWidget() ;
         emit actionsApplied() ;
+        //mytoolbox::dbgMsg( "Emit start actionsApplied == 1" ) ;
       }
     }
   }
@@ -303,6 +308,10 @@ namespace Avogadro
       m_t2Tool = m_time.elapsed() ;
       if( (m_t2Tool-m_t1Tool) > 1000 )
       {
+        #if __WMDEBUG_WMTOOL
+        QString msg= tr("WmTool::applyActions()") + QString::number( (*m_nbUpdateTool)[0] ) ;
+        mytoolbox::dbgMsg( msg ) ;
+        #endif
         m_t1Tool = m_t2Tool ;
         m_nbUpdateTool->pushFront(0) ;
         (*m_nbUpdateTool)[0]++ ;

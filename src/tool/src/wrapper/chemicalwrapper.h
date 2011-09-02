@@ -149,6 +149,23 @@ namespace WrapperInputToDomain
     bool m_hasSleepThread ;
     int m_nbActionRealized ; // To limit the number of sleep calling.
     // @}
+    
+    /**
+      * @name Try to reduce output data.
+      * @{ */
+    QTime m_time ;
+    int m_t1, m_t2 ;
+    // @}
+    /**
+      * Count nb actions by seconds (used with breakpoint).
+      * @{ */
+    WIWO<unsigned int> *m_nbUpdate, *m_nbUpdate2 ;
+    unsigned int m_t1Update, m_t2Update ; // For the runPoll() method.
+    unsigned int m_t1Update2, m_t2Update2 ; // For the updateDataFrom() method.
+    unsigned int m_nbWmToolNotFinished ;
+    unsigned int m_nbDataInWmBuffer ;
+    bool m_bufferFromIsFull, m_bufferToIsFull ;
+    // @}
   };
 
 }

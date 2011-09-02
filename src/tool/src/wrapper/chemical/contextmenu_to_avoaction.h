@@ -31,7 +31,7 @@
 
 #include "wmtool.h"
 #include "chemicalwrapper.h"
-#include "moleculeManipulation.h"
+#include "moleculemanipulation.h"
 #include "qmenu_ex.h"
 #include "qaction_ex.h"
 

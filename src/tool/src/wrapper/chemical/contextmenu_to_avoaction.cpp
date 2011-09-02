@@ -30,10 +30,10 @@ namespace Avogadro
     ( GLWidget *widget, MoleculeManipulation *mm, WITD::ChemicalWrap *chemWrap )
     
     : m_widget(widget), m_chemWrap(chemWrap), m_moleculeManip(mm),
-      m_periodicTableAct(NULL),
+      m_periodicTable(NULL),
       m_menuActive(false),
       m_contextMenuCurrent(NULL), m_contextMenuMain(NULL),
-      m_cancelAct(NULL), 
+      m_cancelAct(NULL), m_periodicTableAct(NULL),
       m_contextMenuMeasure(NULL),
       m_noDistAct(NULL), m_distAct(NULL), m_angleAct(NULL), m_diedreAct(NULL),
       m_contextMenuFragment(NULL), m_contextMenuResumeFragment(NULL),

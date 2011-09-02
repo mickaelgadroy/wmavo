@@ -32,8 +32,10 @@ OBJ_DIR = $(OBJ_PREFIX)-$(shell $(CC) -v 2>&1|grep ^Target:|cut -d' ' -f2)
 #
 # Linking flags
 #
-LDFLAGS = -shared -lwiiuse
-#LDFLAGS = -shared -L../../wiiuse/src/$(OBJ_DIR)/ -lwiiuse
+# If you want change <wiiusecpp.h> <-> "wiiusecpp.h"
+# do not forget to do the same in the source code, and below.
+#LDFLAGS = -shared -lwiiuse
+LDFLAGS = -shared -L../../wiiuse/src/$(OBJ_DIR)/ -lwiiuse
 
 #
 # Target binaries (always created as BIN)
@@ -43,8 +45,10 @@ BIN = ./$(OBJ_DIR)/libwiiusecpp.so
 #
 # Inclusion paths.
 #
-INCLUDES = -I../src/
-#INCLUDES = -Isrc/ -I../../wiiuse/src/
+# If you want change <wiiusecpp.h> <-> "wiiusecpp.h"
+# do not forget to do the same in the source code, and above.
+#INCLUDES = -I../src/
+INCLUDES = -Isrc/ -I../../wiiuse/src/
 
 #
 # Generate a list of object files
@@ -69,7 +73,7 @@ install:
 	@if [ -e $(BIN) ]; then \
 		cp -v $(BIN) /usr/lib ; \
 	fi
-	@cp -v wiiusecpp.h /usr/include
+	@cp -v wiiusecpp*.h /usr/include
 
 $(BIN): mkdir $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $(BIN)

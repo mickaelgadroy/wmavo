@@ -110,7 +110,7 @@ namespace InputDevice
   {
     Q_OBJECT // For the thread.
 
-    friend WmRumble ;
+    friend class WmRumble ;
 
   public :
     WmDevice() ;

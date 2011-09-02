@@ -191,7 +191,7 @@ namespace InputDevice
     m_cirBufferFrom = new WIWO_sem<WmDeviceData_from*>( CIRBUFFER_DEFAULT_SIZE ) ;
     m_cirBufferTo = new WIWO_sem<WmDeviceData_to*>( CIRBUFFER_DEFAULT_SIZE ) ;
     m_threadFinished.fetchAndStoreRelaxed(1) ;
-    m_deviceThread.setPriority( QThread::LowPriority ) ;
+    
     m_time.start() ;
     m_nbUpdate = new WIWO<unsigned int>(20) ;
     m_nbUpdate2 = new WIWO<unsigned int>(20) ;
@@ -312,12 +312,26 @@ namespace InputDevice
     */
   int WmDevice::connectWm()
   {
+    #if __WMDEBUG_WMDEVICE
+    QString msg=tr("WmDevice::connectWm()") ;
+    mytoolbox::dbgMsg( msg ) ;
+    #endif
+    
     int nbFound=0, nbConnect=0 ;
     CWiimote *wm=NULL ;
 
     // Let to restart the connection properly.
     deleteWii() ;
+    
+    #if __WMDEBUG_WMDEVICE
+    msg=tr("WmDevice::connectWm() : new CWii(1)") ;
+    mytoolbox::dbgMsg( msg ) ;
+    #endif
     m_wii = new CWii(1) ;
+    #if __WMDEBUG_WMDEVICE
+    msg= tr("WmDevice::connectWm() : new CWii(1) : Passed") ;
+    mytoolbox::dbgMsg( msg ) ;
+    #endif
 
     // Searching.
     mytoolbox::dbgMsg( "Searching for wiimotes... Turn them on !" ) ;
@@ -330,7 +344,7 @@ namespace InputDevice
     // it connects ...
     if( nbFound > 0 )
     {
-      //cout << "Connecting to wiimotes..." << endl ;
+      mytoolbox::dbgMsg( "Connecting to wiimotes..." ) ;
       std::vector<CWiimote*>& wms=m_wii->Connect() ;
       nbConnect = wms.size() ;
       wm = wms.at(0) ;
@@ -338,10 +352,12 @@ namespace InputDevice
 
     if( nbConnect <= 0 )
     {
+      mytoolbox::dbgMsg( "Wiimote NO connected !!!" ) ;
       deleteWii() ;
     }
     else
     {
+      mytoolbox::dbgMsg( "Wiimote connected !" ) ;
       m_hasWm = true ;
       m_wm = wm ;
 
@@ -391,9 +407,11 @@ namespace InputDevice
     return m_hasNc ;
   }
 
-
+  #if defined WIN32 || defined _WIN32
   void WmDevice::runPoll()
   {
+    m_deviceThread.setPriority( QThread::LowPriority ) ;
+    
     if( m_hasWm )
     {
       bool hasUpdateFrom=false ;
@@ -407,6 +425,13 @@ namespace InputDevice
         m_t2Update = m_time.elapsed() ;
         if( (m_t2Update-m_t1Update) > 1000 )
         {
+          #if __WMDEBUG_WMDEVICE
+          QString msg= tr("WmDevice::runPoll() : tread has ") 
+                       + QString::number( (*m_nbUpdate)[0] )
+                       + tr(" actions/second" ) ;
+          mytoolbox::dbgMsg( msg ) ;
+          #endif
+          
           m_t1Update = m_t2Update ;
           m_nbUpdate->pushFront(0) ;
           (*m_nbUpdate)[0]++ ;
@@ -417,14 +442,13 @@ namespace InputDevice
         }
 
 
-        hasUpdateFrom = false ;
-        hasUpdateTo = false ;
-
         // Check if there are some works.
         hasUpdateFrom = updateDataFrom() ; // Poll directly the Wiimote, not blocking call.
 
         if( !m_cirBufferTo->isEmpty() )
           hasUpdateTo = true ;
+        else
+          hasUpdateTo = false ;
         
         if( hasUpdateFrom || hasUpdateTo )
         { // Working.
@@ -460,6 +484,102 @@ namespace InputDevice
       m_isRunning = false ;
     }
   }
+  
+  #else
+  
+  void WmDevice::runPoll()
+  {
+    m_deviceThread.setPriority( QThread::LowPriority ) ;
+    
+    if( m_hasWm )
+    {
+      bool hasUpdateFrom=false ;
+      bool hasUpdateTo=false ;
+      m_isRunning = true ;
+
+      // Update local data.
+      while( m_isRunning )
+      {
+        // Count nb action by second (used with breakpoint).
+        m_t2Update = m_time.elapsed() ;
+        if( (m_t2Update-m_t1Update) > 1000 )
+        {
+          #if __WMDEBUG_WMDEVICE
+          QString msg= tr("WmDevice::runPoll() : tread has ") 
+                       + QString::number( (*m_nbUpdate)[0] )
+                       + tr(" actions/second" ) ;
+          mytoolbox::dbgMsg( msg ) ;
+          #endif
+          
+          m_t1Update = m_t2Update ;
+          m_nbUpdate->pushFront(0) ;
+          (*m_nbUpdate)[0]++ ;
+        }
+        else
+        {
+          (*m_nbUpdate)[0]++ ;
+        }
+        
+        #if __WMDEBUG_WMDEVICE || __WMDEBUG_CHEMWRAPPER
+        QString msg ;
+        
+        if( m_cirBufferFrom->isFull() )
+        {
+          msg= tr("WmDevice::runPoll() : m_cirBufferFrom->isFull !!!" ) ;
+          mytoolbox::dbgMsg( msg ) ;
+        }
+        
+        if( m_cirBufferTo->isFull() )
+        {
+          msg = tr("WmDevice::runPoll() : m_cirBufferTo->isFull !!!" ) ;
+          mytoolbox::dbgMsg( msg ) ;
+        }
+        #endif
+
+
+        // Check if there are some works.
+        hasUpdateFrom = updateDataFrom() ; // Poll directly the Wiimote, not blocking call.
+
+        if( !m_cirBufferTo->isEmpty() )
+          hasUpdateTo = true ;
+        else
+          hasUpdateTo = false ;
+        
+        if( hasUpdateFrom || hasUpdateTo )
+        { // Working.
+          if( hasUpdateTo )
+            updateDataTo() ;
+        }
+
+        // Sleeping ...
+        if( m_hasSleepThread )
+        {
+          m_nbActionRealized ++ ;
+
+          if( m_nbActionRealized > PLUGIN_WM_SLEEPTHREAD_NBTIME_BEFORE_SLEEP )
+          {
+            m_nbActionRealized = 0 ;
+            m_deviceThread.msleep(PLUGIN_WM_SLEEPTHREAD_TIME) ;
+          }
+          else
+          {
+            m_deviceThread.yieldCurrentThread() ;
+          }
+        }
+        else
+          m_deviceThread.yieldCurrentThread() ;
+          // With m_deviceThread.setPriority( QThread::LowPriority ) ;
+      }
+
+      m_threadFinished.fetchAndStoreRelaxed(1) ;
+    }
+    else
+    {
+      m_threadFinished.fetchAndStoreRelaxed(1) ;
+      m_isRunning = false ;
+    }
+  }
+  #endif
 
   void WmDevice::stopPoll()
   {
@@ -516,20 +636,23 @@ namespace InputDevice
         switch( m_wm->GetEvent() )
         {
         case CWiimote::EVENT_EVENT :
+          //mytoolbox::dbgMsg( "--- EVENT_EVENT :( WmDevice::updateDataFrom )" ) ;
           isPoll = true ;
           break ;
 
         case CWiimote::EVENT_DISCONNECT :
         case CWiimote::EVENT_UNEXPECTED_DISCONNECT :
-          mytoolbox::dbgMsg( "--- DISCONNECTED ---" ) ;
+          mytoolbox::dbgMsg( "--- Wiimote DISCONNECTED :( WmDevice::updateDataFrom )" ) ;
           stopPoll() ;
           break ;
 
         case CWiimote::EVENT_NUNCHUK_INSERTED:
+          mytoolbox::dbgMsg( "--- NUNCHUCK CONNECTED :) WmDevice::updateDataFrom )" ) ;
           connectNc() ;
           break ;
 
         case CWiimote::EVENT_NUNCHUK_REMOVED:
+          mytoolbox::dbgMsg( "--- NUNCHUCK DISCONNECTED :( WmDevice::updateDataFrom )" ) ;
           m_nc = NULL ;
           break ;
 
@@ -542,6 +665,7 @@ namespace InputDevice
         case CWiimote::EVENT_CLASSIC_CTRL_REMOVED :
         case CWiimote::EVENT_CLASSIC_CTRL_INSERTED :
         default:
+          mytoolbox::dbgMsg( "--- EVENT_NONE ... :( WmDevice::updateDataFrom )" ) ;
           break ;
         }
       }
@@ -557,6 +681,13 @@ namespace InputDevice
           m_t2Update2 = m_time.elapsed() ;
           if( (m_t2Update2-m_t1Update2) > 1000 )
           {
+            #if __WMDEBUG_WMDEVICE
+            QString msg= tr("WmDevice::runPoll() : outgoing data ") 
+                         + QString::number( (*m_nbUpdate2)[0] )
+                         + tr( " actions/second." ) ;
+            mytoolbox::dbgMsg( msg ) ;
+            #endif
+            
             m_t1Update2 = m_t2Update2 ;
             m_nbUpdate2->pushFront(0) ;
             (*m_nbUpdate2)[0]++ ;
@@ -569,14 +700,38 @@ namespace InputDevice
           // 1st stategy : If no place, no push data.
           if( !m_cirBufferFrom->isFull() )
           {
-            WmDeviceData_from *wm=new WmDeviceData_from(m_wm->copyData()) ;
-            if( wm==NULL || wm->getDeviceData()==NULL
-                || wm->getDeviceData()->GetBatteryLevel() < 0  
-                || wm->getDeviceData()->IR.GetNumDots()<0 
-                || wm->getDeviceData()->IR.GetNumDots()>4 )
+            //cout << "updateButton:" << updateButton << ", updateAcc:" << updateAcc << ", updateIR:" << updateIR << endl ;
+            CWiimoteData *wmData=m_wm->copyData() ;
+            
+            if( wmData != NULL )
+            { 
+              WmDeviceData_from *wm=new WmDeviceData_from(wmData) ;
+              
+              if( wm==NULL || wm->getDeviceData()==NULL
+                  || wm->getDeviceData()->GetBatteryLevel() < 0  
+                  || wm->getDeviceData()->IR.GetNumDots()<0 
+                  || wm->getDeviceData()->IR.GetNumDots()>4 )
+              {
                 mytoolbox::dbgMsg("Error data : WmDeviceData_from *wm!=NULL && no allocated ...") ;
-            m_cirBufferFrom->pushBack( wm ) ;
-            r = true ;
+              }
+              else
+              {             
+                /* 
+                cout << "m_wm->isConnected():" << m_wm->isConnected() << ", wm->getDeviceData()->isConnected()" << wm->getDeviceData()->isConnected() << endl ;
+                
+                float x, y, z ;
+                m_wm->Accelerometer.GetOrientation( x, y, z ) ;              
+                cout << "m_wm->Accelerometer.GetOrientation: x:" << x << ", y:" << y << ", z:" << z << endl ;
+                
+                wmData->Accelerometer.GetOrientation( x, y, z ) ;
+                cout << "wmData1->Accelerometer.GetOrientation: x:" << x << ", y:" << y << ", z:" << z << endl ;
+                */
+                
+                
+                m_cirBufferFrom->pushBack( wm ) ;
+                r = true ;
+              }
+            }
           }
         }
 
@@ -636,10 +791,7 @@ namespace InputDevice
 
     // TimeOut ?
     if( timeOut > PLUGIN_WM_TIMEOUT_BEFORE_SENDDATA )
-    {
-      m_t1 = m_t2 ;
       hasChanged = true ;
-    }
 
     if( !hasChanged )
     { // Action Wiimote ?
@@ -663,7 +815,8 @@ namespace InputDevice
     // Has changed ?
     if( hasChanged )
     { // YES, update data.
-
+    
+      m_t1 = m_t2 ;
       m_previousEvent = wm.GetEvent() ;
       return true ;
     }

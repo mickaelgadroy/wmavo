@@ -31,8 +31,9 @@ namespace Avogadro
   Eigen::Transform3d MoleculeManipulation::m_transf3d0 ;
 
   MoleculeManipulation::MoleculeManipulation( Molecule *molecule )
-    : m_molecule(molecule), m_isMoveAtom(false), m_addHydrogens(WMEX_ADJUST_HYDROGEN), 
-      m_atomicNumberCurrent(WMEX_CREATEDATOMDEFAULT), m_errorMsgGetFragment(),
+    : m_molecule(molecule), m_isMoveAtom(false), m_errorMsgGetFragment(),
+      m_addHydrogens(WMEX_ADJUST_HYDROGEN), 
+      m_atomicNumberCurrent(WMEX_CREATEDATOMDEFAULT), 
       m_barycenterRefMolecule(m_vect3d0), m_sumOfWeights(0), m_atomsBarycenter(m_vect3d0)
   {
     m_transf3d0.matrix().setIdentity() ;
