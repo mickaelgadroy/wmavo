@@ -26,7 +26,7 @@ if( "${LINK_LIBS}" STREQUAL "avogadro" )
   set( in_RC_SCRS "" )
   
   # Write the Avogadro revision in revision.h.
-  configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/revision.h.in ${CMAKE_CURRENT_SOURCE_DIR}/revision.h )
+  configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../revision.h.in ${CMAKE_CURRENT_SOURCE_DIR}/../revision.h )
 
   ## Set up the build environment (to know where are .h, ".dll" and some files)
 
@@ -120,7 +120,7 @@ else()
   file( GLOB_RECURSE source_files	src/* )
   
   # Write the Avogadro revision in revision.h.
-  configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/revision.h.in ${CMAKE_CURRENT_SOURCE_DIR}/revision.h )
+  configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../revision.h.in ${CMAKE_CURRENT_SOURCE_DIR}/../revision.h )
 
   # Add flags for Windows.
   if( WIN32 )

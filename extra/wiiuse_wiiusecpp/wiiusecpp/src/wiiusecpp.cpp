@@ -1628,10 +1628,7 @@ std::vector<CWiimote*>& CWii::Connect()
     wiiuse_connect((struct wiimote_t**) mpWiimoteArray, mpWiimoteArraySize) ;
   
     for( int i=0 ; i<mpWiimoteArraySize ; i++ ) // mpWiimotesVector.size()
-    {
       mpWiimotesVector.at(i)->mpIsConnected = true ;
-      puts( " TRUEUUEU" ) ;
-      }
       
     return mpWiimotesVector;
 }

@@ -642,17 +642,17 @@ namespace InputDevice
 
         case CWiimote::EVENT_DISCONNECT :
         case CWiimote::EVENT_UNEXPECTED_DISCONNECT :
-          mytoolbox::dbgMsg( "--- Wiimote DISCONNECTED :( WmDevice::updateDataFrom )" ) ;
+          //mytoolbox::dbgMsg( "--- Wiimote DISCONNECTED :( WmDevice::updateDataFrom )" ) ;
           stopPoll() ;
           break ;
 
         case CWiimote::EVENT_NUNCHUK_INSERTED:
-          mytoolbox::dbgMsg( "--- NUNCHUCK CONNECTED :) WmDevice::updateDataFrom )" ) ;
+          //mytoolbox::dbgMsg( "--- NUNCHUCK CONNECTED :) WmDevice::updateDataFrom )" ) ;
           connectNc() ;
           break ;
 
         case CWiimote::EVENT_NUNCHUK_REMOVED:
-          mytoolbox::dbgMsg( "--- NUNCHUCK DISCONNECTED :( WmDevice::updateDataFrom )" ) ;
+          //mytoolbox::dbgMsg( "--- NUNCHUCK DISCONNECTED :( WmDevice::updateDataFrom )" ) ;
           m_nc = NULL ;
           break ;
 
@@ -665,7 +665,7 @@ namespace InputDevice
         case CWiimote::EVENT_CLASSIC_CTRL_REMOVED :
         case CWiimote::EVENT_CLASSIC_CTRL_INSERTED :
         default:
-          mytoolbox::dbgMsg( "--- EVENT_NONE ... :( WmDevice::updateDataFrom )" ) ;
+          //mytoolbox::dbgMsg( "--- EVENT_NONE ... :( WmDevice::updateDataFrom )" ) ;
           break ;
         }
       }

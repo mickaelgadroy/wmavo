@@ -35,7 +35,8 @@ ABOUT
 	feedback on the usablility and consistency of the design of either the C++ or Python implementations.
 
 	Distributed under the GPL and LGPL.
-AUTHORS
+
+AUTHORS
 
 	Jim Thomas
 	Email: jt@missioncognition.net
@@ -125,9 +126,10 @@ COMPILING
 
 	Windows:
 		Should just compile wiiusecpp.cpp making sure that wiiuse.h is available for
-		for the include and link wiiuse.lib.  If somebody comes up with a make file
-		or project file to make a dll under windows let me know and I'll add it to
-		the distribution.
+		for the include and link wiiuse.lib (in the project directory!).
+		
+		If somebody comes up with a make file or project file to make a dll under 
+		windows let me know and I'll add it to the distribution.
 
 
 USING THE LIBRARY IN A THIRD PARTY APPLICATION

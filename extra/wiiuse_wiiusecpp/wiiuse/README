@@ -125,13 +125,18 @@ COMPILING
 		wiiuse-example and wiiuse-sdl are installed to /usr/bin
 
 	Windows:
-		A Microsoft Visual C++ 6.0 project file has been included.
+    A Microsoft Visual C++ 9 2008 project file is included
+    (created with MSVC C++ 9 Express Edition).
+		The Microsoft Visual C++ 6.0 project file included is deprecated.
 
-		You need the install the Windows DDK (driver development kit)
-		to compile wiiuse. Make sure you include the inc/ and lib/
-		directories from the DDK in your IDE include and library paths.
+		You need the install the Windows Driver Kit (WDK) (formerly Windows DDK 
+		(driver development kit)) to compile wiiuse. 
+		Make sure you include the inc/ and lib/ directories from the WDK 
+		in your IDE include and library paths.
+		
 		You can download this from here:
-			http://www.microsoft.com/whdc/devtools/ddk/default.mspx
+		  http://msdn.microsoft.com/en-us/windows/hardware/gg487428
+			(formerly http://www.microsoft.com/whdc/devtools/ddk/default.mspx)
 
 		You need to link the following libraries (already set in the
 		included project file):

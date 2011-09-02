@@ -8,6 +8,26 @@ http://wiiuse.net/
 http://wiiuse.sourceforge.net/
 http://sourceforge.net/projects/wiiuse/
 
+
+---------------------------
+v0.13 -- 2 Sept 2011
+---------------------------
+
+  This version is not available in the official website. It is supplied
+  with the plugin for the Avogadro software.
+  
+	Added:
+		- A new traitment of ir signal : work with difference, no just direct data
+		  (more detail ...)
+		  
+		- IS_JUST_CHANGED : to know if there is an action with the button
+		
+	Fixed:
+	  - Add waiting time in some sent data to the Wiimote
+	  
+	Changed:
+	  - some structure like the button management (standart for all structure)
+
 ---------------------------
 v0.12 -- 2 Apr 2008
 ---------------------------

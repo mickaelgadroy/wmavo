@@ -7,6 +7,8 @@
  *
  *	Copyright 2006-2007
  *
+ *  Copyright 2011 - Mickael Gadroy
+ *
  *	This file is part of wiiuse.
  *
  *	This program is free software; you can redistribute it and/or modify
