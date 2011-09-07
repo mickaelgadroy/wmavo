@@ -16,6 +16,9 @@ CC = gcc
 #
 # Universal cflags
 #
+# On 64bits : -m32 : need libc6-dev-i386 and its dependancies.
+#CFLAGS = -m32 -Wall -pipe -fPIC -funroll-loops
+#CFLAGS = -m64 -Wall -pipe -fPIC -funroll-loops
 CFLAGS = -Wall -pipe -fPIC -funroll-loops
 
 ifeq ($(debug),1)

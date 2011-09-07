@@ -16,6 +16,9 @@ CC = g++
 #
 # Universal cflags
 #
+# On 64bits : -m32 : need g++-multilib, libc6-dev-i386 and its dependancies.
+#CFLAGS = -m32 -Wall -pipe -fPIC -funroll-loops
+#CFLAGS = -m64 -Wall -pipe -fPIC -funroll-loops
 CFLAGS = -Wall -pipe -fPIC -funroll-loops
 
 ifeq ($(debug),1)
@@ -32,10 +35,8 @@ OBJ_DIR = $(OBJ_PREFIX)-$(shell $(CC) -v 2>&1|grep ^Target:|cut -d' ' -f2)
 #
 # Linking flags
 #
-# If you want change <wiiusecpp.h> <-> "wiiusecpp.h"
-# do not forget to do the same in the source code, and below.
-#LDFLAGS = -shared -lwiiuse
-LDFLAGS = -shared -L../../wiiuse/src/$(OBJ_DIR)/ -lwiiuse
+#LDFLAGS = -shared -L../../wiiuse/src/$(OBJ_DIR)/ -lwiiuse
+LDFLAGS = -shared -lwiiuse
 
 #
 # Target binaries (always created as BIN)
@@ -45,8 +46,6 @@ BIN = ./$(OBJ_DIR)/libwiiusecpp.so
 #
 # Inclusion paths.
 #
-# If you want change <wiiusecpp.h> <-> "wiiusecpp.h"
-# do not forget to do the same in the source code, and above.
 #INCLUDES = -I../src/
 INCLUDES = -Isrc/ -I../../wiiuse/src/
 

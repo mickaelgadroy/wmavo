@@ -36,12 +36,13 @@ if( WIN32 )
 
 else() 
 # Unix ...
-  #set( wiiusecpp_lib_dir /usr/lib ) # ".lib"
+  set( wiiuse_libdir /usr/lib ) # ".lib"
+  set( wiiuse_libddir /usr/lib ) # ".lib"
   
   # wiiuse/wiiusecpp libraries.
   #if( CMAKE_SIZEOF_VOID_P EQUAL 8 ) # 64 bits.
-    set( wiiuse_libdir "${wiiuse_dir}/lib_nix64" )
-    set( wiiuse_libddir "${wiiuse_dir}/lib_nix64/debug" )
+  #  set( wiiuse_libdir "${wiiuse_dir}/lib_nix64" )
+  #  set( wiiuse_libddir "${wiiuse_dir}/lib_nix64/debug" )
   #elseif( CMAKE_SIZEOF_VOID_P EQUAL 4 ) # 32 bits.
   #  set( wiiuse_libdir "${wiiuse_dir}/lib_nix32" )
   #  set( wiiuse_libddir "${wiiuse_dir}/lib_nix32/debug" )

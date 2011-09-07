@@ -30,9 +30,15 @@
 #include "wiwo_sem.h"
 #include "qthread_ex.h"
 
-#include "wiiusecpp.h"
-#include "wiiusecppdata.h"
 #include "wmtochem.h"
+
+#if defined WIN32 || defined _WIN32
+  #include "wiiusecpp.h"
+  #include "wiiusecppdata.h"
+#else
+  #include <wiiusecpp.h>
+  #include <wiiusecppdata.h>
+#endif
 
 #include "warning_disable_begin.h"
 #include <QAtomicInt>

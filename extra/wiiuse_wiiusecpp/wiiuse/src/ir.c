@@ -42,6 +42,7 @@
 #define NBPAIR 6
   
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 #ifndef WIN32
@@ -438,7 +439,7 @@ static void interpret_ir_data(struct wiimote_t* wm) {
 	if (WIIMOTE_IS_SET(wm, WIIMOTE_STATE_ACC))
 		roll = wm->orient.roll;
 
-	/* count visible dots */
+	// count visible dots
 	wm->ir.num_dots = 0;
 	for (i = 0; i < 4; ++i) {
 		if (dot[i].visible)
@@ -450,7 +451,7 @@ static void interpret_ir_data(struct wiimote_t* wm) {
 		{
 			wm->ir.state = 0;
 
-			/* reset the dot ordering */
+			// reset the dot ordering
 			for (i = 0; i < 4; ++i)
 				dot[i].order = 0;
 
@@ -465,9 +466,9 @@ static void interpret_ir_data(struct wiimote_t* wm) {
 			fix_rotated_ir_dots(wm->ir.dot, roll);
 
 			if (wm->ir.state < 2) {
-				/*
-				 *	Only 1 known dot, so use just that.
-				 */
+				
+				// Only 1 known dot, so use just that.
+				 
 				for (i = 0; i < 4; ++i) {
 					if (dot[i].visible) {
 						wm->ir.x = dot[i].x;
@@ -476,7 +477,7 @@ static void interpret_ir_data(struct wiimote_t* wm) {
 						wm->ir.ax = wm->ir.x;
 						wm->ir.ay = wm->ir.y;
 
-						/*	can't calculate yaw because we don't have the distance */
+						//	can't calculate yaw because we don't have the distance
 						//wm->orient.yaw = calc_yaw(&wm->ir);
 
 						ir_convert_to_vres(&wm->ir.x, &wm->ir.y, wm->ir.aspect, wm->ir.vres[0], wm->ir.vres[1]);
@@ -484,21 +485,21 @@ static void interpret_ir_data(struct wiimote_t* wm) {
 					}
 				}
 			} else {
-				/*
-				 *	Only see 1 dot but know theres 2.
-				 *	Try to estimate where the other one
-				 *	should be and use that.
-				 */
+				
+				// 	Only see 1 dot but know theres 2.
+				//	Try to estimate where the other one
+				// 	should be and use that.
+				 
 				for (i = 0; i < 4; ++i) {
 					if (dot[i].visible) {
 						int ox = 0;
 						int x, y;
 
 						if (dot[i].order == 1)
-							/* visible is the left dot - estimate where the right is */
+							// visible is the left dot - estimate where the right is
 							ox = dot[i].x + wm->ir.distance;
 						else if (dot[i].order == 2)
-							/* visible is the right dot - estimate where the left is */
+							// visible is the right dot - estimate where the left is
 							ox = dot[i].x - wm->ir.distance;
 
 						x = ((signed int)dot[i].x + ox) / 2;
@@ -525,16 +526,16 @@ static void interpret_ir_data(struct wiimote_t* wm) {
 		case 3:
 		case 4:
 		{
-			/*
-			 *	Two (or more) dots known and seen.
-			 *	Average them together to estimate the true location.
-			 */
+			
+			//	Two (or more) dots known and seen.
+			//	Average them together to estimate the true location.
+			
 			int x, y;
 			wm->ir.state = 2;
 
 			fix_rotated_ir_dots(wm->ir.dot, roll);
 
-			/* if there is at least 1 new dot, reorder them all */
+			// if there is at least 1 new dot, reorder them all
 			if (wm->ir.num_dots > last_num_dots) {
 				reorder_ir_dots(dot);
 				wm->ir.x = 0;
@@ -583,6 +584,7 @@ static void interpret_ir_data(struct wiimote_t* wm) {
  *
  *	@param wm		Pointer to a wiimote_t structure.
  */
+
 static void interpret_ir_data2(struct wiimote_t* wm)
 {
   // dots = LEDs
@@ -603,12 +605,12 @@ static void interpret_ir_data2(struct wiimote_t* wm)
   int cursorRealReal[2]={-1,-1} ;
 
   // 4. Last completion. ((fr)finalization)
-  int cursorRealRealReal[2]={-1,-1} ;
+  //int cursorRealRealReal[2]={-1,-1} ;
 
   // For intermediate needs.
   double dist=0.0 ;
-  double a,b/*,c*/ ;
-  int x, y/*, z*/ ;
+  double a,b ; //,c ;
+  int x, y ; //, z ;
   int i=0, j=0 ;
   bool newDot=true, needAdd=false ;
   struct ir_dot_t* dot=wm->ir.dot ;
@@ -885,7 +887,8 @@ static void interpret_ir_data2(struct wiimote_t* wm)
     }      
   }
   */
-
+  
+  
   //if( cursorRealReal[0]>1 && cursorRealReal[1]>1 )
   //  printf( "        New points x:%d y:%d \n", wm->ir.x, wm->ir.y ) ;
   
@@ -957,6 +960,7 @@ static void interpret_ir_data2(struct wiimote_t* wm)
       wm->ir.z = 1023.0f - wm->ir.distance ;
 
     }
+    
     /*
     else
     { // Do something to calcul distance.
@@ -984,6 +988,7 @@ static void interpret_ir_data2(struct wiimote_t* wm)
       wm->ir.z = 1023 - wm->ir.distance ;
     }
     */
+    
 
     //printf( "  distance:%f, z:%f\n", wm->ir.distance, wm->ir.z ) ;
   }
@@ -995,6 +1000,7 @@ static void interpret_ir_data2(struct wiimote_t* wm)
     wm->orient.yaw = RAD_TO_DEGREE( atanf(a/wm->ir.z) ) ;
   }
 }
+
 
 /**
  *	@brief Another method to interpret IR data which base on the distance.
@@ -1010,8 +1016,8 @@ static void interpret_ir_data3(struct wiimote_t* wm)
   bool *deltaIsCalculated ; //[WM_MAX_DOTS]={false,false,false,false} ;
   double deltaFinal[NBAXE]={0,0} ;
   int nbDelta=0 ;
-  int whichAberrantDelta=0 ;
-  bool ignoreAberrantDelta=true ;
+  //int whichAberrantDelta=0 ;
+  //bool ignoreAberrantDelta=true ;
 
   double dist[NBPAIR]={-1,-1,-1,-1,-1,-1} ;
   double deltaDist[NBPAIR]={-1,-1,-1,-1,-1,-1} ;

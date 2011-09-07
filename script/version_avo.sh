@@ -1,22 +1,42 @@
 
 # Destined to test, not to use ...
 
+which avog
+
+if [ $? -ne 0 ] ; then
+  echo "error: avog does not exist"
+fi
+
 version_avo=`avogadro --version | head -1 | cut -d " " -f 2 | sed -re 's/\t//g'`
 echo ""
-echo "Test:$version_avo:"
+echo "Avogadro version:$version_avo"
+
+version_avo_major=`echo $version_avo | cut -d "." -f 1`
+version_avo_minor=`echo $version_avo | cut -d "." -f 2`
+version_avo_patch=`echo $version_avo | cut -d "." -f 3`
+
+echo "Avogadro major version:$version_avo_major""."
+echo "Avogadro minor version:$version_avo_minor""."
+echo "Avogadro patch version:$version_avo_patch""."
 
 test="test"
 if [ $test == "test" ] ; then
-  echo "OK"
+  echo "Test passed."
 else
-  echo "PAS OK"
+  echo "Test not passed."
 fi
 
-echo "Appuyé sur y"
+echo "Push 'y' button"
 read a
 
-if [ $a == "y" ] ; then
-  echo 'Y'
+echo "a:$a."
+
+if [ "$a" == "y" ] ; then
+  echo "You just pressed 'y'."
+elif [ "$a" == "" ] ; then
+  echo "You just pressed Enter only."
 else
-  echo 'N'
+  echo "You just pressed an other key."
 fi
+
+exit 0

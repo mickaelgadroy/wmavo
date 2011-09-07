@@ -36,14 +36,22 @@
 #include "wmavo_const.h"
 #include "variousfeatures.h"
 
-#include <QObject>
-#include <QGLWidget>
-#include <QColor>
+// Before #include <QObject> <QGLWidget>
+#include "avogadro/glwidget.h" 
+// else : In file included from /usr/include/avogadro/glwidget.h:33,
+//  from /home/.../src/tool/src/rendering/drawsimpleobject.h:43,
+//  from /home/.../src/tool/src/rendering/drawobject.h:30,
+//  from /home/.../src/tool/src/rendering/drawobject.cpp:24:
+//  /usr/include/GL/glew.h:84:2: error: #error gl.h included before glew.h
+//  /usr/include/GL/glew.h:87:2: error: #error glext.h included before glew.h
 
-#include "avogadro/glwidget.h"
 #include "avogadro/painter.h"
 #include "avogadro/atom.h"
 #include "avogadro/camera.h"
+
+#include <QObject>
+#include <QGLWidget>
+#include <QColor>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>

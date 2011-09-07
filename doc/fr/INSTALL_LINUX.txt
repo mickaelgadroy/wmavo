@@ -2,6 +2,18 @@
 PRE-REQUIS
 ==========
 
+apt-get install desired_package
+  => extra packages will be installed
+
+apt-get install gcc g++ make cmake (cmake : 2.6 au moins)
+apt-get install zlib1 zlib1-dev  (1.2.3 au moins)
+apt-get install python-dev libboost-python-dev (respectivement 2.6 et 1.40 au moins)
+apt-get install avogadro libavogadro-dev (1.0.0 au moins)
+  => avogadro-data libavogadro-dev libavogadro1 libopenbabel-dev libopenbabel3 python-avogadro
+ 
+apt-get install bluez libbluetooth-dev (4.60 au moins)
+  
+
 Les librairies, ci-dessous, sont nécessaires pour la compilation des 
 plugins WmAvo pour Avogadro. Si vous avez Synaptic (ou équivalent), ouvrez le
 et "rechercher et installer" les paquets.
