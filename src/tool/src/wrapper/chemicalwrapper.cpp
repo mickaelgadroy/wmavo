@@ -50,11 +50,12 @@ namespace WrapperInputToDomain
     : m_dev(dev), m_wmToChem(NULL),
       m_cirBufferFrom(NULL), m_cirBufferTo(NULL),
       m_actionsGlobalPrevious(0), m_actionsWrapperPrevious(0),
+      m_forceUpdateWmTool(false), m_forceUpdateOrNot(false),
       m_isRunning(false), 
       m_hasSleepThread(PLUGIN_WM_SLEEPTHREAD_ONOFF), 
       m_nbActionRealized(0),
       m_t1(0), m_t2(0), m_t1Update(0), m_t2Update(0), m_t1Update2(0), m_t2Update2(0),
-      m_nbWmToolNotFinished(0), m_nbDataInWmBuffer(0),
+      m_nbWmToolNotFinished(0), m_nbDataInWmBuffer(0), m_nbActionsApplied(0),
       m_bufferFromIsFull(false), m_bufferToIsFull(false)
   {
     m_cirBufferFrom = new WIWO_sem<ChemicalWrapData_from*>( CIRBUFFER_DEFAULT_SIZE ) ;
@@ -129,186 +130,14 @@ namespace WrapperInputToDomain
 
   void ChemicalWrap::setOnActionsApplied()
   {
-    //mytoolbox::dbgMsg( "Slot start actionsApplied == 1" ) ;
+    #if __WMDEBUG_CHEMWRAPPER
+    //mytoolbox::dbgMsg( "Slot setOnActionsApplied == 1" ) ;
+    #endif
     // Under Linux, sometime, this slot is not called ... As if the processEvent() is not called.
     m_actionsAreApplied.fetchAndStoreRelaxed(1) ;
+    m_nbActionsApplied ++ ;
   }
   
-  
-  #if defined WIN32 || defined _WIN32
-  void ChemicalWrap::runPoll()
-  {
-    m_wrapperThread.setPriority( QThread::LowPriority ) ;
-    
-    if( m_dev != NULL )
-    {
-      bool needUpdateDataTo=false ;
-      bool needUpdateDataFrom=false ;
-      bool displayIsFinished=false ;
-      ChemicalWrapData_from *chemData=NULL ;
-
-      m_isRunning = true ;
-
-      while( m_isRunning )
-      {
-        // Count nb action by second (used with breakpoint).
-        m_t2Update = m_time.elapsed() ;
-        if( (m_t2Update-m_t1Update) > 1000 )
-        {
-          #if __WMDEBUG_CHEMWRAPPER
-          QString msg= tr("ChemicalWrap::runPoll() : tread has ") 
-                       + QString::number( (*m_nbUpdate)[0] )
-                       + tr(" actions/second" ) ;
-          mytoolbox::dbgMsg( msg ) ;
-          
-          msg = tr( "ChemicalWrap::runPoll() : WmTool not finished (Signal recept?) :" ) + QString::number( m_nbWmToolNotFinished ) ;
-          if( m_bufferFromIsFull )
-            msg += ", buffer From Full !" ;
-          if( m_bufferToIsFull )
-            msg += ", buffer To Full !" ;
-            
-          mytoolbox::dbgMsg( msg ) ;
-          #endif
-          
-          m_t1Update = m_t2Update ;
-          m_nbUpdate->pushFront(0) ;
-          (*m_nbUpdate)[0]++ ;
-          m_nbWmToolNotFinished = 0 ;
-          m_bufferFromIsFull = false ;
-          m_bufferToIsFull = false ;
-        }
-        else
-        {
-          (*m_nbUpdate)[0]++ ;
-        }
-
-        // Something need update.        
-        displayIsFinished = (m_actionsAreApplied==0?false:true) ;
-
-        if( m_dev->hasDeviceDataAvailable() )
-          chemData = updateDataFrom() ;
-        else
-          chemData = NULL ;
-
-        if( !m_cirBufferTo->isEmpty() )
-          needUpdateDataTo = updateDataTo() ;
-        else
-          needUpdateDataTo = false ;
-
-        if( !m_cirBufferFrom->isEmpty() )
-          needUpdateDataFrom = true ;
-        else
-          needUpdateDataFrom = false ;
-
-        #if __WMDEBUG_CHEMWRAPPER
-        QString msg ;      
-        if( m_cirBufferFrom->isFull() ) m_bufferFromIsFull = true ;
-        if( m_cirBufferTo->isFull() ) m_bufferToIsFull = true ;
-        #endif
-
-        if( chemData!=NULL || needUpdateDataFrom || needUpdateDataTo )
-        { // Working ...
-
-          if( chemData != NULL )
-          {              
-            //#if defined WIN32 || defined _WIN32
-            if( !reduceSentData(displayIsFinished, chemData) )
-            {
-              delete chemData ;
-            }
-            else
-            //#endif 
-            {
-              // 1st stategy : If no place, no push data.
-              if( !m_cirBufferFrom->isFull() )
-              {
-                m_cirBufferFrom->pushBack( chemData ) ;
-                
-                // Count nb action by second (used with breakpoint).
-                m_t2Update2 = m_time.elapsed() ;
-                if( (m_t2Update2-m_t1Update2) > 1000 )
-                {
-                  #if __WMDEBUG_CHEMWRAPPER
-                  QString msg= tr("ChemicalWrap::runPoll() : outgoing data ")
-                               + QString::number( (*m_nbUpdate2)[0] )
-                               + tr( " actions/second." ) ;
-                  mytoolbox::dbgMsg( msg ) ;
-                  #endif
-                  
-                  m_t1Update2 = m_t2Update2 ;
-                  m_nbUpdate2->pushFront(0) ;
-                  (*m_nbUpdate2)[0]++ ;
-                }
-                else
-                {
-                  (*m_nbUpdate2)[0]++ ;
-                }
-              }
-              else
-              {
-                delete chemData ;
-                
-                #if __WMDEBUG_CHEMWRAPPER
-                QString msg= tr("ChemicalWrap::runPoll() : m_cirBufferFrom->isFull !") ;
-                mytoolbox::dbgMsg( msg ) ;
-                #endif
-              }
-            }
-          }
-
-          if( needUpdateDataFrom && displayIsFinished )
-          {
-            m_actionsAreApplied.fetchAndStoreRelaxed(0) ;
-            emit newActions() ;
-          }
-
-          //if( needUpdateDataTo )
-            // Nothing to do.
-            
-        }
-        
-        // Sleeping ...
-        if( m_hasSleepThread )
-        {
-          m_nbActionRealized ++ ;
-
-          if( m_nbActionRealized > PLUGIN_WM_SLEEPTHREAD_NBTIME_BEFORE_SLEEP )
-          {
-            m_nbActionRealized = 0 ;
-            m_wrapperThread.msleep(PLUGIN_WM_SLEEPTHREAD_TIME) ;
-          }
-          else
-          {
-            m_wrapperThread.yieldCurrentThread() ;
-          }
-        }
-        else
-          m_wrapperThread.yieldCurrentThread() ;
-          // With m_wrapperThread.setPriority( QThread::LowPriority ) ;
-          
-      
-        // Call event loop (to get "incoming signals").
-        QCoreApplication::processEvents() ; 
-        // By default : QEventLoop::AllEvent "& !QEventLoop::WaitForMoreEvents"
-        // http://doc.qt.nokia.com/latest/qeventloop.html#ProcessEventsFlag-enum
-      }
-
-      // Must be disconnect, else there is a crash when this object is deleted.
-      // Once QCoreApplication::processEvents() called, this object is "attached" at QCoreApplication.
-      // So with this static method, this object must force to disconnect every signal after use,
-      // mainly with QCoreApplication object.
-      this->disconnect() ;
-
-      m_threadFinished.fetchAndStoreRelaxed(1) ;
-    }
-    else
-    {
-      m_threadFinished.fetchAndStoreRelaxed(1) ;
-      m_isRunning = false ;
-    }
-  }
-  
-  #else
   
   void ChemicalWrap::runPoll()
   {
@@ -336,7 +165,8 @@ namespace WrapperInputToDomain
                        + QString::number( m_nbDataInWmBuffer ) ;
           mytoolbox::dbgMsg( msg ) ;
           
-          msg = tr( "ChemicalWrap::runPoll() : WmTool not finished:" ) + QString::number( m_nbWmToolNotFinished ) ;
+          msg = tr( "ChemicalWrap::runPoll() : Actions not applied: " ) + QString::number( m_nbWmToolNotFinished ) 
+                + tr( ", vs applied:") + QString::number( m_nbActionsApplied ) ;
           if( m_bufferFromIsFull )
             msg += ", buffer From Full !" ;
           if( m_bufferToIsFull )
@@ -350,15 +180,22 @@ namespace WrapperInputToDomain
           (*m_nbUpdate)[0]++ ;
           m_nbWmToolNotFinished = 0 ;
           m_nbDataInWmBuffer = 0 ;
+          m_nbActionsApplied = 0 ;
           m_bufferFromIsFull = false ;
           m_bufferToIsFull = false ;
+          
+          if( m_forceUpdateWmTool )
+            emit wmWorksBad() ;
+          else
+            emit wmWorksGood() ;
         }
         else
         {
           (*m_nbUpdate)[0]++ ;
         }
 
-        // Something need update.        
+        // Something need update.
+        m_forceUpdateWmTool = false ;  
         displayIsFinished = (m_actionsAreApplied==0?false:true) ;
 
         if( m_dev->hasDeviceDataAvailable() )
@@ -438,7 +275,7 @@ namespace WrapperInputToDomain
             }
           }
 
-          if( needUpdateDataFrom && displayIsFinished )
+          if( (needUpdateDataFrom && displayIsFinished) || m_forceUpdateWmTool )
           {
             m_actionsAreApplied.fetchAndStoreRelaxed(0) ;
             emit newActions() ;
@@ -482,6 +319,10 @@ namespace WrapperInputToDomain
       this->disconnect() ;
 
       m_threadFinished.fetchAndStoreRelaxed(1) ;
+      
+      #if __WMDEBUG_CHEMWRAPPER
+      mytoolbox::dbgMsg( "ChemicalWrap::runPoll() m_threadFinished=1" ) ;
+      #endif
     }
     else
     {
@@ -490,7 +331,6 @@ namespace WrapperInputToDomain
     }
   }
   
-  #endif
 
   void ChemicalWrap::stopPoll()
   {
@@ -499,7 +339,11 @@ namespace WrapperInputToDomain
       // Stop the working thread.
       m_isRunning = false ;
       while( m_threadFinished == 0 ) ;
-
+      
+      #if __WMDEBUG_CHEMWRAPPER
+      mytoolbox::dbgMsg( "ChemicalWrap::stopPoll() passed" ) ;
+      #endif
+      
       ChemicalWrapData_from *dataFrom=NULL ;
       ChemicalWrapData_to *dataTo=NULL ;
 
@@ -718,10 +562,7 @@ namespace WrapperInputToDomain
       else
       { // If display working, do not add works if possible.
       
-      
-        #if __WMDEBUG_CHEMWRAPPER
-        m_nbWmToolNotFinished ++;
-        #endif
+        m_nbWmToolNotFinished ++ ;
 
         WrapperData_from::wrapperActions_t wa=chemData->getWrapperAction() ;
 
@@ -731,6 +572,27 @@ namespace WrapperInputToDomain
           dataIsInteresting = true ;
           m_actionsGlobalPrevious = wa.actionsGlobal ;
           m_actionsWrapperPrevious = wa.actionsWrapper ;
+          m_forceUpdateWmTool = true ;
+        }
+        else
+        {
+          // Study if we must force to send data to WmTool.
+          if( m_nbWmToolNotFinished > PLUGIN_WM_NBLOSTDATA_BEFORE_COUNTERSTRIKE 
+              && m_nbWmToolNotFinished > m_nbActionsApplied
+              )
+          {
+            
+            if( m_forceUpdateOrNot )
+            {
+              m_forceUpdateWmTool = true ;
+              
+              #if __WMDEBUG_CHEMWRAPPER
+              mytoolbox::dbgMsg( "Force update" ) ;
+              #endif
+            }
+            
+            m_forceUpdateOrNot = !m_forceUpdateOrNot ;
+          }
         }
       }
     }

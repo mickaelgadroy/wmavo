@@ -327,7 +327,9 @@ namespace InputDevice
     msg=tr("WmDevice::connectWm() : new CWii(1)") ;
     mytoolbox::dbgMsg( msg ) ;
     #endif
+    
     m_wii = new CWii(1) ;
+    
     #if __WMDEBUG_WMDEVICE
     msg= tr("WmDevice::connectWm() : new CWii(1) : Passed") ;
     mytoolbox::dbgMsg( msg ) ;
@@ -406,99 +408,24 @@ namespace InputDevice
 
     return m_hasNc ;
   }
-
-  #if defined WIN32 || defined _WIN32
+  
   void WmDevice::runPoll()
   {
     m_deviceThread.setPriority( QThread::LowPriority ) ;
     
-    if( m_hasWm )
-    {
-      bool hasUpdateFrom=false ;
-      bool hasUpdateTo=false ;
-      m_isRunning = true ;
-
-      // Update local data.
-      while( m_isRunning )
-      {
-        // Count nb action by second (used with breakpoint).
-        m_t2Update = m_time.elapsed() ;
-        if( (m_t2Update-m_t1Update) > 1000 )
-        {
-          #if __WMDEBUG_WMDEVICE
-          QString msg= tr("WmDevice::runPoll() : tread has ") 
-                       + QString::number( (*m_nbUpdate)[0] )
-                       + tr(" actions/second" ) ;
-          mytoolbox::dbgMsg( msg ) ;
-          #endif
-          
-          m_t1Update = m_t2Update ;
-          m_nbUpdate->pushFront(0) ;
-          (*m_nbUpdate)[0]++ ;
-        }
-        else
-        {
-          (*m_nbUpdate)[0]++ ;
-        }
-
-
-        // Check if there are some works.
-        hasUpdateFrom = updateDataFrom() ; // Poll directly the Wiimote, not blocking call.
-
-        if( !m_cirBufferTo->isEmpty() )
-          hasUpdateTo = true ;
-        else
-          hasUpdateTo = false ;
-        
-        if( hasUpdateFrom || hasUpdateTo )
-        { // Working.
-          if( hasUpdateTo )
-            updateDataTo() ;
-        }
-
-        // Sleeping ...
-        if( m_hasSleepThread )
-        {
-          m_nbActionRealized ++ ;
-
-          if( m_nbActionRealized > PLUGIN_WM_SLEEPTHREAD_NBTIME_BEFORE_SLEEP )
-          {
-            m_nbActionRealized = 0 ;
-            m_deviceThread.msleep(PLUGIN_WM_SLEEPTHREAD_TIME) ;
-          }
-          else
-          {
-            m_deviceThread.yieldCurrentThread() ;
-          }
-        }
-        else
-          m_deviceThread.yieldCurrentThread() ;
-          // With m_deviceThread.setPriority( QThread::LowPriority ) ;
-      }
-
-      m_threadFinished.fetchAndStoreRelaxed(1) ;
-    }
-    else
+    if( !m_hasWm )
     {
       m_threadFinished.fetchAndStoreRelaxed(1) ;
       m_isRunning = false ;
     }
-  }
-  
-  #else
-  
-  void WmDevice::runPoll()
-  {
-    m_deviceThread.setPriority( QThread::LowPriority ) ;
-    
-    if( m_hasWm )
+    else
     {
       bool hasUpdateFrom=false ;
       bool hasUpdateTo=false ;
       m_isRunning = true ;
 
       // Update local data.
-      while( m_isRunning )
+      while( m_isRunning && m_hasWm )
       {
         // Count nb action by second (used with breakpoint).
         m_t2Update = m_time.elapsed() ;
@@ -572,14 +499,13 @@ namespace InputDevice
       }
 
       m_threadFinished.fetchAndStoreRelaxed(1) ;
-    }
-    else
-    {
-      m_threadFinished.fetchAndStoreRelaxed(1) ;
-      m_isRunning = false ;
+      stopPoll() ;
+      
+      #if __WMDEBUG_CHEMWRAPPER || __WMDEBUG_WMDEVICE
+      mytoolbox::dbgMsg( "WmDevice::runPoll() m_threadFinished 1" ) ;
+      #endif
     }
   }
-  #endif
 
   void WmDevice::stopPoll()
   {
@@ -588,6 +514,10 @@ namespace InputDevice
       // Stop the working thread.
       m_isRunning = false ;
       while( m_threadFinished == 0 ) ;
+      
+      #if __WMDEBUG_CHEMWRAPPER || __WMDEBUG_WMDEVICE
+      mytoolbox::dbgMsg( "WmDevice::stopPoll() passed" ) ;
+      #endif
 
       WmDeviceData_from *dataFrom=NULL ;
       WmDeviceData_to *dataTo=NULL ;
@@ -642,8 +572,9 @@ namespace InputDevice
 
         case CWiimote::EVENT_DISCONNECT :
         case CWiimote::EVENT_UNEXPECTED_DISCONNECT :
-          //mytoolbox::dbgMsg( "--- Wiimote DISCONNECTED :( WmDevice::updateDataFrom )" ) ;
-          stopPoll() ;
+          mytoolbox::dbgMsg( "--- Wiimote DISCONNECTED :( WmDevice::updateDataFrom )" ) ;
+          m_hasWm = false ;
+          //m_wm = NULL ;
           break ;
 
         case CWiimote::EVENT_NUNCHUK_INSERTED:

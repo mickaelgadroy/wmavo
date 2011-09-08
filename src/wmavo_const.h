@@ -31,6 +31,7 @@
 #define __WMDEBUG_WMTOOL 0
 #define __WMDEBUG_CHEMWRAPPER 0
 #define __WMDEBUG_WMDEVICE 0
+#define __WMDEBUG_MOLMANIP 0
 
 
 ///**********************************************************
@@ -58,7 +59,9 @@
 #define PLUGIN_WM_SLEEPTHREAD_ONOFF true 
 #define PLUGIN_WM_SLEEPTHREAD_TIME 8 // ms
 #define PLUGIN_WM_SLEEPTHREAD_NBTIME_BEFORE_SLEEP 5
-#define PLUGIN_WM_TIMEOUT_BEFORE_SENDDATA 17 // ms,  16.6ms ~=> 1frame/second
+#define PLUGIN_WM_TIMEOUT_BEFORE_SENDDATA 17 // ms,  16.6ms ~=> 60frames/second
+#define PLUGIN_WM_NBLOSTDATA_BEFORE_COUNTERSTRIKE 5 // To have a threshold 
+    // before to send data to WmTool even if it do not respond.
 
 
 ///**********************************************************

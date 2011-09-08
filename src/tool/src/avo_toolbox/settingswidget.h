@@ -50,8 +50,14 @@ public :
   inline QSlider* getSliderPointSizeFont(){ return m_wmPointSizeFontSlider ; } ;
   inline QCheckBox* getCheckboxVibration(){ return m_checkBoxActivateVibration ; } ;
   inline QCheckBox* getCheckboxSleepThread(){ return m_checkBoxActivateSleepThread ; } ;
+  inline QLabel* getLabelWmWorks(){ return m_labelWmWorks ; } ;
 
   void resetWidget() ;
+  
+public slots :
+
+  inline void setWmWorksGood(){ if( m_labelWmWorks!=NULL ) m_labelWmWorks->setText(m_wmWorks) ; } ;
+  inline void setWmWorksBad(){ if( m_labelWmWorks!=NULL ) m_labelWmWorks->setText(m_wmWorksBad) ; } ;
 
 private :
 
@@ -63,7 +69,10 @@ private :
   QSlider *m_wmPointSizeFontSlider ; // (object)
   QCheckBox *m_checkBoxActivateVibration ; // (object)
   QCheckBox *m_checkBoxActivateSleepThread ; // (object)
+  QLabel *m_labelWmWorks ; // (object)
+  QString m_wmWorks, m_wmWorksBad ;
 
 } ;
 
-#endif 
+#endif
+

@@ -135,6 +135,8 @@ namespace WrapperInputToDomain
   signals :
     void newActions() ;
     //void runRunPoll() ;
+    void wmWorksGood() ;
+    void wmWorksBad() ;
 
   protected :
     /** @name Manage Chemical data.
@@ -145,6 +147,7 @@ namespace WrapperInputToDomain
     WIWO_sem<ChemicalWrapData_to*> *m_cirBufferTo ; //< (object)
     QAtomicInt m_actionsAreApplied ; 
     int m_actionsGlobalPrevious, m_actionsWrapperPrevious ; // Save previous state to reduce output data.
+    bool m_forceUpdateWmTool, m_forceUpdateOrNot ;
     // @}
 
     /** @name Manage thread.
@@ -162,6 +165,7 @@ namespace WrapperInputToDomain
     QTime m_time ;
     int m_t1, m_t2 ;
     // @}
+    
     /**
       * Count nb actions by seconds (used with breakpoint).
       * @{ */
@@ -170,6 +174,7 @@ namespace WrapperInputToDomain
     unsigned int m_t1Update2, m_t2Update2 ; // For the updateDataFrom() method.
     unsigned int m_nbWmToolNotFinished ;
     unsigned int m_nbDataInWmBuffer ;
+    unsigned int m_nbActionsApplied ;
     bool m_bufferFromIsFull, m_bufferToIsFull ;
     // @}
   };

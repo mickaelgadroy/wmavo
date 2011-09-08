@@ -250,7 +250,7 @@ namespace Avogadro
         m_renderText->drawWmInfo() ;
       }
 
-      m_drawObject->drawCursor() ;
+      //m_drawObject->drawCursor() ;
 
       return true ;
     }
@@ -270,11 +270,20 @@ namespace Avogadro
       //m_settingsWidget = new SettingsWidget() ;
 
       if( m_wrapperChemToAvo != NULL )
+      {
         delete m_wrapperChemToAvo ;
+        m_wrapperChemToAvo = NULL ;
+      }
       if( m_chemWrap != NULL )
+      {
         delete m_chemWrap ;
+        m_chemWrap = NULL ;
+      }
       if( m_wm != NULL )
+      {
         delete m_wm ;
+        m_wm = NULL ;
+      }
 
       m_wm = new InputDevice::WmDevice() ;
       m_chemWrap = new WITD::ChemicalWrap( m_wm ) ;
@@ -293,6 +302,7 @@ namespace Avogadro
       {
         m_settingsWidget->resetWidget() ;
         emit actionsApplied() ;
+
         //mytoolbox::dbgMsg( "Emit start actionsApplied == 1" ) ;
       }
     }
@@ -387,7 +397,17 @@ namespace Avogadro
       isConnect = connect( m_chemWrap, SIGNAL(newActions()), this, SLOT(applyActions()) ) ;
       if( !isConnect )
         mytoolbox::dbgMsg( "Problem connection signal : m_chemWrap.newActions() -> WmTool.applyActions() !!" ) ;
+      
+      isConnect = connect( m_chemWrap, SIGNAL(wmWorksGood()),
+                           m_settingsWidget, SLOT(setWmWorksGood()) ) ;
+      if( !isConnect )
+        mytoolbox::dbgMsg( "Problem connection signal : m_chemWrap.WmWorksGood() -> m_settingsWidget.setWmWorksGood() !!" ) ;
 
+      isConnect = connect( m_chemWrap, SIGNAL(wmWorksBad()),
+                           m_settingsWidget, SLOT(setWmWorksBad()) ) ;
+      if( !isConnect )
+        mytoolbox::dbgMsg( "Problem connection signal : m_chemWrap.WmWorksBad() -> m_settingsWidget.setWmWorksBad() !!" ) ;
+        
 
       MoleculeManipulation *mm=m_wrapperChemToAvo->getMoleculeManip() ;
       ContextMenuToAvoAction *cm=m_wrapperChemToAvo->getContextMenu() ;
@@ -454,6 +474,7 @@ namespace Avogadro
                            this, SLOT(setSleepThreadNow(int)) ) ;
       if( !isConnect )
         mytoolbox::dbgMsg( "Problem connection signal : m_settingsWidget->getCheckboxVibration().stateChanged() -> wmTool.setWmVibrationNow() !!" ) ;
+        
     }
   }
 

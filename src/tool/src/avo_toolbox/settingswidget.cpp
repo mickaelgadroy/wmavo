@@ -27,8 +27,11 @@
 SettingsWidget::SettingsWidget() 
   : m_settingsWidget(NULL), 
     m_irSensitiveSlider(NULL), m_wmPointSizeFontSlider(NULL),
-    m_checkBoxActivateVibration(NULL), m_checkBoxActivateSleepThread(NULL)
+    m_checkBoxActivateVibration(NULL), m_checkBoxActivateSleepThread(NULL),
+    m_labelWmWorks(NULL)
 {
+  m_wmWorks = "Wiimote works good." ;
+  m_wmWorksBad = "Wiimote can work better." ;
   createSettingsWidget() ;
 }
 
@@ -78,6 +81,8 @@ void SettingsWidget::createSettingsWidget()
     QLabel *lblSleepThread = new QLabel(tr("Less CPU use (but can lag):")) ;
     m_checkBoxActivateSleepThread = new QCheckBox( "ON/OFF" ) ;
     m_checkBoxActivateSleepThread->setChecked(PLUGIN_WM_SLEEPTHREAD_ONOFF) ;
+    
+    m_labelWmWorks = new QLabel( m_wmWorks ) ;
 
     QVBoxLayout *vBoxSens=new QVBoxLayout() ;
     QHBoxLayout *hBoxSens=new QHBoxLayout() ;
@@ -104,6 +109,9 @@ void SettingsWidget::createSettingsWidget()
     QHBoxLayout *hBoxSleepTh=new QHBoxLayout() ;
     hBoxSleepTh->addWidget( lblSleepThread ) ;
     hBoxSleepTh->addWidget( m_checkBoxActivateSleepThread ) ;
+    
+    QHBoxLayout *hBoxWmInfo=new QHBoxLayout() ;
+    hBoxWmInfo->addWidget( m_labelWmWorks ) ;
 
     QVBoxLayout *vBox=new QVBoxLayout() ;
     vBox->addLayout( vBoxSens ) ;
@@ -113,6 +121,8 @@ void SettingsWidget::createSettingsWidget()
     vBox->addLayout( hBoxVibration ) ;
     vBox->addSpacing( 30 ) ;
     vBox->addLayout( hBoxSleepTh ) ;
+    vBox->addSpacing( 30 ) ;
+    vBox->addLayout( hBoxWmInfo ) ;
     vBox->addStretch( 1 ) ;
 
     m_settingsWidget->setLayout( vBox ) ;
@@ -133,4 +143,7 @@ void SettingsWidget::resetWidget()
 
   if( m_checkBoxActivateSleepThread != NULL )
     m_checkBoxActivateSleepThread->setChecked(PLUGIN_WM_SLEEPTHREAD_ONOFF) ;
+    
+  if( m_labelWmWorks != NULL )
+    m_labelWmWorks->setText( m_wmWorks ) ;
 }

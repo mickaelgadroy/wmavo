@@ -307,8 +307,11 @@ namespace Avogadro
   {
     if( m_molecule!=NULL && atom!=NULL )
       atom->setAtomicNumber( atomicNumber ) ;
+
+    #if __WMDEBUG_MOLMANIP
     else
       mytoolbox::dbgMsg( "Bug in MoleculeManipulation::changeAtomicNumber() : NULL-object non expected." ) ;
+    #endif
   }
 
 
@@ -332,8 +335,11 @@ namespace Avogadro
       addHydrogen_p( &obmol, atom ) ;
       adjustPartialCharge_p( &obmol ) ;
     }
+    
+    #if __WMDEBUG_MOLMANIP
     else
       mytoolbox::dbgMsg( "Bug in MoleculeManipulation::changeAtomicNumberWithHA() : NULL-object non expected." ) ;
+    #endif
   }
 
 
@@ -390,8 +396,11 @@ namespace Avogadro
 
         updateBarycenter( *(a->pos()), true ) ;
       }
+      
+      #if __WMDEBUG_MOLMANIP
       else
         mytoolbox::dbgMsg( "Bug in MoleculeManipulation::addAtom() : NULL-object non expected." ) ;
+      #endif
     }
 
     return a ;
@@ -418,8 +427,11 @@ namespace Avogadro
         if( !bondedAtom->isHydrogen() || (bondedAtom->isHydrogen() && bondedAtom->valence()<1) )
           addBondWithoutHA( a, bondedAtom, (short)order ) ;
       }
+      
+      #if __WMDEBUG_MOLMANIP
       else
         mytoolbox::dbgMsg( "Bug in MoleculeManipulation::addAtom() : NULL-object non expected." ) ;
+      #endif
     }
 
     return a ;
@@ -486,8 +498,11 @@ namespace Avogadro
 
         updateBarycenter( *(a->pos()), true ) ;
       }
+      
+      #if __WMDEBUG_MOLMANIP
       else
         mytoolbox::dbgMsg( "Bug in MoleculeManipulation::addAtom() : There is a problem with the add of an atom." ) ;
+      #endif
     }
 
     return a ;
@@ -707,8 +722,11 @@ namespace Avogadro
         b->setBegin( a1 ) ;
         b->setEnd( a2 ) ;
       }
+      
+      #if __WMDEBUG_MOLMANIP
       else
         mytoolbox::dbgMsg( "Bug in MoleculeManipulation::addBond() : a NULL-object not expected." ) ;
+      #endif
     }
 
     return b ;
@@ -2365,11 +2383,15 @@ namespace Avogadro
             }
           }
         }
+        #if __WMDEBUG_MOLMANIP
         else
           mytoolbox::dbgMsg( "Bug in MoleculeManipulation::addHydrogen_p() : a NULL-object not expected" ) ;
+        #endif
       }
+      #if __WMDEBUG_MOLMANIP
       else
         mytoolbox::dbgMsg( "Rq in MoleculeManipulation::addHydrogen_p() : atom is a Hydrogen, do not add Hydrogen" ) ;
+      #endif
     }
 
     return hasAddedH ;
@@ -2410,12 +2432,16 @@ namespace Avogadro
             //else
             //  mytoolbox::dbgMsg( "Rq in MoleculeManipulation::removeHydrogen_p() : do not erase the (atomNoRemove)." ;
           }
+          #if __WMDEBUG_MOLMANIP
           else
             mytoolbox::dbgMsg( "Bug in MoleculeManipulation::removeHydrogen_p() : a NULL-object not expected." ) ;
+          #endif
         }
       }
+      #if __WMDEBUG_MOLMANIP
       else
         mytoolbox::dbgMsg( "Rq in MoleculeManipulation::removeHydrogen_p() : atom is a Hydrogen, do not remove its neighbor." ) ;
+      #endif
     }
 
     return hasRemoveH ;
@@ -2460,7 +2486,9 @@ namespace Avogadro
              || (!addOrDel && numAtoms!=(unsigned int)(m_sumOfWeights)) // UdateBarycenter before the removing.
             ))
     {
-      printf( "recalculate barycenter\n" ) ;
+      #if __WMDEBUG_MOLMANIP
+      mytoolbox::dbgMsg( "recalculate barycenter" ) ;
+      #endif
       recalculateBarycenter() ;
       recalculateB = true ;
     }
