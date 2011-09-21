@@ -1,6 +1,8 @@
 
 /*******************************************************************************
-  Copyright (C) 2010,2011 Mickael Gadroy
+  Copyright (C) 2010,2011 Mickael Gadroy, University of Reims Champagne-Ardenne (Fr)
+                          Project managers: Eric Henon and Michael Krajecki
+                          Financial support: Region Champagne-Ardenne (Fr)
 
   This file is part of WmAvo (WiiChem project)
   WmAvo - Integrate the Wiimote and the Nunchuk in Avogadro software for the
@@ -1223,9 +1225,8 @@ namespace Avogadro
           updateBarycenter( *(atom->pos()), true ) ;
         }
       }
-      #endif
 
-      #if 0 // MY_THING
+      #else // MY_THING
       // This code causes problem with acetylene only ...
       // But at the end, it doesn't check every atom of the molecule to
       // update some information (new atoms and to update the barycenter).
@@ -1283,58 +1284,6 @@ namespace Avogadro
           // Store for the return of the function.
           addedPrim->append( newBond ) ;
         }
-      }
-      #endif
-
-
-      #if 0 // MY_THING 2   
-      QList<int> map ; // Create a temporary map from the old indices to the new for bonding
-      Atom *newAtom=NULL, *a1=NULL, *a2=NULL ;
-      Bond *newBond=NULL ;
-
-      addedPrim = new PrimitiveList() ;
-
-      // "Copy" all atoms.
-      foreach( Atom *oldAtom, fragment->atoms() )
-      {        
-        // "Copy" atom of the fragment.
-        newAtom = addAtomWithoutHA( const_cast<Eigen::Vector3d*>(oldAtom->pos()), oldAtom->atomicNumber() ) ;
-        // TODO : addAtomWithoutHA( oldAtom ) ;
-          //m_atomicNumber = other.m_atomicNumber; //d->formalCharge = other.formalCharge();
-          //d->customLabel = other.customLabel(); //d->customColorName = other.customColorName();
-          //d->customRadius = other.customRadius();
-
-        // Store for the return of the function.
-        addedPrim->append( newAtom ) ;
-        map.push_back( newAtom->id() ) ;
-      }
-
-      foreach( Bond *oldBond, fragment->bonds() )
-      {
-        a1 = m_molecule->atomById( map.at( fragment->atomById(oldBond->beginAtomId())->index() ) ) ;
-        a2 = m_molecule->atomById( map.at( fragment->atomById(oldBond->endAtomId())->index() ) ) ;
-
-        if( a1!=NULL && a2!=NULL )
-        {
-          // "Copy" bond of the fragment.
-          newBond = addBondWithoutHA( a1, a2, oldBond->order() ) ;
-
-          // Store for the return of the function.
-          addedPrim->append( newBond ) ;
-        }
-      }
-
-      foreach( Residue *r, fragment->residues() )
-      {
-        Residue *residue = m_molecule->addResidue() ;
-        residue->setChainNumber( r->chainNumber() ) ;
-        residue->setChainID( r->chainID() ) ;
-        residue->setNumber( r->number() ) ;
-        residue->setName( r->name() ) ;
-
-        foreach( unsigned int atomId, r->atoms() ) 
-          residue->addAtom( map.at(atomId) ) ;
-        residue->setAtomIds( r->atomIds() ) ;
       }
       #endif
     }    
@@ -1474,12 +1423,14 @@ namespace Avogadro
         }
       }
 
-      // Get the added atoms. In fact, the molecule has been cleared.
-      // So we must find its, and adjust the barycenter.
+      // Get the added atoms. 
+      // In fact, the molecule has been cleared  (by the m_molecule->setOBMol()).
+      // So we must find new adress, and adjust the barycenter.
       if( endAtom != NULL )
       {
         int i=0 ;
 
+        // Initiate at zero the primitive list of selected atoms.
         if( addedPrim == NULL )
           addedPrim = new PrimitiveList() ;
         else
@@ -1604,10 +1555,11 @@ namespace Avogadro
           OpenBabel::OBBuilder::Connect( obmol, startAtomIndex+1, endAtomIndex+1 ) ;
 
          
-          // Do not adjust Hydrogen on startAtom because it is useless.
-          // Because : we do not remove Hydrogen on startAtom.
-
-          // Instead, Adjust the hydrogen of the endAtom.
+          // No Adjust the hydrogen of the startAtom.
+          // Because No hydrogen atoms removed on startAtom.
+          //addHydrogen_p( &obmol, startAtom ) ; *
+ 
+          // Adjust the hydrogen of the endAtom.
           addHydrogen_p( &obmol, endAtom ) ; //
 
           // Clear and initiate the Avogadro molecule by the OpenBabel molecule.
@@ -1620,8 +1572,22 @@ namespace Avogadro
       // So we must find its, and adjust the barycenter.
       if( endAtom != NULL )
       {
+        // --> If there was remove hydrogen atoms on startAtom.
+        //bool find=false ;
+        //QList<Atom*> neighborsStartAtom ;
+        //Atom *startA=m_molecule->atomById( startAtomIndex ) ;
+        //Atom *n=NULL ;
+
+        // Get the Hydrogen neighbors of the start atom.
+        //foreach( unsigned long ai, startA->neighbors() )
+        //{
+        //  n = m_molecule->atomById( ai ) ;
+        //  if( n->isHydrogen() )
+        //    neighborsStartAtom.append( n ) ;
+        //}
+        // <--
+
         int i=0 ;
-        QList<Atom*> neighborsStartAtom ;
 
         // Initiate the primitive list of selected atoms ...
         if( addedPrim == NULL )

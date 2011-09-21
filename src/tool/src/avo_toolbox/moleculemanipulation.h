@@ -1,6 +1,8 @@
 
 /*******************************************************************************
-  Copyright (C) 2010,2011 Mickael Gadroy
+  Copyright (C) 2010,2011 Mickael Gadroy, University of Reims Champagne-Ardenne (Fr)
+                          Project managers: Eric Henon and Michael Krajecki
+                          Financial support: Region Champagne-Ardenne (Fr)
 
   This file is part of WmAvo (WiiChem project)
   WmAvo - Integrate the Wiimote and the Nunchuk in Avogadro software for the
@@ -45,7 +47,6 @@
 #include <avogadro/molecule.h>
 #include <avogadro/atom.h>
 #include <avogadro/bond.h>
-#include <avogadro/residue.h>
 #include <avogadro/tool.h>
 #include <avogadro/toolgroup.h>
 #include <avogadro/periodictableview.h>

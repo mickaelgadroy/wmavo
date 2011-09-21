@@ -1,5 +1,11 @@
 # Doxyfile 1.6.4
 
+
+# Mickael Gadroy, University of Reims Champagne-Ardenne (Fr)
+# Project managers: Eric Henon and Michael Krajecki
+# Financial support: Region Champagne-Ardenne (Fr)
+
+
 #---------------------------------------------------------------------------
 # Project related configuration options
 #---------------------------------------------------------------------------
@@ -102,49 +108,37 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = ../src/ ../src/en/src/ ../src/tool/src/ \
-                         ../src/ex/src/ ../src/ex/src/tools
+INPUT                  = ../src/ \
+                         ../src/en/src/ \
+                         ../src/ex/src/ \
+                         ../src/tool/src/ \
+                         ../src/tool/src/avo_toolbox \
+                         ../src/tool/src/inputdevice ../src/tool/src/inputdevice/wiimote \
+                         ../src/tool/src/qt_extended \
+                         ../src/tool/src/rendering \
+                         ../src/tool/src/toolbox \
+                         ../src/tool/src/wrapper/ ../src/tool/src/wrapper/chemical
 INPUT_ENCODING         = UTF-8
-FILE_PATTERNS          = *.c \
-                         *.cc \
-                         *.cxx \
-                         *.cpp \
-                         *.c++ \
+FILE_PATTERNS          = *.h *.hh *.hxx *.hpp *.h++ \
+                         *.H *.HH *.H++ \
+                         *.c *.cc *.cxx *.cpp *.c++ \
+                         *.C *.CC *.C++ \
+                         *.cs \
+                         *.CS \
                          *.d \
                          *.java \
-                         *.ii \
-                         *.ixx \
-                         *.ipp \
-                         *.i++ \
+                         *.ii *.ixx *.ipp *.i++ \
+                         *.II *.I++ \
                          *.inl \
-                         *.h \
-                         *.hh \
-                         *.hxx \
-                         *.hpp \
-                         *.h++ \
                          *.idl \
                          *.odl \
-                         *.cs \
-                         *.php \
-                         *.php3 \
+                         *.php *.php3 \
+                         *.PHP *.PHP3 \
                          *.inc \
-                         *.m \
-                         *.mm \
+                         *.m *.mm \
+                         *.M *.MM \
                          *.dox \
                          *.py \
-                         *.C \
-                         *.CC \
-                         *.C++ \
-                         *.II \
-                         *.I++ \
-                         *.H \
-                         *.HH \
-                         *.H++ \
-                         *.CS \
-                         *.PHP \
-                         *.PHP3 \
-                         *.M \
-                         *.MM \
                          *.PY
 ##
 #RECURSIVE              = YES

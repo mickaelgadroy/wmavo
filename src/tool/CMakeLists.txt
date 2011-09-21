@@ -1,10 +1,9 @@
 
-set( PLUGIN_NAME wmtool )
+# Mickael Gadroy, University of Reims Champagne-Ardenne (Fr)
+# Project managers: Eric Henon and Michael Krajecki
+# Financial support: Region Champagne-Ardenne (Fr)
 
-# None, Release, Debug ...
-# Windows : Debug and Release : ok
-# Linux : Release : ok, Debug : some librairies (like wiiuse) are not compiled for.
-set( CMAKE_BUILD_TYPE "Release" )
+set( PLUGIN_NAME wmtool )
 
 # wmextension plugin source files.
 set( wmavoconst_include_dir ../ ) # .h (constants & revision)
@@ -27,9 +26,20 @@ set( wiiusecpp_lib_name wiiusecpp )
 #include(CheckTypeSize)
 #check_type_size("void*" CMAKE_SIZEOF_VOID_P BUILTIN_TYPES_ONLY)
 
+if( CMAKE_SIZEOF_VOID_P EQUAL 8 ) # 64 bits.
+  message( STATUS "Run on an OS 64bits., CMAKE_SIZEOF_VOID_P=" ${CMAKE_SIZEOF_VOID_P} )
+#  set( wiiuse_libdir "${wiiuse_dir}/lib_nix64" )
+#  set( wiiuse_libddir "${wiiuse_dir}/lib_nix64/debug" )
+elseif( CMAKE_SIZEOF_VOID_P EQUAL 4 ) # 32 bits.
+  message( STATUS "Run on an OS 32bits., CMAKE_SIZEOF_VOID_P=" ${CMAKE_SIZEOF_VOID_P} )
+#  set( wiiuse_libdir "${wiiuse_dir}/lib_nix32" )
+#  set( wiiuse_libddir "${wiiuse_dir}/lib_nix32/debug" )
+else() # Unknown.
+  message( STATUS "Impossible to detect if your compiler is 32 or 64 bits, CMAKE_SIZEOF_VOID_P=" ${CMAKE_SIZEOF_VOID_P} )
+endif()
+
 if( WIN32 )
 # Windows.
-
   # wiiuse/wiiusecpp libraries.
   set( wiiuse_libdir "${wiiuse_dir}/lib_win32" )
   set( wiiuse_libddir "${wiiuse_dir}/lib_win32/debug" )
@@ -39,18 +49,12 @@ else()
   set( wiiuse_libdir /usr/lib ) # ".lib"
   set( wiiuse_libddir /usr/lib ) # ".lib"
   
-  # wiiuse/wiiusecpp libraries.
-  #if( CMAKE_SIZEOF_VOID_P EQUAL 8 ) # 64 bits.
-  #  set( wiiuse_libdir "${wiiuse_dir}/lib_nix64" )
-  #  set( wiiuse_libddir "${wiiuse_dir}/lib_nix64/debug" )
-  #elseif( CMAKE_SIZEOF_VOID_P EQUAL 4 ) # 32 bits.
-  #  set( wiiuse_libdir "${wiiuse_dir}/lib_nix32" )
-  #  set( wiiuse_libddir "${wiiuse_dir}/lib_nix32/debug" )
-  #else() # Unknown.
-  #  message( FATAL_ERROR "Impossible to detect if your compiler is 32 or 64 bits, CMAKE_SIZEOF_VOID_P=" ${CMAKE_SIZEOF_VOID_P} )
-  #endif()
-  
   set( OpenBabel2_include_DIR "/usr/include/openbabel-2.0/" )
+  
+  # None, Release, Debug ...
+  # Windows : Debug and Release : ok
+  # Linux : Release : ok, Debug : some librairies (like wiiuse) are not compiled for.
+  set( CMAKE_BUILD_TYPE "Release" )
 
 endif()
 
@@ -79,20 +83,34 @@ if( "${LINK_LIBS}" STREQUAL "avogadro" )
   #set( PLUGIN_TYPE tool )
   
   # The Meta-Object Compiler, moc, is the program that handles Qt's C++ extensions.
+  # http://qtnode.net/wiki/Qt4_with_cmake
+  # http://cmake.org/cmake/help/cmake2.6docs.html#module:FindQt4
+  
   set( in_MOC_SRC src/wmtool.cpp )
-  set( in_MOC_SRC ${in_MOC_SRC} src/rendering/drawsimpleobject.cpp src/rendering/drawobject.cpp src/rendering/rendertext.cpp src/rendering/distanceanglediedre.cpp)    
+  set( in_MOC_SRC ${in_MOC_SRC} src/rendering/drawsimpleobject.cpp src/rendering/drawobject.cpp )
+  set( in_MOC_SRC ${in_MOC_SRC} src/rendering/rendertext.cpp src/rendering/distanceanglediedre.cpp )
+  
   set( in_MOC_SRC ${in_MOC_SRC} src/avo_toolbox/moleculemanipulation.cpp src/avo_toolbox/settingswidget.cpp )
   #set( in_MOC_SRC ${in_MOC_SRC} src/avo_toolbox/undocommand.cpp src/avo_toolbox/constraintsmodel.cpp )
-  set( in_MOC_SRC ${in_MOC_SRC} src/inputdevice/inputdevice.cpp src/inputdevice/wmdevice.cpp src/inputdevice/wiimote/wmrumble.cpp )
+  
+  set( in_MOC_SRC ${in_MOC_SRC} src/inputdevice/inputdevice.cpp src/inputdevice/wmdevice.cpp )
+  set( in_MOC_SRC ${in_MOC_SRC} src/inputdevice/wiimote/wmrumble.cpp src/inputdevice/wiimote/wmtochem.cpp )
   #set( in_MOC_SRC ${in_MOC_SRC} src/inputdevice/wiimote/wmavo.cpp ) # Add file to include in project, but it does not need moc file ...
-  set( in_MOC_SRC ${in_MOC_SRC} src/wrapper/chemicalwrapper.cpp src/wrapper/chemical/wrapper_chemicalcmd_to_avoaction.cpp src/wrapper/chemical/contextmenu_to_avoaction.cpp )
+  
+  set( in_MOC_SRC ${in_MOC_SRC} src/wrapper/wrapper.cpp src/wrapper/chemicalwrapper.cpp )
+  set( in_MOC_SRC ${in_MOC_SRC} src/wrapper/chemical/wrapper_chemicalcmd_to_avoaction.cpp src/wrapper/chemical/contextmenu_to_avoaction.cpp )
+  
   set( in_MOC_SRC ${in_MOC_SRC} src/qt_extended/qmenu_ex.cpp src/qt_extended/qaction_ex.cpp src/qt_extended/qundo_ex.cpp )
   
   set( in_UIS_H "" )
   set( in_RC_SCRS src/inputdevice/wiimote/wmtool.qrc )
   
+  # All source file (recursif search) (wmavo, fifo ...).
+  # Add the forgotten files for the moc generation.
+  #file( GLOB_RECURSE source_files	src/* ) => All will be moc files ... So initiate previous set().
+  
   ## Set up the build environment (to know where are .h, ".dll" and some files)
-
+  
   # Let to use .h directly : 
   # ex. : #include <wmavo_const.h> instead of <../../wmavo_const.h>
   include_directories( ${wmavoconst_include_dir} )
@@ -106,6 +124,10 @@ if( "${LINK_LIBS}" STREQUAL "avogadro" )
   include_directories( ${wiiuse_include_dir} )
   include_directories( ${wiiusecpp_include_dir} )
   
+  #set( QT_USE_OPENGL TRUE )
+  #include(${QT_USE_FILE})
+  #INCLUDE_DIRECTORIES( ${QT_INCLUDE_DIR} ${QT_QTOPENGL_INCLUDE_DIR} )
+ 
   # ".dll"  directories.
   link_directories( ${wiiuse_lib_dir} )
   link_directories( ${wiiusecpp_lib_dir} )
@@ -116,19 +138,16 @@ if( "${LINK_LIBS}" STREQUAL "avogadro" )
   # Link the LIBRARY ! Not *.h !
   target_link_libraries( ${PLUGIN_NAME} ${wiiuse_lib_name} )
   target_link_libraries( ${PLUGIN_NAME} ${wiiusecpp_lib_name} )
-  
+  target_link_libraries( ${PLUGIN_NAME} ${QT_LIBRARIES} ${QT_QTOPENGL_LIBRARY} )
+
   # To install wiiuse/wiiusecpp libraries (& other things)in the Avogadro bin.
   file( GLOB wiiuse_files ${wiiuse_lib_dir}/*wiiuse* )
   if( WIN32 ) 
     install( FILES ${wiiuse_files} DESTINATION ${BIN_INSTALL_DIR} )
-   
-    #file( GLOB_RECURSE frag_files img/fragments/* )
-    #install( FILES ${frag_files} DESTINATION ${BIN_INSTALL_DIR}/../share/avogadro/fragments_resume )
-  else()
-    install( FILES ${wiiuse_files} DESTINATION "/usr/lib" )
+    message( STATUS "Copy wiiuse/wiiusecpp librairies -> " ${BIN_INSTALL_DIR} )
+  #else()
+  #  install( FILES ${wiiuse_files} DESTINATION "/usr/lib" )
   endif()
-  
-  message( STATUS "Copy " ${wiiuse_files} "->" ${BIN_INSTALL_DIR} ) 
   
 else()
 # In a stand alone compilation process.
@@ -195,6 +214,7 @@ else()
   set( PLUGIN_LABEL tools )
   set( PLUGIN_TARGET tools )
   set( PLUGIN_TYPE tool )
+
   
   # glut libraries and source files (Replaced by OpenGL needs)
   #set( glut_INCLUDE_DIR "C:/src/freeglut-2.6.0/include" ) # .h
@@ -202,13 +222,22 @@ else()
   #set( glut_lib_name freeglut ) # Name of the library to link.
     
   # The Meta-Object Compiler, moc, is the program that handles Qt's C++ extensions.
+  # http://qtnode.net/wiki/Qt4_with_cmake
+  # http://cmake.org/cmake/help/cmake2.6docs.html#module:FindQt4
   set( in_MOC_H src/wmtool.h )
-  set( in_MOC_H ${in_MOC_H} src/rendering/drawsimpleobject.h src/rendering/drawobject.h src/rendering/rendertext.h src/rendering/distanceanglediedre.h )
+  
+  set( in_MOC_H ${in_MOC_H} src/rendering/drawsimpleobject.h src/rendering/drawobject.h )
+  set( in_MOC_H ${in_MOC_H} src/rendering/rendertext.h src/rendering/distanceanglediedre.h )
+  
   set( in_MOC_H ${in_MOC_H} src/avo_toolbox/moleculemanipulation.h src/avo_toolbox/settingswidget.h )
   #set( in_MOC_H ${in_MOC_H} src/avo_toolbox/undocommand.h src/avo_toolbox/constraintsmodel.h )
+  
   set( in_MOC_H ${in_MOC_H} src/inputdevice/inputdevice.h src/inputdevice/wmdevice.h src/inputdevice/wiimote/wmrumble.h )
   #set( in_MOC_H ${in_MOC_H} src/inputdevice/wiimote/wmavo.h ) # Add file to include in project, but it does not need moc file ...
-  set( in_MOC_H ${in_MOC_H} src/wrapper/wrapper.h src/wrapper/chemicalwrapper.h src/wrapper/chemical/wrapper_chemicalcmd_to_avoaction.h src/wrapper/chemical/contextmenu_to_avoaction.h )
+  
+  set( in_MOC_H ${in_MOC_H} src/wrapper/wrapper.h src/wrapper/chemicalwrapper.h )
+  set( in_MOC_H ${in_MOC_H} src/wrapper/chemical/wrapper_chemicalcmd_to_avoaction.h src/wrapper/chemical/contextmenu_to_avoaction.h )
+  
   set( in_MOC_H ${in_MOC_H} src/qt_extended/qmenu_ex.h src/qt_extended/qaction_ex.h src/qt_extended/qundo_ex.h )
   
   set( in_UIS_H "" )
@@ -272,6 +301,9 @@ else()
   
   message( STATUS "Be careful, do not forget compile and install wiiuse librairies (in extra/wiiuse_wiiusecpp/" )
   
+  #message( STATUS "Copy fragments" )
+  #file( GLOB_RECURSE frag_files img/fragments/* )
+  #install( FILES ${frag_files} DESTINATION ${BIN_INSTALL_DIR}/../share/avogadro/fragments_resume )
   
 endif()
 
