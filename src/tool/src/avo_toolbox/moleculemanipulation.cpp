@@ -1196,7 +1196,7 @@ namespace Avogadro
 
     if( m_molecule!=NULL && fragment!=NULL )
     {
-      #if 0 // AVO_THING
+      #if 1 // AVO_THING
       // Original code of Avogadro
       // (except for updateBarycenter, and the returned value).
 
@@ -1287,7 +1287,7 @@ namespace Avogadro
       #endif
 
 
-      #if 1 // MY_THING 2   
+      #if 0 // MY_THING 2   
       QList<int> map ; // Create a temporary map from the old indices to the new for bonding
       Atom *newAtom=NULL, *a1=NULL, *a2=NULL ;
       Bond *newBond=NULL ;
