@@ -45,6 +45,7 @@
 #include <avogadro/molecule.h>
 #include <avogadro/atom.h>
 #include <avogadro/bond.h>
+#include <avogadro/residue.h>
 #include <avogadro/tool.h>
 #include <avogadro/toolgroup.h>
 #include <avogadro/periodictableview.h>

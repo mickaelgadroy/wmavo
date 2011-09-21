@@ -36,7 +36,7 @@ namespace Avogadro
       m_cancelAct(NULL), m_periodicTableAct(NULL),
       m_contextMenuMeasure(NULL),
       m_noDistAct(NULL), m_distAct(NULL), m_angleAct(NULL), m_diedreAct(NULL),
-      m_contextMenuFragment(NULL), m_contextMenuResumeFragment(NULL),
+      m_contextMenuSABF(NULL), m_contextMenuSABFResume(NULL),
       m_insertFragAct(NULL),
       m_addSubstituteFragAct(NULL),
       m_changeAddHAct(NULL), 
@@ -117,6 +117,8 @@ namespace Avogadro
                                         QMenu::item:selected { background-color: #654321; }" ) ;
 
     m_contextMenuMain->addAction( m_periodicTableAct ) ;
+    
+    m_contextMenuMain->addMenu( createMenuSubstituteAtomByFragment() ) ;
     m_contextMenuMain->addSeparator() ;
 
     m_contextMenuMeasure = new QMenu_ex( "Measure", m_contextMenuMain, m_contextMenuMain ) ;
@@ -126,9 +128,6 @@ namespace Avogadro
     m_contextMenuMeasure->addAction( m_diedreAct ) ;
 
     m_contextMenuMain->addMenu( m_contextMenuMeasure ) ;
-
-    m_contextMenuMain->addMenu( createMenuResumeSubstituteAtomByFragment() ) ;
-    m_contextMenuMain->addMenu( createMenuSubstituteAtomByFragment() ) ;
     m_contextMenuMain->addSeparator() ;
 
     m_contextMenuMain->addAction( m_changeAddHAct ) ;
@@ -239,8 +238,9 @@ namespace Avogadro
       QFont font( WMTOOL_FONT_FAMILY_INFO, fontsize, WMTOOL_FONT_WEIGHT_INFO ) ;
       m_contextMenuMain->setFont( font ) ;
       m_contextMenuMeasure->setFont( font ) ;
-      m_contextMenuFragment->setFont( font ) ;
-      m_contextMenuResumeFragment->setFont( font ) ;
+      m_contextMenuSABF->setFont( font ) ;
+      m_contextMenuSABFResume->setFont( font ) ;
+      m_contextMenuHydrogen->setFont( font ) ;
 
       for( int i=0 ; i<m_famillyFragAct.size() ; i++ )
         m_famillyFragAct.at(i)->setFont(font) ;
@@ -317,22 +317,67 @@ namespace Avogadro
         {
           //m_periodicTable->show() ;
           bool hasAddHydrogen=m_moleculeManip->hasAddedHydrogen() ;
+          int nbSelectedAtom=0 ;
+          bool selectH=false ;
 
           m_menuActive = true ;
           m_contextMenuCurrent = m_contextMenuMain ;
           m_contextMenuMain->setActiveAction( m_periodicTableAct ) ;
 
-          // Disable useless menu.
+          // Get some information on the selected atoms.
+          nbSelectedAtom = m_widget->selectedPrimitives().size() ;
+          if( nbSelectedAtom == 1 )
+          {
+            QList<Primitive*> atomList=m_widget->selectedPrimitives().subList( Primitive::AtomType ) ;
+            Atom *a=NULL ;
+            if( atomList.size() > 0 )
+            {
+              #if defined WIN32 || defined _WIN32
+              a = dynamic_cast<Atom*>(atomList[0]) ;
+              #else
+              a = static_cast<Atom*>(atomList[0]) ;
+              if( a!=NULL && !a->type()==Primitive::AtomType )
+                a = NULL ;
+              #endif
+
+              if( a!=NULL && a->isHydrogen() )
+                selectH = true ;
+            }
+          }
+
+          // Rename/Disable useless menu.
+          if( /*hasAddHydrogen &&*/ nbSelectedAtom==1 && selectH )
+          { // Substitute Hydrogen By Fragment.
+            m_contextMenuSABF->setEnabled(true) ;
+            m_contextMenuSABF->setTitle( "Substitute hydrogen by fragment" ) ;
+          }
+          else if( !hasAddHydrogen && nbSelectedAtom==1 )
+          { // Link atom to Fragment.
+            m_contextMenuSABF->setEnabled(true) ;
+            m_contextMenuSABF->setTitle( "Bond atom by fragment" ) ;
+          }
+          else if( nbSelectedAtom == 0 )
+          { // Insert Fragment.
+            m_contextMenuSABF->setTitle( "Insert fragment" ) ;
+            m_contextMenuSABF->setEnabled(true) ;
+          }
+          else
+          { // Do nothing.
+            m_contextMenuSABF->setEnabled(false) ;
+          }
+
+          /*
           if( !hasAddHydrogen || (hasAddHydrogen && m_widget->selectedPrimitives().size()==1) )
           {
-            m_contextMenuResumeFragment->setEnabled(true) ;
-            m_contextMenuFragment->setEnabled(true) ;
+            m_contextMenuSABFResume->setEnabled(true) ;
+            m_contextMenuSABF->setEnabled(true) ;
           }
           else
           {
-            m_contextMenuResumeFragment->setEnabled(false) ;
-            m_contextMenuFragment->setEnabled(false) ;
+            m_contextMenuSABFResume->setEnabled(false) ;
+            m_contextMenuSABF->setEnabled(false) ;
           }
+          */
 
           // Method 1
           //m_contextMenuMain->show() ; where is setPos !!?
@@ -503,10 +548,16 @@ namespace Avogadro
     //filtersName << "*.cpp" << "*.cxx" << "*.cc" ;
     //fragRootDir.setNameFilters( filtersName ) ;
 
-    m_contextMenuFragment = createMenuSABF(m_contextMenuMain, fragRootDir) ;
-    m_contextMenuFragment->setTitle( "Substitute atom by fragment" ) ;
+    m_contextMenuSABF = createMenuSABF(m_contextMenuMain, fragRootDir) ;
 
-    return m_contextMenuFragment ;
+    if( m_contextMenuSABF != NULL )
+    {
+      m_contextMenuSABF->insertMenu( m_contextMenuSABF->actions().at(0),
+                                     createMenuResumeSubstituteAtomByFragment(m_contextMenuSABF) ) ;
+      m_contextMenuSABF->setTitle( "Fragment" ) ;
+    }
+
+    return m_contextMenuSABF ;
   }
 
 
@@ -515,15 +566,15 @@ namespace Avogadro
     * It lets to search in an Avogadro repository some selected fragment files.
     * @return A (QMenu_ex*) object which represents the "Substitute Atom By Fragment" sub-menu.
     */
-  QMenu_ex* ContextMenuToAvoAction::createMenuResumeSubstituteAtomByFragment()
+  QMenu_ex* ContextMenuToAvoAction::createMenuResumeSubstituteAtomByFragment( QMenu_ex *parent )
   {
     /* 1st method, if the cmake can copy img/ directory in an Avogadro directory.
     QDir fragRootDir( QCoreApplication::applicationDirPath()+"/../share/avogadro/fragments_resume" ) ;
 
     if( fragRootDir.exists() )
     {
-      m_contextMenuFragment = createMenuSABF(m_contextMenuMain, fragRootDir, false ) ;
-      m_contextMenuFragment->setTitle( "Substitute atom by fragment (resume)" ) ;
+      m_contextMenuSABF = createMenuSABF(m_contextMenuMain, fragRootDir, false ) ;
+      m_contextMenuSABF->setTitle( "Substitute atom by fragment (resume)" ) ;
     }
     */
 
@@ -556,8 +607,7 @@ namespace Avogadro
         << "thiols/thiol.cml" << "-SH"
         << "nitrogen dioxyde.cml" << "-NO2" ;
 
-      m_contextMenuResumeFragment = new QMenu_ex( "Substitute atom by fragment (resume)", 
-                                                  m_contextMenuMain, m_contextMenuMain ) ;
+      m_contextMenuSABFResume = new QMenu_ex( "Frequently used", parent, parent ) ;
      
       // Get files.
       for( int i=0 ; i<listFragment.size() ; i+=2 )
@@ -565,7 +615,7 @@ namespace Avogadro
         tmp = absPath ;
         tmp += listFragment[i] ;
 
-        aTmp = new QAction_ex(listFragment[i+1], this) ;
+        aTmp = new QAction_ex( listFragment[i+1], this ) ;
         m_fragAct.append( aTmp ) ;
         aTmp->setStatusTip( tmp ) ;
 
@@ -575,11 +625,11 @@ namespace Avogadro
         if( !isConnect )
           mytoolbox::dbgMsg( "Problem connection signal : ActionsModified.triggeredInfo() -> ContextMenuToAvoAction.letToSubstituteAtomByFragment() !!" ) ;
 
-        m_contextMenuResumeFragment->addAction( m_fragAct.last() ) ;
+        m_contextMenuSABFResume->addAction( m_fragAct.last() ) ;
       }
     }
 
-    return m_contextMenuResumeFragment ;
+    return m_contextMenuSABFResume ;
   }
 
 
@@ -620,7 +670,7 @@ namespace Avogadro
     {
       tmpStr = absPath ;
       tmpStr += d ;
-      //mytoolbox::dbgMsg( tmpStr ;
+      //mytoolbox::dbgMsg( tmpStr ) ;
 
       if( withFamily )
         cmCur->addMenu( createMenuSABF( cmCur, QDir(tmpStr)) ) ;
@@ -633,7 +683,7 @@ namespace Avogadro
     {
       tmpStr = absPath ;
       tmpStr += f ;
-      //mytoolbox::dbgMsg( tmpStr ;
+      //mytoolbox::dbgMsg( tmpStr ) ;
 
       aTmp = new QAction_ex(f, this) ;
       m_fragAct.append( aTmp ) ;
@@ -686,18 +736,23 @@ namespace Avogadro
 
     if( selectedAtoms.size() > 1 )
     {
-      strList << "Erreur lors de l'ajout d'un fragment :" << "Un SEUL atome ou aucun atome doit etre selectionne." ;
+      strList << "Erreur lors de l'ajout d'un fragment :" 
+              << "Un SEUL atome ou aucun atome doit etre selectionne." ;
       emit displayedMsg( strList, QPoint(300,20) ) ;
       mytoolbox::dbgMsg( strList ) ;
     }
+    /*
     else if( m_changeAddHAct->isChecked() && !a->isHydrogen() )
     {
-      strList << "Erreur lors de l'ajout d'un fragment :" << "Substitution possible seulement pour un atome d'Hydrogene." ;
+      strList << "Erreur lors de l'ajout d'un fragment :" 
+              << "Substitution possible seulement pour un atome d'Hydrogene." ;
       emit displayedMsg( strList, QPoint(300,20) ) ;
       mytoolbox::dbgMsg( strList ) ;
     }
+    */
     else
-    {
+    { // All is OK
+
       PrimitiveList* newElement=NULL ;
       newElement = m_moleculeManip->addFragment( fragmentAbsPath, a ) ;
 

@@ -70,7 +70,9 @@ if( "${LINK_LIBS}" STREQUAL "avogadro" )
 # A lot of attribut are initiated for openGL, openBabel ... 
 # It is necessary that you (if it is does't already) :
 # - add the project in : [avogadro_path]/libavogadro/src/extensions/[here_wmavo_directory]
-# - add "add_subdirectory( wmavo/src/tool )" in : [avogadro_path]/libavogadro/src/extensions/CMakeLists.txt
+# - in : [avogadro_path]/libavogadro/src/extensions/CMakeLists.txt
+#   - add "add_subdirectory( wmavo/src/tool )"
+#   - add "add_subdirectory( wmavo/src/ex )"
 
   #set( PLUGIN_LABEL tools )
   #set( PLUGIN_TARGET tools )

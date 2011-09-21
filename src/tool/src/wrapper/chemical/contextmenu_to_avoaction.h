@@ -128,7 +128,7 @@ namespace Avogadro
       * @{ */
     QMenu_ex* createMenuSubstituteAtomByFragment() ;
         ///< To help in the initialization of the "Substiture atom by fragment" menu.
-    QMenu_ex* createMenuResumeSubstituteAtomByFragment() ;
+    QMenu_ex* createMenuResumeSubstituteAtomByFragment( QMenu_ex *parent=NULL ) ;
         ///< To help in the initialization of the "Substiture atom by fragment" resume menu.
     QMenu_ex* createMenuSABF( QMenu_ex *parent, QDir dirCur, bool withFamily=true ) ;
     // @}
@@ -152,8 +152,8 @@ namespace Avogadro
     QAction *m_cancelAct, *m_periodicTableAct ;
     QMenu_ex *m_contextMenuMeasure ;
     QAction *m_noDistAct, *m_distAct, *m_angleAct, *m_diedreAct ;
-    QMenu_ex *m_contextMenuFragment ;
-    QMenu_ex *m_contextMenuResumeFragment ;
+    QMenu_ex *m_contextMenuSABF ; // SABF : Substitute Atom By Fragment.
+    QMenu_ex *m_contextMenuSABFResume ; // SABF : Substitute Atom By Fragment (limited choice).
     QAction *m_insertFragAct ;
     QAction *m_addSubstituteFragAct ;
     QVector<QAction_ex*> m_fragAct ;

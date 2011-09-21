@@ -32,7 +32,7 @@
 #include <string>
 
 #if WIN32 || _WIN32
-//#define NOMINMAX // To avoid Eigen compilation fatal error.
+#define NOMINMAX // To avoid Eigen compilation fatal error.
 // The preprocessor symbols 'min' or 'max' are defined. If you are compiling on Windows, 
 // do #define NOMINMAX to prevent windows.h from defining these symbols.
 #include <windows.h>
@@ -66,7 +66,7 @@ namespace mytoolbox
   inline void dbgMsg( const QList<QString> &msg )
   {
     #ifdef WIN32
-    QString msgComplete ;s
+    QString msgComplete ;
     foreach( QString m, msg )
       msgComplete.append( m ) ;
       
@@ -94,7 +94,6 @@ namespace mytoolbox
   {
     #ifdef WIN32
     printf( "%s\n", msg ) ;
-    ffl
     #else
     qDebug() << msg ;
     #endif

@@ -252,6 +252,7 @@ bool WmToChem::convert( CWiimoteData *data )
       {
         if( WMAVO_IS(WMAVO_ATOM_MOVE)) // A last action must be realised.
           lastUpdate = true ;
+
         else
           lastUpdate = false ;
       }
@@ -961,7 +962,7 @@ bool WmToChem::transformWmAction1ToDeleteAtom()
         m_timeFirst = m_time.elapsed() ;
       m_timeSecond = m_time.elapsed() ;
 
-      if( !m_delAllAlready && (m_timeSecond-m_timeFirst)>3000 )
+      if( !m_delAllAlready && (m_timeSecond-m_timeFirst)>WMAVO_DELETEALL_AFTER )
       {
         WMAVO_SETON( WMAVO_DELETEALL ) ;
         m_delAllAlready = true ;
@@ -1323,7 +1324,7 @@ bool WmToChem::transformNcAction1ToZoomIn()
       if( m_distCamZoom > 0 )
         m_distCamZoom = 0.0 ;
       else
-        m_distCamZoom = m_nbZoom*(-WMAVO_ATOM_MAX_MOVE_FOR_PROHITED_MOVE) ;
+        m_distCamZoom = m_nbZoom*(-WMAVO_ZOOM_STEP) ;
     }
   }
 
@@ -1352,7 +1353,7 @@ bool WmToChem::transformNcAction1ToZoomOut()
       if( m_distCamZoom < 0 )
         m_distCamZoom = 0.0 ;
       else
-        m_distCamZoom = m_nbZoom*WMAVO_ATOM_MAX_MOVE_FOR_PROHITED_MOVE ;
+        m_distCamZoom = m_nbZoom*WMAVO_ZOOM_STEP ;
     }
   }
 

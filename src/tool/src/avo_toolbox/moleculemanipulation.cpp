@@ -1057,6 +1057,56 @@ namespace Avogadro
 
     if( m_molecule!=NULL && fragment!=NULL )
     {
+      #if 1 // AVO_THING
+      // Original code of Avogadro
+      // (except for updateBarycenter, and the returned value).
+
+      unsigned int initialAtoms=m_molecule->numAtoms()-1 ;
+      bool emptyMol=(m_molecule->numAtoms()==0) ;
+      addedPrim = new PrimitiveList() ;
+
+      if( emptyMol )
+        initialAtoms = 0 ;
+
+      *(m_molecule) += (*fragment) ;
+      m_molecule->update() ;
+
+      if( emptyMol )  // we'll miss atom 0, so add it now
+        addedPrim->append( m_molecule->atom(0) ) ;
+
+      foreach( Atom *atom, m_molecule->atoms() )
+      {
+        if( atom->index() > initialAtoms )
+        {
+          addedPrim->append( const_cast<Atom*>(atom) ) ;
+
+          // Update barycenter.
+          updateBarycenter( *(atom->pos()), true ) ;
+        }
+      }
+
+      // Remove H-Atoms of the fragment.
+      foreach( Primitive* p, addedPrim->subList(Primitive::AtomType) )
+      {
+        Atom *a=static_cast<Atom*>( p ) ;
+        if( a!=NULL && a->type()==Primitive::AtomType && a->isHydrogen() )
+          removeAtomWithoutHA( a ) ;
+
+        #if __WMDEBUG_MOLMANIP
+        else
+        {
+          if( a->type() != Primitive::AtomType ) 
+            mytoolbox::dbgMsg( "Bug : MoleculeManipulation::addFragmentWithoutHA : Atom type expected ..." ) ;
+        }
+        #endif
+      }
+
+      
+      #else // MY_THING
+      // This code causes problem with acetylene only ...
+      // But at the end, it doesn't check every atom of the molecule to
+      // update some information (new atoms and to update the barycenter).
+
       QList<Atom*> newAtomList, oldAtomList ; // To retreive the atoms for the bond.
       Atom *newAtom=NULL, *a1=NULL, *a2=NULL, *a3=NULL, *a4=NULL ;
       Bond *newBond=NULL ;
@@ -1118,6 +1168,7 @@ namespace Avogadro
           }
         }
       }
+      #endif
     }
 
     if( addedPrim==NULL || addedPrim->size()<=0 )
@@ -1145,6 +1196,40 @@ namespace Avogadro
 
     if( m_molecule!=NULL && fragment!=NULL )
     {
+      #if 0 // AVO_THING
+      // Original code of Avogadro
+      // (except for updateBarycenter, and the returned value).
+
+      unsigned int initialAtoms=m_molecule->numAtoms()-1 ;
+      bool emptyMol=(m_molecule->numAtoms()==0) ;
+      addedPrim = new PrimitiveList() ;
+
+      if( emptyMol )
+        initialAtoms = 0 ;
+
+      *(m_molecule) += (*fragment) ;
+      m_molecule->update() ;
+
+      if( emptyMol )  // we'll miss atom 0, so add it now
+        addedPrim->append( m_molecule->atom(0) ) ;
+
+      foreach( Atom *atom, m_molecule->atoms() )
+      {
+        if( atom->index() > initialAtoms )
+        {
+          addedPrim->append( const_cast<Atom*>(atom) ) ;
+
+          // Update barycenter.
+          updateBarycenter( *(atom->pos()), true ) ;
+        }
+      }
+      #endif
+
+      #if 0 // MY_THING
+      // This code causes problem with acetylene only ...
+      // But at the end, it doesn't check every atom of the molecule to
+      // update some information (new atoms and to update the barycenter).
+
       QList<Atom*> newAtomList, oldAtomList ; // To retreive the atoms for the bond.
       Atom *newAtom=NULL, *a1=NULL, *a2=NULL, *a3=NULL, *a4=NULL ;
       Bond *newBond=NULL ;
@@ -1199,7 +1284,60 @@ namespace Avogadro
           addedPrim->append( newBond ) ;
         }
       }
-    }
+      #endif
+
+
+      #if 1 // MY_THING 2   
+      QList<int> map ; // Create a temporary map from the old indices to the new for bonding
+      Atom *newAtom=NULL, *a1=NULL, *a2=NULL ;
+      Bond *newBond=NULL ;
+
+      addedPrim = new PrimitiveList() ;
+
+      // "Copy" all atoms.
+      foreach( Atom *oldAtom, fragment->atoms() )
+      {        
+        // "Copy" atom of the fragment.
+        newAtom = addAtomWithoutHA( const_cast<Eigen::Vector3d*>(oldAtom->pos()), oldAtom->atomicNumber() ) ;
+        // TODO : addAtomWithoutHA( oldAtom ) ;
+          //m_atomicNumber = other.m_atomicNumber; //d->formalCharge = other.formalCharge();
+          //d->customLabel = other.customLabel(); //d->customColorName = other.customColorName();
+          //d->customRadius = other.customRadius();
+
+        // Store for the return of the function.
+        addedPrim->append( newAtom ) ;
+        map.push_back( newAtom->id() ) ;
+      }
+
+      foreach( Bond *oldBond, fragment->bonds() )
+      {
+        a1 = m_molecule->atomById( map.at( fragment->atomById(oldBond->beginAtomId())->index() ) ) ;
+        a2 = m_molecule->atomById( map.at( fragment->atomById(oldBond->endAtomId())->index() ) ) ;
+
+        if( a1!=NULL && a2!=NULL )
+        {
+          // "Copy" bond of the fragment.
+          newBond = addBondWithoutHA( a1, a2, oldBond->order() ) ;
+
+          // Store for the return of the function.
+          addedPrim->append( newBond ) ;
+        }
+      }
+
+      foreach( Residue *r, fragment->residues() )
+      {
+        Residue *residue = m_molecule->addResidue() ;
+        residue->setChainNumber( r->chainNumber() ) ;
+        residue->setChainID( r->chainID() ) ;
+        residue->setNumber( r->number() ) ;
+        residue->setName( r->name() ) ;
+
+        foreach( unsigned int atomId, r->atoms() ) 
+          residue->addAtom( map.at(atomId) ) ;
+        residue->setAtomIds( r->atomIds() ) ;
+      }
+      #endif
+    }    
 
     if( addedPrim==NULL || addedPrim->size()<=0 )
     {
@@ -1209,6 +1347,7 @@ namespace Avogadro
     }
     else
       return addedPrim ;
+    
   }
 
 
@@ -1464,10 +1603,11 @@ namespace Avogadro
           // Open Babel indexes atoms from 1, not 0
           OpenBabel::OBBuilder::Connect( obmol, startAtomIndex+1, endAtomIndex+1 ) ;
 
-          // Adjust the hydrogen of the startAtom.
-          //addHydrogen_p( &obmol, startAtom ) ; //
+         
+          // Do not adjust Hydrogen on startAtom because it is useless.
+          // Because : we do not remove Hydrogen on startAtom.
 
-          // Adjust the hydrogen of the endAtom.
+          // Instead, Adjust the hydrogen of the endAtom.
           addHydrogen_p( &obmol, endAtom ) ; //
 
           // Clear and initiate the Avogadro molecule by the OpenBabel molecule.
@@ -1481,18 +1621,7 @@ namespace Avogadro
       if( endAtom != NULL )
       {
         int i=0 ;
-        bool find=false ;
         QList<Atom*> neighborsStartAtom ;
-        Atom *startA=m_molecule->atomById( startAtomIndex ) ;
-        Atom *n=NULL ;
-
-        // Get the Hydrogen neighbors of the start atom.
-        foreach( unsigned long ai, startA->neighbors() )
-        {
-          n = m_molecule->atomById( ai ) ;
-          if( n->isHydrogen() )
-            neighborsStartAtom.append( n ) ;
-        }
 
         // Initiate the primitive list of selected atoms ...
         if( addedPrim == NULL )
@@ -1504,22 +1633,12 @@ namespace Avogadro
         resetBarycenter_p() ;
         foreach( Atom *atom, m_molecule->atoms() )
         {
-          find = false ;
           updateBarycenter( *(atom->pos()), true ) ;
 
           if( atom->index() >= endAtomIndex )
           {
-            foreach( Atom *a, neighborsStartAtom )
-            {
-              if( atom == a )
-                find = true ;
-            }
-
-            if( !find /*&& i<nbAtomInFrag*/ )
-            {
-              i ++ ;
-              addedPrim->append( atom ) ;
-            }
+            i ++ ;
+            addedPrim->append( atom ) ;
           }
         }
       }
@@ -2663,6 +2782,30 @@ namespace Avogadro
     frag->setOBMol( &obfragment ) ;
     frag->center() ;
     ifs.close() ;
+
+    #if __WMDEBUG_MOLMANIP
+    QString str=tr("nbAtom:") + QString::number(frag->numAtoms()) + tr(", nbBond:") + QString::number(frag->numBonds()) ;
+    mytoolbox::dbgMsg(str) ;
+
+    foreach( Atom* a, frag->atoms() )
+    {
+      str = QString::number(a->atomicNumber()) + tr("(valence:") + QString::number(a->valence()) + tr(")")
+              + tr(": nbBond:") + QString::number(a->bonds().size()) 
+              + tr(", nbNeighbors:") + QString::number(a->neighbors().size()) ;
+      mytoolbox::dbgMsg(str) ;
+
+      foreach( unsigned int bId, a->bonds() )
+      {
+        Bond *b=m_molecule->bondById(bId) ;
+
+        if( b == NULL )
+          str = QString::number(bId) + tr(":order:00 : Bug ...") ;
+        else
+          str = QString::number(bId) + tr(":order:") + QString::number(b->order()) ;
+        mytoolbox::dbgMsg(str) ;
+      }
+    }
+    #endif
 
     return frag ;
   }

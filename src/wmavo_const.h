@@ -91,7 +91,9 @@
 #define WMAVO_CONNECTION_TIMEOUT 5.0 // Computer lets few time to the connection of the Wiimote (in seconde).
 #define WMAVO_IRSENSITIVITY 3
 #define WMAVO_WIWO_IR_SMOOTH 10
-#define WMAVO_ACTIVATEMENU_AFTER 1000 //ms
+#define WMAVO_ACTIVATEMENU_AFTER 700 //ms // 1000
+#define WMAVO_DELETEALL_AFTER 2000 //ms // 3000
+#define WMAVO_ZOOM_STEP 0.01 // For zoom, it is a step.
 
 #define WMAVO_CURSOR_CALIBRATION_X 2.4 // 2.5
 #define WMAVO_CURSOR_CALIBRATION_Y 2.4 // 3.0
@@ -103,7 +105,7 @@
 
 #define WMAVO_ATOM_MAX_MOVE_Z 0.08 //0.1
 #define WMAVO_ATOM_SMOOTHED_MOVE_XY 4
-#define WMAVO_ATOM_MAX_MOVE_FOR_PROHITED_MOVE 0.001 // 0.0 // For zoom, it is a step.
+#define WMAVO_ATOM_MAX_MOVE_FOR_PROHITED_MOVE 0.001 // 0.0
 #define WMAVO_ATOM_ROTATION_SPEED 0.2
 
 #define WMAVO_WM_XY_SELECTING 18 // Nb. pixel before activate move of atom. (Not use)

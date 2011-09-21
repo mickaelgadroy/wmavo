@@ -93,5 +93,50 @@ done
 
 cd ../../script
 
+
+# Copy some fragments.
+
+which avogadro
+if [ $? -ne 0 ] ; then
+  echo "error: Avogadro seems not to exist ..."
+  echo "error: Instalation aborted."
+  exit 1
+fi
+
+version_avo=`avogadro --version | grep "^Avogadro:" | cut -d " " -f 2 | sed -re 's/\t//g'`
+version_avo_major=`echo $version_avo | cut -d "." -f 1`
+version_avo_minor=`echo $version_avo | cut -d "." -f 2`
+version_avo_patch=`echo $version_avo | cut -d "." -f 3`
+
+dir_mycml="../img/fragments/cml/"
+
+if [[ $version_avo_major -le 0 ]] || [[ $version_avo_major -le 1  && $version_avo_minor -le 0 ]] ; then
+  dir_avocml="/usr/share/avogadro/fragments/"
+else
+  dir_avocml="/usr/local/share/avogadro/fragments/"
+fi
+
+# if source directory noexisting ?
+if [ ! -d $dir_mycml ] ; then
+  echo "error: The directory $dir_mycml is not present !"
+  echo "error: Some fragments will lack."
+  exit 1
+fi
+
+echo ""
+echo "info: Copy fragments from $dir_mycml to $dir_avocml"
+sudo chmod -R 755 $dir_mycml/*
+sudo cp -npR $dir_mycml/* $dir_avocml
+# -R : recursive (+ directory)
+# -p : preserve ownership, mode, timestamps
+# -n : do not overwrite
+
+if [ $? -ne 0 ] ; then
+  echo "error: Copy of fragments has known a problem."
+  echo "error: Instalation aborted."
+  exit 1
+fi
+
+echo "info: Process finished. SUCCESS!"
 exit 0
 

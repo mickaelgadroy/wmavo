@@ -5,10 +5,10 @@
 
 
 # Information about dependency.
-echo "Verify the dependency with (1_dependency.sh) script"
-echo "before to continue the plugin compilation."
-echo "(Here the user account is enough.)"
-echo "(Press any button to continue, or press Ctl+C to abort.)"
+echo "info: Verify the dependency with (1_dependency.sh) script"
+echo "info:   before to continue the plugin compilation."
+echo "info:   (Here the user account is enough.)"
+echo "info:   (Press any button to continue, or press Ctl+C to abort.)"
 read
 
 which avogadro
@@ -18,13 +18,60 @@ if [ $? -ne 0 ] ; then
   exit 1
 fi
 
-version_avo=`avogadro --version | head -1 | cut -d " " -f 2 | sed -re 's/\t//g'`
+version_avo=`avogadro --version | grep "^Avogadro:" | cut -d " " -f 2 | sed -re 's/\t//g'`
 
-echo "Avogadro version:$version_avo"
+echo "info: Avogadro version:$version_avo"
 version_avo_major=`echo $version_avo | cut -d "." -f 1`
 version_avo_minor=`echo $version_avo | cut -d "." -f 2`
 version_avo_patch=`echo $version_avo | cut -d "." -f 3`
 
+
+login=`whoami`
+echo "info: The current user is : $login."
+
+
+if [ $login == "root" ] ; then
+
+  if [[ $version_avo_major -le 0 ]] || [[ $version_avo_major -le 1  && $version_avo_minor -le 0 ]] ; then
+    dir_lib="/usr/lib/avogadro/$version_avo_major""_$version_avo_minor/extensions/"
+  else
+    dir_lib="/usr/local/lib/avogadro/$version_avo_major""_$version_avo_minor/extensions/"
+  fi
+  
+  echo "info: Be careful, you are root. The installation continues in"
+  echo "info:   $dir_lib"
+  echo "info:   (Press any button to continue, or press Ctl+C to abort.)"
+  read
+  
+  if [ ! -d $dir_lib ] ; then
+    echo "error: $dir_lib doesn't exist ..."
+    echo "error: Instalation aborted."
+    exit 1
+  fi
+  
+else
+
+  ## Copy (2nd version) the lib in user directory.
+  dir_lib="/home/`whoami`/.avogadro"
+  if [ ! -d $dir_lib ] ; then
+    mkdir $dir_lib
+  fi
+
+  dir_lib="$dir_lib/$version_avo_major""_$version_avo_minor"
+  if [ ! -d $dir_lib ] ; then
+    mkdir $dir_lib
+  fi
+
+  dir_lib="$dir_lib/plugins"
+  if [ ! -d $dir_lib ] ; then
+    mkdir $dir_lib
+  fi
+
+  dir_lib="$dir_lib/extensions/"
+  if [ ! -d $dir_lib ] ; then
+    mkdir $dir_lib
+  fi
+fi
 
 echo ""
 echo "info: Part II: Compilation and installation of wiimote plugins"
@@ -60,7 +107,7 @@ for dir in {en,ex,tool} ; do
   cd $build_dir
 
   echo ""  
-  echo "info: Cmake ..."
+  echo "info: Cmake ($dir)"
   cmake -G"Unix Makefiles" ../
   #if cmake error ...
   if [ $? -ne 0 ] ; then
@@ -70,7 +117,7 @@ for dir in {en,ex,tool} ; do
   fi
 
   echo ""
-  echo "info: Make ..."
+  echo "info: Make ($dir)"
   #sudo make clean
   make
   #if make error ...
@@ -90,34 +137,7 @@ for dir in {en,ex,tool} ; do
     dir_type="tools"
   fi
     
-  ## Copy (1st version) the lib in Avogadro directory.
-  # Be careful with the version.
-  #if [[ $version_avo == "1.0.1" || $version_avo == "1.0.0" ]] ; then
-  #  dir_lib="/usr/lib/avogadro/1_0/$dir_type/"
-  #else
-  #  dir_lib="/usr/local/lib/avogadro/$version_avo_major""_$version_avo_minor/$dir_type/"
-  #fi
-  
-  ## Copy (2nd version) the lib in user directory.
-  dir_lib="/home/`whoami`/.avogadro"
-  if [ ! -d $dir_lib ] ; then
-    mkdir $dir_lib
-  fi
-  
-  dir_lib="$dir_lib/$version_avo_major""_$version_avo_minor"
-  if [ ! -d $dir_lib ] ; then
-    mkdir $dir_lib
-  fi
-  
-  dir_lib="$dir_lib/plugins"
-  if [ ! -d $dir_lib ] ; then
-    mkdir $dir_lib
-  fi
 
-  dir_lib="$dir_lib/extensions/"
-  if [ ! -d $dir_lib ] ; then
-    mkdir $dir_lib
-  fi
   
   ok=0
   while [ $ok -eq 0 ] ; do
@@ -126,7 +146,6 @@ for dir in {en,ex,tool} ; do
     echo "info: The $dir_type plugin will be copied in:"
     echo $dir_lib
     echo "info: This repertory seems ok ? (y/n) (y:default value)"
-    
     read a
     
     if [ "$a" != "" ] ; then
@@ -152,4 +171,5 @@ for dir in {en,ex,tool} ; do
 done
 
 cd ../script
+echo "info: Process finished with SUCCESS!"
 exit 0
