@@ -12,7 +12,7 @@
 # Information about dependency.
 echo "info: Verify the dependency with (1_dependency.sh) script"
 echo "info:   before to continue the plugin compilation."
-echo "info:   (Here the user account is enough.)"
+echo "info:   (Here the user account is enough and RECOMMEND!)"
 echo "info:   (Press any button to continue, or press Ctl+C to abort.)"
 read
 

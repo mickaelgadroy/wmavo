@@ -318,7 +318,7 @@ namespace Avogadro
         if( !m_menuActive && !m_periodicTable->isVisible() )
         {
           //m_periodicTable->show() ;
-          bool hasAddHydrogen=m_moleculeManip->hasAddedHydrogen() ;
+          //bool hasAddHydrogen=m_moleculeManip->hasAddedHydrogen() ;
           int nbSelectedAtom=0 ;
           bool selectH=false ;
 
