@@ -41,27 +41,22 @@ endif()
 if( WIN32 )
 # Windows.
   # wiiuse/wiiusecpp libraries.
-  set( wiiuse_libdir "${wiiuse_dir}/lib_win32" )
-  set( wiiuse_libddir "${wiiuse_dir}/lib_win32/debug" )
+  if( "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
+    set( wiiuse_lib_dir "${wiiuse_dir}/lib_win32/debug" )
+  else()
+    set( wiiuse_lib_dir "${wiiuse_dir}/lib_win32" )
+  endif()
 
 else() 
 # Unix ...
   set( wiiuse_libdir /usr/lib ) # ".lib"
-  set( wiiuse_libddir /usr/lib ) # ".lib"
   
   set( OpenBabel2_include_DIR "/usr/include/openbabel-2.0/" )
   
   # None, Release, Debug ...
   # Windows : Debug and Release : ok
   # Linux : Release : ok, Debug : some librairies (like wiiuse) are not compiled for.
-  set( CMAKE_BUILD_TYPE "Release" )
 
-endif()
-
-if( "${CMAKE_BUILD_TYPE}" STREQUAL "Release" )
-  set( wiiuse_lib_dir ${wiiuse_libdir} )
-else()
-  set( wiiuse_lib_dir ${wiiuse_libddir} )
 endif()
 
 if( NOT EXISTS "${wiiuse_lib_dir}" )
@@ -161,8 +156,11 @@ else()
     if( WIN32 )
       #set( Avogadro_DIR "C:/src/avogadro-1.1.0/build" ) # .h
       #set( Avogadro_DIR "C:/Program Files (x86)/Avogadro/bin/avogadro" )
-      set( Avogadro_DIR "C:/Program Files (x86)/Avogadro-1.0.3_debug/bin/avogadro" )
-      #message( STATUS "Avogadro_DIR is by default : " ${Avogadro_DIR} )
+      if( "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
+        set( Avogadro_DIR "C:/Program Files (x86)/Avogadro-1.0.3_debug/bin/avogadro" )
+      else()
+        set( Avogadro_DIR "C:/Program Files (x86)/Avogadro-1.0.3_release/bin/avogadro" )
+      endif()
     endif()
   else()
     #message( STATUS "Avogadro_DIR is : " ${Avogadro_DIR} )
@@ -191,7 +189,11 @@ else()
   #set( OpenBabel22_include_DIR "C:/src/openbabel-2.3.0/windows-vc2008/build/include" ) # .h
   if( NOT EXISTS "${OPENBABEL2_INCLUDE_DIR}" )
     if( WIN32 )
-      set( OPENBABEL2_INCLUDE_DIR "C:/src/openbabeld-2.3.0/windows-vc2008/install/include/openbabel-2.0" ) # .h
+      if( "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
+        set( OPENBABEL2_INCLUDE_DIR "C:/src/openbabeld-2.3.0/windows-vc2008/install/include/openbabel-2.0" ) # .h
+      else()
+        set( OPENBABEL2_INCLUDE_DIR "C:/src/openbabel-2.3.0/windows-vc2008/install/include/openbabel-2.0" ) # .h
+      endif()
     else()
       set( OPENBABEL2_INCLUDE_DIR "/usr/include/openbabel-2.0/" )
       

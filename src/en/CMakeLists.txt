@@ -44,9 +44,11 @@ else()
   # Avogadro needs.
   if( NOT EXISTS "${Avogadro_DIR}" )
     if( WIN32 )
-      #set( Avogadro_DIR "C:/src/avogadro-1.1.0/build" ) # .h
-      set( Avogadro_DIR "C:/Program Files (x86)/Avogadro-1.0.3_debug/bin/avogadro" )
-      #message( STATUS "Avogadro_DIR is by default : " ${Avogadro_DIR} )
+      if( "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
+        set( Avogadro_DIR "C:/Program Files (x86)/Avogadro-1.0.3_debug/bin/avogadro" )
+      else()
+        set( Avogadro_DIR "C:/Program Files (x86)/Avogadro-1.0.3_release/bin/avogadro" )
+      endif()
     endif()
   else()
     #message( STATUS "Avogadro_DIR is : " ${Avogadro_DIR} )
@@ -75,7 +77,11 @@ else()
   #set( OpenBabel22_include_DIR "C:/src/openbabel-2.3.0/windows-vc2008/build/include" ) # .h
   if( NOT EXISTS "${OPENBABEL2_INCLUDE_DIR}" )
     if( WIN32 )
-      set( OPENBABEL2_INCLUDE_DIR "C:/src/openbabeld-2.3.0/windows-vc2008/install/include/openbabel-2.0" ) # .h
+      if( "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
+        set( OPENBABEL2_INCLUDE_DIR "C:/src/openbabeld-2.3.0/windows-vc2008/install/include/openbabel-2.0" ) # .h
+      else()
+        set( OPENBABEL2_INCLUDE_DIR "C:/src/openbabel-2.3.0/windows-vc2008/install/include/openbabel-2.0" ) # .h
+      endif()
     else()
       set( OPENBABEL2_INCLUDE_DIR "/usr/include/openbabel-2.0/" )
       
