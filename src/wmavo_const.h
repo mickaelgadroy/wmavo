@@ -33,7 +33,7 @@
 #define __WMDEBUG_WMTOOL 0
 #define __WMDEBUG_CHEMWRAPPER 0
 #define __WMDEBUG_WMDEVICE 0
-#define __WMDEBUG_MOLMANIP 1
+#define __WMDEBUG_MOLMANIP 0
 
 
 ///**********************************************************

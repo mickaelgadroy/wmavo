@@ -118,8 +118,8 @@ namespace Avogadro
                                         QMenu::item { background-color: transparent; } \
                                         QMenu::item:selected { background-color: #654321; }" ) ;
 
-    m_contextMenuMain->addAction( m_periodicTableAct ) ;
     
+    m_contextMenuMain->addAction( m_periodicTableAct ) ;
     m_contextMenuMain->addMenu( createMenuSubstituteAtomByFragment() ) ;
     m_contextMenuMain->addSeparator() ;
 
@@ -145,7 +145,8 @@ namespace Avogadro
 
     // Init default actions.
     m_contextMenuMain->setDefaultAction( m_cancelAct ) ;
-    m_contextMenuMain->setActiveAction( m_periodicTableAct ) ;
+    m_contextMenuMain->setActiveAction( m_periodicTableAct ) ; // m_contextMenuMain->actions().at(0)
+        // Be careful, a 2nd setActiveAction exist below.
   }
 
 
@@ -318,7 +319,7 @@ namespace Avogadro
         if( !m_menuActive && !m_periodicTable->isVisible() )
         {
           //m_periodicTable->show() ;
-          bool hasAddHydrogen=m_moleculeManip->hasAddedHydrogen() ;
+          //bool hasAddHydrogen=m_moleculeManip->hasAddedHydrogen() ;
           int nbSelectedAtom=0 ;
           bool selectH=false ;
 
