@@ -140,6 +140,17 @@ namespace Avogadro
     const Eigen::Vector3d& getBarycenterMolecule() ;
     void recalculateBarycenter() ;
     // @}
+    
+    /** 
+     * @name For the other referentiel
+     * @{ */
+    void setRotationAxe( Eigen::Vector3d *p1Ref, Eigen::Vector3d *p2, Bond* axeRot ) ; 
+        //< Set m_rotationAxe.
+    void resetRotationAxe() ; //< Put m_rotationAxe to zero.
+    Eigen::Vector3d getRotationAxe() ;
+    Bond* getRotationAxeBond() ;
+    Eigen::Vector3d getRotationAxePoint() ; //< A point on the rotation axe.
+    // @}
 
     /** 
       * @name Getter/Setter/Tester.
@@ -252,6 +263,15 @@ namespace Avogadro
       Eigen::Vector3d m_barycenterRefMolecule ;
       int m_sumOfWeights ;
       Eigen::Vector3d m_atomsBarycenter ;
+      // @}
+      
+      /**
+       * @name Some other referentiel
+       * Stock some referentiel like axe of rotation (according to a bond) ...
+       * @{ */
+      Eigen::Vector3d m_rotationAxe ; //< (0;0;0) = no defined axe.
+      Bond *m_rotationAxeBond ; //< Just for information (and manage selection)
+      Eigen::Vector3d m_rotationAxePoint ; //< A point on the rotation axe.
       // @}
 
       /**

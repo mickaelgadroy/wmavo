@@ -1333,6 +1333,7 @@ namespace Avogadro
     {
       bool emptyMol=(m_molecule->numAtoms() == 0) ;
       Atom *startAtom=NULL, *endAtom=NULL ;
+      unsigned long startAtomIndex=0, endAtomIndex=0 ;
       int nbAtomInFrag=fragment->numAtoms() ;
 
       // Add fragment in the molecule.
@@ -1365,6 +1366,7 @@ namespace Avogadro
           }
         }
 
+        startAtomIndex = startAtom->index() ;
         removeHydrogen_p( startAtom ) ;
 
 
@@ -1399,10 +1401,12 @@ namespace Avogadro
           // else
             // Stay like that. Else, active a message error where there is not.
         }
+        
+        endAtomIndex = endAtom->index() ;
 
 
         if( (startAtom==NULL || endAtom==NULL) //  If something to do
-            || (startAtom->index() == endAtom->index()) // If bug ...
+            || (startAtomIndex == endAtomIndex ) // If bug ...
           )
         {
           mytoolbox::dbgMsg( " BUG : The connection between the fragment and the molecule are eguals !!" ) ;
@@ -1444,6 +1448,15 @@ namespace Avogadro
           if( atom->index()>=endAtom->index() && i++<nbAtomInFrag )
             addedPrim->append( atom ) ;
         }
+        
+        // Init the rotation axe before turn around.
+        Bond *b=m_molecule->bond(startAtomIndex, endAtomIndex) ;
+        Atom *a1=m_molecule->atom( startAtomIndex ) ;
+        Atom *a2=m_molecule->atom( endAtomIndex ) ;
+        if( a1!=NULL || a2!=NULL || b!=NULL )
+          setRotationAxe( const_cast<Eigen::Vector3d*>(a1->pos()), 
+                          const_cast<Eigen::Vector3d*>(a2->pos()), 
+                          b ) ;
       }
     }
 
@@ -1627,6 +1640,15 @@ namespace Avogadro
         (*addedPrim) = matchedAtoms ;
       }
       */
+      
+      // Init the rotation axe before turn around.
+      Bond *b=m_molecule->bond( startAtomIndex, endAtomIndex ) ;
+      Atom *a1=m_molecule->atom( endAtomIndex ) ;
+      Atom *a2=m_molecule->atom( startAtomIndex ) ;
+      if( a1!=NULL || a2!=NULL || b!=NULL )
+          setRotationAxe( const_cast<Eigen::Vector3d*>(a1->pos()), 
+                          const_cast<Eigen::Vector3d*>(a2->pos()), 
+                          b ) ;
     }
 
     return addedPrim ;
@@ -2822,6 +2844,68 @@ namespace Avogadro
   void MoleculeManipulation::invertHasAddHydrogen()
   {
     m_addHydrogens = !m_addHydrogens ;
+  }
+ 
+  
+  /**
+   * Set m_rotationAxe.
+   * @param p1Ref 1st point to calcul a vector AND the "centre of the rotation".
+   * @param p2 2nd point to calcul a vector.
+   * @param axeRot If !NULL, the bond will be used to have a visual information.
+   */
+  void MoleculeManipulation::setRotationAxe( Eigen::Vector3d *p1Ref, Eigen::Vector3d *p2, Bond* axeRot )
+  {
+      m_rotationAxeBond = axeRot ;
+      
+      if( p1Ref==NULL || p2==NULL )
+      {
+          m_rotationAxe = m_vect3d0 ;
+          m_rotationAxePoint = m_vect3d0 ;
+      }
+      else
+      {
+          m_rotationAxe = (*p1Ref) - (*p2) ;
+          m_rotationAxePoint = (*p1Ref) ;
+      }
+  }
+  
+  
+  /**
+   * Set m_rotationAxe to zero.
+   */
+  void MoleculeManipulation::resetRotationAxe()
+  {
+      m_rotationAxe = m_vect3d0 ;
+      m_rotationAxeBond = NULL ;
+      m_rotationAxePoint = m_vect3d0 ;
+  }
+  
+  /**
+   * Get the rotation axe vector.
+   * @return Eigen::Vector object not nul if rotation axe exists.
+   */
+  Eigen::Vector3d MoleculeManipulation::getRotationAxe()
+  {
+      return m_rotationAxe ;
+  }
+
+
+  /**
+   * Get the bond used for the rotation axe.
+   * @return Bond* if existing bond ; else NULL.
+   */
+  Bond* MoleculeManipulation::getRotationAxeBond()
+  {
+      return m_rotationAxeBond ;
+  }
+  
+  /**
+   * Get one point on the rotation axe.
+   * @return Eigen::Vector object not nul if rotation axe exists.
+   */
+  Eigen::Vector3d MoleculeManipulation::getRotationAxePoint()
+  {
+      return m_rotationAxePoint ;
   }
 
 }

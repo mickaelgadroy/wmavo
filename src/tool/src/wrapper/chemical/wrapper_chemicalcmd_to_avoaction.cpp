@@ -136,7 +136,8 @@ namespace Avogadro
 
     // Adjustment for the rotation of atoms.
     if( WMAVO_IS2(state,WMAVO_CAM_ROTATE_BYWM) && m_widget->selectedPrimitives().size()>=2 )
-    {
+    { // Disable the context menu action.
+        
       WMAVO_SETOFF2( state, WMAVO_CAM_ROTATE_BYWM ) ;
       WMAVO_SETON2( state, WMAVO_ATOM_MOVE ) ;
       WMAVO_SETON2( state, WMAVO_ATOM_ROTATE ) ;
@@ -202,43 +203,69 @@ namespace Avogadro
       { // Select only 1 object.
 
         // Just one rumble.
-        InputDevice::RumbleSettings rumble(true, true, false, false, 10 ) ;
+        InputDevice::RumbleSettings rumble( true, true, false, false, 10 ) ;
         rumble.setDistance( 0 ) ;
         InputDevice::WmDeviceData_to wmDevDataTo ;
         wmDevDataTo.setRumble( rumble ) ;
         m_wmDev->setDeviceDataTo( wmDevDataTo ) ;
 
         QPoint p=m_widget->mapFromGlobal(posCursor) ;
-        QList<Primitive*> hitList ;
-        Atom* atom=m_widget->computeClickedAtom( p ) ;
         bool hasAddHydrogen=m_moleculeManip->hasAddedHydrogen() ;
+        Atom *atom=NULL ;
+        Bond *bond=NULL ;
         
+        // One method:
+        // Not adapted here: atom = m_widget->computeClickedAtom( p ) ;
         // OR,
         // use the method below :
-        #if 0
-        QPoint p=m_widget->mapFromGlobal(posCursor) ;
         QList<GLHit> hits=m_widget->hits( p.x()-5, p.y()-5, 10, 10 ) ;
-        QList<Primitive*> hitList ;
 
+        // Search the 1st primitive which is interesting.
         foreach( const GLHit& hit, hits )
         {
           if( hit.type() == Primitive::AtomType )
           {
-            //cout << "atom !!" << endl ;
-            Atom *atom = m_widget->molecule()->atom( hit.name() ) ;
-            hitList.append(atom) ;
+            atom = m_widget->molecule()->atom( hit.name() ) ;
+            break ;
+          }
+          
+          if( hit.type() == Primitive::BondType )
+          {
+            bond = m_widget->molecule()->bond( hit.name() ) ;
+            break ;
           }
         }
-        #endif
 
-        if( atom == NULL )
+        if( atom==NULL && bond==NULL )
         {
           m_widget->clearSelected() ;
+          m_moleculeManip->resetRotationAxe() ;
         }
+        /*else if( bond != NULL )
+        {
+          Bond *oldBond=m_moleculeManip->getRotationAxeBond() ;
+          m_moleculeManip->setRotationAxe( bond ) ;
+          
+          if( oldBond != NULL )
+          { // Unselect the previous bond used to the rotation axe.
+              
+              PrimitiveList pl ;
+              pl.append( oldBond ) ;
+              m_widget->setSelected( pl, false ) ;
+          }
+          
+          // Select the new bond used to the rotation axe.
+          PrimitiveList pl ;
+          pl.append( bond ) ;
+          m_widget->setSelected( pl, true ) ;
+        }*/
         else
         {
+          m_moleculeManip->resetRotationAxe() ;
+            
           if( m_isCalculDistDiedre )
-          { // Manage the selection of atom. It works with an association of the WmTool class.
+          { // Manage the selection of atom for the calculation of distance & Co.
+            // It works with an association of the WmTool class.
 
             // Put the "calcul distance" mode of the WrapperChemicalCmdToAvoAction class to off.
             m_isCalculDistDiedre = false ;
@@ -250,7 +277,9 @@ namespace Avogadro
             // it is necessary to select an atom for the "calcul distance" mode.
           }
           else
-          {
+          { // Manage the selection of one atom.
+            
+            QList<Primitive*> hitList ;
             hitList.append(atom) ;
             m_widget->toggleSelected(hitList) ;
             //m_widget->setSelected(hitList, true) ;
@@ -1365,6 +1394,8 @@ namespace Avogadro
       }
       else if( WMAVO_IS2(wmactions_in,WMAVO_ATOM_ROTATE) )
       {
+        Eigen::Vector3d rotAxe=m_moleculeManip->getRotationAxe() ;
+        
         if( m_tmpBarycenter == m_vect3d0 )
         { // Calculate the barycenter of selected atoms.
 
@@ -1384,34 +1415,54 @@ namespace Avogadro
 
           m_tmpBarycenter = tmp / i ;
         }
+          
+        if( rotAxe != m_vect3d0 )
+        {
+            // Rotate the selected atoms about the center
+            // rotate only selected primitives
+            transfAtomRotate_out.matrix().setIdentity();
 
-        // Rotate the selected atoms about the center
-        // rotate only selected primitives
-        transfAtomRotate_out.matrix().setIdentity();
+            // Return to the center of the 3D-space.
+            transfAtomRotate_out.translation() = m_tmpBarycenter ;
+            
+            changer m_tmpBarycenter -> rotationAxePiont
+            normer rotAxe
 
-        // Return to the center of the 3D-space.
-        transfAtomRotate_out.translation() = m_tmpBarycenter ;
+            // Apply rotations.
+            transfAtomRotate_out.rotate(
+              Eigen::AngleAxisd( (rotAtomdegX_in/90.0)* 0.1, rotAxe) ) ;
+              // /90.0 => Eliminate the initial 90° rotation by the Wiimote, 
+              //            then to apply a step (in unknown metric).
 
-        // Apply rotations.
-        transfAtomRotate_out.rotate(
-          Eigen::AngleAxisd( (rotAtomdegX_in/90.0)* 0.1, camBackTransformedYAxis) );
+            transfAtomRotate_out.rotate(
+              Eigen::AngleAxisd( (rotAtomdegY_in/90.0)*-0.1, rotAxe ) ) ;
 
-        transfAtomRotate_out.rotate(
-          Eigen::AngleAxisd( (rotAtomdegY_in/90.0)*-0.1, camBackTransformedXAxis) );
+            // Return to the object.
+            transfAtomRotate_out.translate( -m_tmpBarycenter ) ;
+        }
+        else
+        { // Rotation around the barycenter.
+            
+            // Rotate the selected atoms about the center
+            // rotate only selected primitives
+            transfAtomRotate_out.matrix().setIdentity();
 
-        /*
-        m_transfAtomRotate_out.rotate(
-            Eigen::AngleAxisd( m_vectAtomTranslate[1]*WMAVO_ATOM_ROTATION_SPEED,
-                        camBackTransformedXAxis)
-            );
-        m_transfAtomRotate_out.rotate(
-            Eigen::AngleAxisd( m_vectAtomTranslate[0]*(-WMAVO_ATOM_ROTATION_SPEED),
-                        camBackTransformedYAxis)
-            );
-        */
+            // Return to the center of the 3D-space.
+            transfAtomRotate_out.translation() = m_tmpBarycenter ;
 
-        // Return to the object.
-        transfAtomRotate_out.translate( -m_tmpBarycenter ) ;
+            // Apply rotations.
+            transfAtomRotate_out.rotate(
+              Eigen::AngleAxisd( (rotAtomdegX_in/90.0)* 0.1, camBackTransformedYAxis) ) ;
+              // /90.0 => Eliminate the initial 90° rotation by the Wiimote, 
+              //            then to apply a step (in unknown metric).
+
+            transfAtomRotate_out.rotate(
+              Eigen::AngleAxisd( (rotAtomdegY_in/90.0)*-0.1, camBackTransformedXAxis) ) ;
+
+            // Return to the object.
+            transfAtomRotate_out.translate( -m_tmpBarycenter ) ;
+        }
+        
         isMoved = true ;
       }
       else
