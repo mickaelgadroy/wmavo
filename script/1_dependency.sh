@@ -116,7 +116,7 @@ version_avo_patch=`echo $version_avo | cut -d "." -f 3`
 
 dir_mycml="../img/fragments/cml/"
 
-if [[ $version_avo_major -le 0 ]] || [[ $version_avo_major -le 1  && $version_avo_minor -le 0 ]] ; then
+if [[ $version_avo_major -le 0 ]] || [[ $version_avo_major -le 1  && $version_avo_patch -le 2 ]] ; then
   dir_avocml="/usr/share/avogadro/fragments/"
 else
   dir_avocml="/usr/local/share/avogadro/fragments/"
