@@ -195,6 +195,7 @@ namespace Avogadro
       * @{ */
     bool m_isRenderRect ;
     QPoint m_rectP1, m_rectP2 ;
+    bool m_needAnUpdateMore ;
     // @}
 
     /**

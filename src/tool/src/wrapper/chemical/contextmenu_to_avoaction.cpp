@@ -587,6 +587,7 @@ namespace Avogadro
         << "carboxylic_acids/formic_acid.cml" << "-COOH"
         << "amines/ammonia.cml" << "-NH2"
         << "alcohols/alcohol.cml" << "-OH"
+        << "alkynes/acetylene.cml" << "-actylene"
         << "cyclic alkanes/cyclopentane.cml" << "-cyclopentane"
         << "cyclic alkanes/cyclohexane.cml" << "-cyclohexane"
         << "aromatics/benzene.cml" << "-phenyl"

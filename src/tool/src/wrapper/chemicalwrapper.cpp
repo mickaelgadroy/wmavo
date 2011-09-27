@@ -338,6 +338,10 @@ namespace WrapperInputToDomain
   {
     if( m_isRunning )
     {
+      #if __WMDEBUG_CHEMWRAPPER
+      mytoolbox::dbgMsg( "ChemicalWrap::stopPoll() m_isRunning=true" ) ;
+      #endif
+
       // Stop the working thread.
       m_isRunning = false ;
       while( m_threadFinished == 0 ) ;
@@ -358,6 +362,10 @@ namespace WrapperInputToDomain
           dataFrom = NULL ;
         }
       }
+      
+      #if __WMDEBUG_CHEMWRAPPER
+      mytoolbox::dbgMsg( "ChemicalWrap::stopPoll() m_cirBufferFrom->isEmpty()" ) ;
+      #endif
 
       while( !m_cirBufferTo->isEmpty() )
       {
@@ -368,10 +376,17 @@ namespace WrapperInputToDomain
           dataTo = NULL ;
         }
       }
+      
+      #if __WMDEBUG_CHEMWRAPPER
+      mytoolbox::dbgMsg( "ChemicalWrap::stopPoll() m_cirBufferTo->isEmpty()" ) ;
+      #endif
     }
 
     // Stop the event loop thread (run() method).
     m_wrapperThread.quit() ;
+    #if __WMDEBUG_CHEMWRAPPER
+    mytoolbox::dbgMsg( "ChemicalWrap::stopPoll() m_wrapperThread.quit()" ) ;
+    #endif
   }
 
   ChemicalWrapData_from* ChemicalWrap::updateDataFrom()

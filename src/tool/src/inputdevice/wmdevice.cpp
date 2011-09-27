@@ -511,11 +511,27 @@ namespace InputDevice
 
   void WmDevice::stopPoll()
   {
+    #if __WMDEBUG_CHEMWRAPPER || __WMDEBUG_WMDEVICE
+    mytoolbox::dbgMsg( "WmDevice::stopPoll()" ) ;
+    #endif
+    
     if( m_isRunning )
     {
+      #if __WMDEBUG_CHEMWRAPPER || __WMDEBUG_WMDEVICE
+      mytoolbox::dbgMsg( "WmDevice::stopPoll(): m_isRunning=true" ) ;
+      #endif
+
       // Stop the working thread.
       m_isRunning = false ;
-      while( m_threadFinished == 0 ) ;
+      #if __WMDEBUG_CHEMWRAPPER || __WMDEBUG_WMDEVICE
+      mytoolbox::dbgMsg( "WmDevice::stopPoll(): m_isRunning=false" ) ;
+      #endif
+      while( m_threadFinished == 0 )
+      {
+          #if __WMDEBUG_CHEMWRAPPER || __WMDEBUG_WMDEVICE
+          mytoolbox::dbgMsg( "WmDevice::stopPoll(): m_threadFinished == 0" ) ;
+          #endif
+      }
       
       #if __WMDEBUG_CHEMWRAPPER || __WMDEBUG_WMDEVICE
       mytoolbox::dbgMsg( "WmDevice::stopPoll() passed" ) ;
@@ -533,6 +549,10 @@ namespace InputDevice
           dataFrom = NULL ;
         }
       }
+      
+      #if __WMDEBUG_CHEMWRAPPER || __WMDEBUG_WMDEVICE
+      mytoolbox::dbgMsg( "WmDevice::stopPoll(): m_cirBufferFrom->isEmpty()" ) ;
+      #endif
 
       while( !m_cirBufferTo->isEmpty() )
       {
@@ -543,10 +563,17 @@ namespace InputDevice
           dataTo = NULL ;
         }
       }
+      
+      #if __WMDEBUG_CHEMWRAPPER || __WMDEBUG_WMDEVICE
+      mytoolbox::dbgMsg( "WmDevice::stopPoll(): m_cirBufferTo->isEmpty()" ) ;
+      #endif
     }
 
     // Stop the event loop thread (run() method).
     m_deviceThread.quit() ;
+    #if __WMDEBUG_CHEMWRAPPER || __WMDEBUG_WMDEVICE
+    mytoolbox::dbgMsg( "WmDevice::stopPoll(): m_deviceThread.quit()" ) ;
+    #endif
   }
 
   bool WmDevice::updateDataFrom()

@@ -55,6 +55,7 @@ namespace Avogadro
       m_isMoveAtom(false), m_tmpBarycenter(m_vect3d0),
 
       m_isRenderRect(false), m_rectP1(m_qpoint0), m_rectP2(m_qpoint0),
+      m_needAnUpdateMore(false),
 
       m_isAtomDraw(false), m_isBondOrder(false),
       m_drawBeginAtom(false), m_drawCurrentAtom(false), m_drawBond(false),
@@ -189,7 +190,8 @@ namespace Avogadro
   }
 
   /**
-    * Transform a wrapper action to an Avogadro action : select an atom.
+    * Transform a wrapper action to an Avogadro action : select an atom,
+   *  (or a bond to initiate a rotation axe).
     * @param wmavoAction All actions ask by the wrapper
     * @param posCursor The position where a "click" is realised
     */
@@ -408,6 +410,7 @@ namespace Avogadro
         // 2. Finish the action.
 
         m_isRenderRect = false ;
+        m_needAnUpdateMore = true ;
         m_rectP1 = QPoint( 0, 0 ) ;
         m_rectP2 = QPoint( 0, 0 ) ;
 
@@ -1277,11 +1280,13 @@ namespace Avogadro
         || WMAVO_IS2(wmavoAction,WMAVO_CAM_ZOOM)
         || WMAVO_IS2(wmavoAction,WMAVO_CAM_TRANSLATE)
         || WMAVO_IS2(wmavoAction,WMAVO_CAM_INITIAT)
+        || m_needAnUpdateMore
       )
     {
 
       //mytoolbox::dbgMsg( "WrapperChemicalCmdToAvoAction::updateForAvoActions2" ;
 
+        if( m_needAnUpdateMore ) m_needAnUpdateMore = false ;
 
       if( !m_widget->quickRender() )
       {
