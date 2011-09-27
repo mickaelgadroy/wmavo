@@ -237,30 +237,49 @@ namespace Avogadro
         }
 
         if( atom==NULL && bond==NULL )
-        {
+        { // No selection.
+            
           m_widget->clearSelected() ;
           m_moleculeManip->resetRotationAxe() ;
         }
-        /*else if( bond != NULL )
-        {
+        else if( bond != NULL )
+        { // Bond selection.
+            
+          // Get the previous bond.
           Bond *oldBond=m_moleculeManip->getRotationAxeBond() ;
-          m_moleculeManip->setRotationAxe( bond ) ;
           
-          if( oldBond != NULL )
-          { // Unselect the previous bond used to the rotation axe.
+          // Check if identical with the new.
+          if( oldBond == bond )
+          { // Disable it.
+          
+              m_moleculeManip->resetRotationAxe() ;
               
               PrimitiveList pl ;
               pl.append( oldBond ) ;
               m_widget->setSelected( pl, false ) ;
           }
+          else
+          { // Enable the new, and disable the old.
           
-          // Select the new bond used to the rotation axe.
-          PrimitiveList pl ;
-          pl.append( bond ) ;
-          m_widget->setSelected( pl, true ) ;
-        }*/
-        else
-        {
+              m_moleculeManip->setRotationAxe( bond ) ;
+
+              if( oldBond != NULL )
+              { // Unselect the previous bond used to the rotation axe.
+
+                  PrimitiveList pl ;
+                  pl.append( oldBond ) ;
+                  m_widget->setSelected( pl, false ) ;
+              }
+
+              // Select the new bond used to the rotation axe.
+              PrimitiveList pl ;
+              pl.append( bond ) ;
+              m_widget->setSelected( pl, true ) ;
+          }
+        }
+        else if( atom != NULL )
+        { // Atom seletion.
+            
           m_moleculeManip->resetRotationAxe() ;
             
           if( m_isCalculDistDiedre )
@@ -1418,16 +1437,15 @@ namespace Avogadro
           
         if( rotAxe != m_vect3d0 )
         {
+            Eigen::Vector3d rotAxePoint=m_moleculeManip->getRotationAxePoint() ;
+            
             // Rotate the selected atoms about the center
             // rotate only selected primitives
             transfAtomRotate_out.matrix().setIdentity();
 
             // Return to the center of the 3D-space.
-            transfAtomRotate_out.translation() = m_tmpBarycenter ;
+            transfAtomRotate_out.translation() = rotAxePoint ;
             
-            changer m_tmpBarycenter -> rotationAxePiont
-            normer rotAxe
-
             // Apply rotations.
             transfAtomRotate_out.rotate(
               Eigen::AngleAxisd( (rotAtomdegX_in/90.0)* 0.1, rotAxe) ) ;
@@ -1438,7 +1456,7 @@ namespace Avogadro
               Eigen::AngleAxisd( (rotAtomdegY_in/90.0)*-0.1, rotAxe ) ) ;
 
             // Return to the object.
-            transfAtomRotate_out.translate( -m_tmpBarycenter ) ;
+            transfAtomRotate_out.translate( -rotAxePoint ) ;
         }
         else
         { // Rotation around the barycenter.

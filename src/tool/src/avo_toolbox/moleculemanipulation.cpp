@@ -2864,9 +2864,45 @@ namespace Avogadro
       }
       else
       {
-          m_rotationAxe = (*p1Ref) - (*p2) ;
+          Eigen::Vector3d axeRot=(*p1Ref)-(*p2) ;
+          double sum=axeRot[0]*axeRot[0] + axeRot[1]*axeRot[1] + axeRot[2]*axeRot[2] ;
+          axeRot /= sqrt( sum ) ;
+          m_rotationAxe = axeRot ;
           m_rotationAxePoint = (*p1Ref) ;
       }
+  }
+  
+  /**
+   * Set m_rotationAxe. But not defined what is the atom used to define the referentiel point.
+   * @param axeRot Bond used to define a rotation axe.
+   */
+  void MoleculeManipulation::setRotationAxe( Bond* axeRot )
+  {
+      if( axeRot == NULL )
+      {
+          resetRotationAxe() ;
+          return ;
+      }
+
+      Atom *a1=axeRot->beginAtom() ;
+      Atom *a2=axeRot->endAtom() ;
+
+      if( a1==NULL || a2==NULL )
+      {
+          resetRotationAxe() ;
+          return ;
+      }
+
+      Eigen::Vector3d *p1=const_cast<Eigen::Vector3d*>(a1->pos()) ;
+      Eigen::Vector3d *p2=const_cast<Eigen::Vector3d*>(a2->pos()) ;
+
+      if( p1==NULL || p2==NULL )   
+      {
+          resetRotationAxe() ;
+          return ;
+      }
+      
+      setRotationAxe( p1, p2, axeRot ) ;
   }
   
   

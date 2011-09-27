@@ -144,6 +144,7 @@ namespace Avogadro
     /** 
      * @name For the other referentiel
      * @{ */
+    void setRotationAxe( Bond* axeRot ) ; //< Set m_rotationAxe.
     void setRotationAxe( Eigen::Vector3d *p1Ref, Eigen::Vector3d *p2, Bond* axeRot ) ; 
         //< Set m_rotationAxe.
     void resetRotationAxe() ; //< Put m_rotationAxe to zero.
