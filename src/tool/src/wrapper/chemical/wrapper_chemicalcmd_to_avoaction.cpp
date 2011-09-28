@@ -66,11 +66,13 @@ namespace Avogadro
       m_timeFirst(0), m_timeSecond(0), m_canDrawOther(false)
   {
     /// Initiate the objects.
+    
     m_moleculeManip = new MoleculeManipulation( widget->molecule() ) ;
     m_contextMenu = new ContextMenuToAvoAction( widget, m_moleculeManip, chemWrap ) ;
     m_transf3d0.matrix().setIdentity() ;
 
     /// Initiate some attributs to realize mouse simulations.
+    
     m_testEventPress = false ;
     m_p = new QPoint(1,1) ;
     m_me1 = new QMouseEvent(QEvent::MouseButtonPress, *m_p, Qt::LeftButton, Qt::NoButton, Qt::NoModifier) ;

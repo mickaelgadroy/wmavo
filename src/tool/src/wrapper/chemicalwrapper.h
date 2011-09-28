@@ -45,6 +45,8 @@
 #include "warning_disable_begin.h"
 #include <QAtomicInt>
 #include <QEventLoop>
+#include <QReadWriteLock>
+#include <QSemaphore>
 #include "warning_disable_end.h"
 
 namespace WrapperInputToDomain
@@ -155,7 +157,9 @@ namespace WrapperInputToDomain
     /** @name Manage thread.
       * @{ */
     QThread_ex m_wrapperThread ;
-    bool m_isRunning ;
+    QSemaphore m_semThreadFinish ; // Secure the end of runPoll().
+    QReadWriteLock m_mutexIsRunning ;
+    volatile bool m_isRunning ;
     QAtomicInt m_threadFinished ;
     bool m_hasSleepThread ;
     int m_nbActionRealized ; // To limit the number of sleep calling.

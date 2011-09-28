@@ -53,8 +53,8 @@ namespace WrapperInputToDomain
       m_cirBufferFrom(NULL), m_cirBufferTo(NULL),
       m_actionsGlobalPrevious(0), m_actionsWrapperPrevious(0),
       m_forceUpdateWmTool(false), m_forceUpdateOrNot(false),
-      m_isRunning(false), 
-      m_hasSleepThread(PLUGIN_WM_SLEEPTHREAD_ONOFF), 
+      m_semThreadFinish(1), m_isRunning(false),
+      m_hasSleepThread(PLUGIN_WM_SLEEPTHREAD_ONOFF),
       m_nbActionRealized(0),
       m_t1(0), m_t2(0), m_t1Update(0), m_t2Update(0), m_t1Update2(0), m_t2Update2(0),
       m_nbWmToolNotFinished(0), m_nbDataInWmBuffer(0), m_nbActionsApplied(0),
@@ -92,6 +92,10 @@ namespace WrapperInputToDomain
       delete( m_wmToChem ) ;
       m_wmToChem = NULL ;
     }
+    
+    #if __WMDEBUG_CHEMWRAPPER
+    mytoolbox::dbgMsg( "ChemicalWrap::~ChemicalWrap(): End" ) ;
+    #endif
   }
 
   ChemicalWrapData_from* ChemicalWrap::getWrapperDataFrom()
@@ -147,20 +151,22 @@ namespace WrapperInputToDomain
     
     if( m_dev != NULL )
     {
+      m_semThreadFinish.acquire(1) ;
       bool needUpdateDataTo=false ;
       bool needUpdateDataFrom=false ;
       bool displayIsFinished=false ;
       ChemicalWrapData_from *chemData=NULL ;
-
+      
+      bool run=true ; // = m_isRunning
       m_isRunning = true ;
-
-      while( m_isRunning )
+      
+      while( run )
       {
         // Count nb action by second (used with breakpoint).
         m_t2Update = m_time.elapsed() ;
         if( (m_t2Update-m_t1Update) > 1000 )
         {
-          #if __WMDEBUG_CHEMWRAPPER
+          #if __WMDEBUG_CHEMWRAPPER && 0
           QString msg= tr("ChemicalWrap::runPoll() : tread has ") 
                        + QString::number( (*m_nbUpdate)[0] )
                        + tr(" actions/second, Nb data in WmBuffer :")
@@ -249,7 +255,7 @@ namespace WrapperInputToDomain
                 m_t2Update2 = m_time.elapsed() ;
                 if( (m_t2Update2-m_t1Update2) > 1000 )
                 {
-                  #if __WMDEBUG_CHEMWRAPPER
+                  #if __WMDEBUG_CHEMWRAPPER && 0
                   QString msg= tr("ChemicalWrap::runPoll() : outgoing data ")
                                + QString::number( (*m_nbUpdate2)[0] )
                                + tr( " actions/second." ) ;
@@ -312,6 +318,11 @@ namespace WrapperInputToDomain
         QCoreApplication::processEvents() ; 
         // By default : QEventLoop::AllEvent "& !QEventLoop::WaitForMoreEvents"
         // http://doc.qt.nokia.com/latest/qeventloop.html#ProcessEventsFlag-enum
+        
+        
+        m_mutexIsRunning.lockForRead() ;
+        run = m_isRunning ;
+        m_mutexIsRunning.unlock() ;
       }
 
       // Must be disconnect, else there is a crash when this object is deleted.
@@ -325,6 +336,7 @@ namespace WrapperInputToDomain
       #if __WMDEBUG_CHEMWRAPPER
       mytoolbox::dbgMsg( "ChemicalWrap::runPoll() m_threadFinished=1" ) ;
       #endif
+      m_semThreadFinish.release(1) ;
     }
     else
     {
@@ -338,18 +350,15 @@ namespace WrapperInputToDomain
   {
     if( m_isRunning )
     {
-      #if __WMDEBUG_CHEMWRAPPER
-      mytoolbox::dbgMsg( "ChemicalWrap::stopPoll() m_isRunning=true" ) ;
-      #endif
-
       // Stop the working thread.
+      m_mutexIsRunning.lockForWrite() ;
       m_isRunning = false ;
-      while( m_threadFinished == 0 ) ;
-      
-      #if __WMDEBUG_CHEMWRAPPER
-      mytoolbox::dbgMsg( "ChemicalWrap::stopPoll() passed" ) ;
-      #endif
-      
+      m_mutexIsRunning.unlock() ;
+            
+      m_semThreadFinish.acquire(1) ;
+      while( m_threadFinished == 0 ) ; // Useless with the semaphore.
+      m_semThreadFinish.release(1) ;
+            
       ChemicalWrapData_from *dataFrom=NULL ;
       ChemicalWrapData_to *dataTo=NULL ;
 
@@ -362,10 +371,6 @@ namespace WrapperInputToDomain
           dataFrom = NULL ;
         }
       }
-      
-      #if __WMDEBUG_CHEMWRAPPER
-      mytoolbox::dbgMsg( "ChemicalWrap::stopPoll() m_cirBufferFrom->isEmpty()" ) ;
-      #endif
 
       while( !m_cirBufferTo->isEmpty() )
       {
@@ -376,17 +381,11 @@ namespace WrapperInputToDomain
           dataTo = NULL ;
         }
       }
-      
-      #if __WMDEBUG_CHEMWRAPPER
-      mytoolbox::dbgMsg( "ChemicalWrap::stopPoll() m_cirBufferTo->isEmpty()" ) ;
-      #endif
     }
 
     // Stop the event loop thread (run() method).
     m_wrapperThread.quit() ;
-    #if __WMDEBUG_CHEMWRAPPER
-    mytoolbox::dbgMsg( "ChemicalWrap::stopPoll() m_wrapperThread.quit()" ) ;
-    #endif
+    m_wrapperThread.wait() ;
   }
 
   ChemicalWrapData_from* ChemicalWrap::updateDataFrom()

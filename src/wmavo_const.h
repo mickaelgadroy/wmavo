@@ -31,7 +31,7 @@
 #define __WMAVO_CONST_H__
 
 #define __WMDEBUG_WMTOOL 0
-#define __WMDEBUG_CHEMWRAPPER 1
+#define __WMDEBUG_CHEMWRAPPER 0
 #define __WMDEBUG_WMDEVICE 0
 #define __WMDEBUG_MOLMANIP 0
 
