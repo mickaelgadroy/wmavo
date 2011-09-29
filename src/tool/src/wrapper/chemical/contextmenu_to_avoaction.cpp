@@ -42,7 +42,8 @@ namespace Avogadro
       m_insertFragAct(NULL),
       m_addSubstituteFragAct(NULL),
       m_changeAddHAct(NULL), 
-      m_contextMenuHydrogen(NULL), m_addAllHAct(NULL), m_removeAllHAct(NULL)
+      m_contextMenuHydrogen(NULL), m_addAllHAct(NULL), m_removeAllHAct(NULL),
+      m_selectAllBondedAtomAct(NULL)
   {
 
     m_periodicTable = new PeriodicTableView() ;
@@ -104,7 +105,9 @@ namespace Avogadro
 
     m_removeAllHAct = new QAction( tr("Remove all Hydrogen"), this ) ;
     m_removeAllHAct->setStatusTip( tr("Remove all Hydrogen atoms in the molecule") ) ;
-
+    
+    m_selectAllBondedAtomAct = new QAction( tr("Select all bonded atoms"), this ) ;
+    m_selectAllBondedAtomAct = new QAction( tr("Select all bonded atoms of selected atoms"), this ) ;
   }
 
     /**
@@ -130,6 +133,7 @@ namespace Avogadro
     m_contextMenuMeasure->addAction( m_diedreAct ) ;
 
     m_contextMenuMain->addMenu( m_contextMenuMeasure ) ;
+    m_contextMenuMain->addAction( m_selectAllBondedAtomAct ) ;
     m_contextMenuMain->addSeparator() ;
 
     m_contextMenuMain->addAction( m_changeAddHAct ) ;
@@ -220,6 +224,13 @@ namespace Avogadro
     if( !isConnect )
     {
       mytoolbox::dbgMsg( "Problem connection signal : m_removeAllHAct.triggered() -> m_moleculeManip.removeHydrogens() !!" ) ;
+      ok = false ;
+    }
+    
+    isConnect=connect( m_selectAllBondedAtomAct, SIGNAL(triggered()), this, SLOT(beginToSelectAllBondedAtom()) ) ;
+    if( !isConnect )
+    {
+      mytoolbox::dbgMsg( "Problem connection signal : m_selectAllBondedAtomAct.triggered() -> ContextMenuToAvoAction.beginToSelectAllBondedAtom() !!" ) ;
       ok = false ;
     }
 
@@ -800,6 +811,23 @@ namespace Avogadro
   {
     //cout << "diedre" << endl ;
     emit initiatedCalculDistDiedre( 4 ) ;
+  }
+  
+  
+  /**
+   * Launch the method to select all bonded atoms with the selected atoms.
+   */
+  void ContextMenuToAvoAction::beginToSelectAllBondedAtom()
+  {
+    PrimitiveList selectedPrim1=m_widget->selectedPrimitives() ;
+    PrimitiveList *selectedPrim2=m_moleculeManip->getAllBondedAtom( selectedPrim1 ) ;
+    
+    
+    if( selectedPrim2 != NULL )
+    {
+      m_widget->setSelected( *selectedPrim2, true ) ;
+      delete selectedPrim2 ;
+    }
   }
 
 }

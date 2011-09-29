@@ -90,11 +90,12 @@ namespace Avogadro
     private slots :
 
       /**
-        * @name Various
+        * @name Miscellanious
         * @{ */
       void closeContextMenu() ; ///< Close the context menu.
       void letToSubstituteAtomByFragment( QString fragmentAbsPath ) ;
           ///< For "substitute atom by fragment" feature (Context menu)
+      void beginToSelectAllBondedAtom() ;
       // @}
 
       /**
@@ -124,6 +125,7 @@ namespace Avogadro
     bool connectMainQActionSignal() ; ///< Connect the trigger signals of QAction to their methods.
 
     void closePeriodicTable( int &wmavoAction, QPoint posCursor ) ;
+    
 
     /**
       * @name Create menu for "substitute atom by fragment" option.
@@ -165,6 +167,8 @@ namespace Avogadro
     QMenu_ex *m_contextMenuHydrogen ;
     QAction *m_addAllHAct ;
     QAction *m_removeAllHAct ;
+    
+    QAction *m_selectAllBondedAtomAct ;
     // @}
 
   };

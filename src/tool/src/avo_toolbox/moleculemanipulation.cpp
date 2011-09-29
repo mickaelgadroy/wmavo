@@ -2943,5 +2943,99 @@ namespace Avogadro
   {
       return m_rotationAxePoint ;
   }
+  
+      
+  /**
+   * Select all atoms which bond with the atom.
+   * CAUTION: Do not forget to delete after use!!!
+   * 
+   * @param primList The selected atoms used to get all bonded atom.
+   * @return A list of bonded atoms.
+   */
+  PrimitiveList* MoleculeManipulation::getAllBondedAtom( const PrimitiveList &primList )
+  {
+    PrimitiveList *primListOut=NULL ;
+    
+    // Is it already visited ?
+    if( m_molecule!=NULL && primList.size()>0 ) 
+    { // No visited.
+      
+      Atom *a=NULL ;
+      QList<Atom*> atomList ;      
+      primListOut = new PrimitiveList() ;
+      int sizeFinal=0 ;
+
+      foreach( Primitive *p, primList )
+      {
+        if( p!=NULL && p->type()==Primitive::AtomType )
+        {
+          a = static_cast<Atom*>(p) ;
+          
+          if( !(atomList.contains(a)) )
+          {
+            m_spanTreeNodeFirst = new SpanningTreeNode( NULL, a ) ;
+            getAllBondedAtom_p( m_spanTreeNodeFirst, atomList ) ;
+          }
+        }
+      }
+      
+      sizeFinal = atomList.size() ;
+      if( sizeFinal > 0 )
+      {
+        for( int i=0 ; i<sizeFinal ; i++ )
+          (*primListOut).append(atomList.at(i)) ;
+      }
+    }
+    // else if visited
+      // Nothing to do.
+    
+    
+    return primListOut ;
+  }
+  
+  /**
+   * Select all atoms which bond with the atom (recurive method).
+   * @param atomFirst The atom used to get all bonded atom.
+   */
+  void MoleculeManipulation::getAllBondedAtom_p( SpanningTreeNode *aNode, QList<Atom*> &atomList )
+  {
+    if( aNode!=NULL && aNode->atom!=NULL )
+    {
+      // Get the list of the visited atom.
+      Atom *atom=aNode->atom ; // Get the current atom.
+      
+      if( !atomList.contains(atom) )
+      { // Not visited.
+                
+        // The current atom is visited.
+        atomList.append( atom ) ;
+        //aNode->isVisited = true ;
+
+        // Check the sons.
+        Atom *atomTmp=NULL ;
+        const QList<unsigned long> &neighbors=atom->neighbors() ;
+
+        foreach( unsigned long nai, neighbors )
+        {
+          atomTmp = m_molecule->atomById( nai ) ;
+
+          if( atomTmp == NULL )
+          {
+            #if __WMDEBUG_MOLMANIP
+            mytoolbox::dbgMsg( "Bug in MoleculeManipulation::selectAllBondedAtom(Atom*) : NULL-object non expected." ) ;
+            #endif
+            continue ;
+          }
+
+          if( !atomList.contains(atomTmp) )
+          { // Not visited.
+
+            SpanningTreeNode *sonNode=new SpanningTreeNode(aNode, atomTmp) ;          
+            getAllBondedAtom_p( sonNode, atomList ) ;
+          }
+        } 
+      }
+    }
+  }
 
 }

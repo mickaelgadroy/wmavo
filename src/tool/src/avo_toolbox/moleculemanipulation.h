@@ -158,11 +158,12 @@ namespace Avogadro
       * @{ */
     int getAtomicNumberCurrent() ;
     Molecule* getFragment( const QString &fragmentAbsPath ) ;
+    PrimitiveList* getAllBondedAtom( const PrimitiveList &primList ) ;
     bool hasAddedHydrogen() ;
     // @}
 
     /** 
-      * @name Various
+      * @name Miscellanious.
       * @{ */
     Atom* calculateNearestAtom( const Eigen::Vector3d *posAtom, const Atom *atomNotUse=NULL ) ;
     void optimizeGeometry() ;
@@ -185,8 +186,31 @@ namespace Avogadro
     #endif
 
 
-    // Private methods.
+    // Private methods and structure.
     private :
+      
+      struct SpanningTreeNode
+      {
+        Atom *atom ;
+        bool isVisited ;
+        SpanningTreeNode *father ;
+        QList<SpanningTreeNode*> sons ;
+        
+        SpanningTreeNode()
+        {
+          atom = NULL ;
+          father = NULL ;
+          isVisited = false ;
+          
+        };
+        
+        SpanningTreeNode( SpanningTreeNode* aFather, Atom* anAtom )
+        {
+          atom = anAtom ;
+          father = aFather ;
+          isVisited = false ;
+        }; 
+      };
 
        /**
         * @name Tools for all "basics" manipulations.
@@ -247,6 +271,12 @@ namespace Avogadro
       void updateBarycenter( const Eigen::Vector3d& atomPos, bool addOrDel, bool testIfNeedToRecalculateBarycenter=true ) ;
       void resetBarycenter_p() ;
        // @}
+      
+      /** 
+      * @name Miscellanious.
+      * @{ */
+      void getAllBondedAtom_p( SpanningTreeNode *spanTreeNode, QList<Atom*> &atomList ) ;
+      // @}
 
 
     // Private attributs.
@@ -273,6 +303,12 @@ namespace Avogadro
       Eigen::Vector3d m_rotationAxe ; //< (0;0;0) = no defined axe.
       Bond *m_rotationAxeBond ; //< Just for information (and manage selection)
       Eigen::Vector3d m_rotationAxePoint ; //< A point on the rotation axe.
+      // @}
+      
+      /**
+       * @name Select all bonded atoms.
+       * @{ */
+      SpanningTreeNode *m_spanTreeNodeFirst ;
       // @}
 
       /**
