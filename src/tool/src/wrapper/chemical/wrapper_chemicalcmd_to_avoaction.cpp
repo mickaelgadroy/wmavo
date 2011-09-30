@@ -160,6 +160,7 @@ namespace Avogadro
     transformWrapperActionToZoomCamera( state, pointRef, distCamZoom ) ;
     transformWrapperActionToInitiateCamera( state, pointRef ) ;
 
+    transformWrapperActionToSaturateAtoms( state ) ;
     transformWrapperActionToUseContextMenu( state, posCursor ) ;
 
     transformWrapperActionToAvoUpdate( state ) ;
@@ -1202,6 +1203,19 @@ namespace Avogadro
       cam(2,3) = -25 ;
       m_widget->camera()->setModelview(cam) ;
 
+    }
+  }
+    
+  /**
+   * Transform a wrapper action to an Avogadro action : enable/disable the atom saturation.
+   * @param wmavoAction All actions ask by the wrapper
+   */
+  void WrapperChemicalCmdToAvoAction::transformWrapperActionToSaturateAtoms
+    ( int wmavoAction )
+  {
+    if( WMAVO_IS2(wmavoAction,WMAVO_SATURATE_ATOMS) )
+    {
+      m_moleculeManip->invertHasAddHydrogen() ;
     }
   }
 

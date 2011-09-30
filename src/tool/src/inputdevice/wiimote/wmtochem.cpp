@@ -73,7 +73,7 @@ WmToChem::WmToChem( int operatingMode ) :
   m_crossRelease(false), m_crossReleaseEnd(false),
   m_lastCrossAction(0), m_crossMenuRelease(false), m_crossMenuTimeOut(false),
   m_okMenuRelease(false), m_okMenuReleaseEnd(false),
-  m_delAllAlready(false),
+  m_delAllAlready(false), m_saturateAtom(false),
 
   m_xWidget(0), m_yWidget(0), m_widthWidget(0), m_heightWidget(0)
 {
@@ -539,6 +539,9 @@ void WmToChem::operatingModeWm2()
 
   // "Move in menu" action.
   transformWmAction1ToMoveInMenu() ;
+  
+  // "Enable/disable the atom saturation" action.
+  transformWmAction1ToSaturateAtoms() ;
 }
 
 
@@ -1245,7 +1248,6 @@ bool WmToChem::transformWmAction1ToRotateAtomOrActivateMenu()
  */
 bool WmToChem::transformWmAction1ToMoveInMenu()
 {
-
   // Move in menu mode.
   if( WMAVO_IS(WMAVO_MENU_ACTIVE)
       && (m_wmData->Buttons.isPressed(CButtons::BUTTON_RIGHT)
@@ -1302,6 +1304,37 @@ bool WmToChem::transformWmAction1ToMoveInMenu()
 
       m_timeFirst = 0 ;
       m_timeSecond = 0 ;
+    }
+  }
+
+  return true ;
+}
+
+
+/**
+ * Transform a Wiimote action to "Enable/Disable atoms saturation" action,
+ * @return TRUE if an action has been realised ; FALSE else.
+ */
+bool WmToChem::transformWmAction1ToSaturateAtoms()
+{ 
+  if( m_wmData->Buttons.isPressed(CButtons::BUTTON_ONE) )
+  {
+    if( !m_pressedButton )
+    {
+      m_pressedButton = true ;
+      m_saturateAtom = true ;
+      WMAVO_SETON( WMAVO_SATURATE_ATOMS ) ;
+    }
+    else
+      WMAVO_SETOFF( WMAVO_SATURATE_ATOMS ) ;
+  }
+  else
+  {
+    if( m_saturateAtom )
+    {
+      m_saturateAtom = false ;
+      m_pressedButton = false ;
+      WMAVO_SETOFF( WMAVO_SATURATE_ATOMS ) ;
     }
   }
 
@@ -1537,3 +1570,4 @@ bool WmToChem::transformNcAction2ToCalculCameraMovement( float angle, float magn
 
   return true ;
 }
+

@@ -161,6 +161,7 @@ class WmToChem
     bool transformWmAction1ToOKMenu() ;
     bool transformWmAction1ToRotateAtomOrActivateMenu() ;
     bool transformWmAction1ToMoveInMenu() ;
+    bool transformWmAction1ToSaturateAtoms() ;
     // @}
 
     /**
@@ -272,6 +273,7 @@ class WmToChem
     bool m_crossMenuRelease, m_crossMenuTimeOut ;
     bool m_okMenuRelease, m_okMenuReleaseEnd ;
     bool m_delAllAlready ;
+    bool m_saturateAtom ;
     // @}
 
     /**

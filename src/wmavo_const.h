@@ -140,7 +140,7 @@
 #define WMAVO_DELETE            0x000010
 #define WMAVO_DELETEALL         0x000020
 #define WMAVO_ATOM_MOVE         0x000040 // Translate or rotate, the mode is "activate", 
-                                          // but it can be "not translating or rotating" 
+                                          // but it can be "not translating or not rotating" 
                                           // to limit the calling of wmextension.
 #define WMAVO_ATOM_ROTATE       0x000080
 #define WMAVO_ATOM_TRANSLATE    0x000100
@@ -156,6 +156,7 @@
 #define WMAVO_MENU_UP           0x040000
 #define WMAVO_MENU_DOWN         0x080000
 #define WMAVO_MENU_OK           0x100000
+#define WMAVO_SATURATE_ATOMS    0x200000 // Atoms must be saturate or not ?
 
 
 ///**********************************************************
