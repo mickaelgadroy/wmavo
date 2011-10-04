@@ -63,14 +63,18 @@ namespace InputDevice
   class RumbleSettings
   {
   public :
-    RumbleSettings( bool enable=true, bool start=false, bool continu=false, bool loop=false, int gradual=-1 ) ;
+    //RumbleSettings( bool enable=true, bool start=false, bool continu=false, bool loop=false, int gradual=-1 ) ;
+    RumbleSettings() ;
+    RumbleSettings( bool enable ) ;
+    RumbleSettings( bool continu, bool loop=false, int gradual=-1 ) ;
     ~RumbleSettings() ;
     void setEnable( bool e ) ; void setStart( bool s ) ;
     void setContinue( bool c ) ; void setLoop( bool l ) ;
     void setGradual( int g ) ;
     void setDistance( double current ) ;
     void setDistance( double min, double max ) ;
-    bool getEnable() const ; bool getStart() const ;
+    void setDistance( double current, double min, double max ) ;
+    bool getEnable( bool &isEnable_out ) ; bool getStart() const ;
     bool getContinue() const ; bool getLoop() const ;
     int getGradual() const ;
     double getDistanceCurrent() const ;
@@ -78,7 +82,7 @@ namespace InputDevice
     double getDistanceMax() const ;
     
   private:
-    bool m_enable ;
+    bool m_enable ; bool m_updateEnable ;
     bool m_start, m_continu, m_loop ;
     int m_gradual ;
     double m_step, m_stepMin, m_stepMax ;
@@ -129,7 +133,7 @@ namespace InputDevice
       void setContinue( bool continu ) ;
       void setLoop( bool loop ) ;
       void setGradual( int gradual ) ;
-      void setSettings( const RumbleSettings& settings ) ;
+      void setSettings( RumbleSettings& settings ) ;
       void setStartInContinue( bool start ) ;
       void setStartInLoop( bool start, int gradual=-1 ) ;
       void setStartOnce( bool start, int gradual=-1 ) ;

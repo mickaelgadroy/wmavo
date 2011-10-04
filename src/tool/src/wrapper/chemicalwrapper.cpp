@@ -166,7 +166,7 @@ namespace WrapperInputToDomain
         m_t2Update = m_time.elapsed() ;
         if( (m_t2Update-m_t1Update) > 1000 )
         {
-          #if __WMDEBUG_CHEMWRAPPER && 0
+          #if __WMDEBUG_CHEMWRAPPER && 1
           QString msg= tr("ChemicalWrap::runPoll() : tread has ") 
                        + QString::number( (*m_nbUpdate)[0] )
                        + tr(" actions/second, Nb data in WmBuffer :")
@@ -255,7 +255,7 @@ namespace WrapperInputToDomain
                 m_t2Update2 = m_time.elapsed() ;
                 if( (m_t2Update2-m_t1Update2) > 1000 )
                 {
-                  #if __WMDEBUG_CHEMWRAPPER && 0
+                  #if __WMDEBUG_CHEMWRAPPER && 1
                   QString msg= tr("ChemicalWrap::runPoll() : outgoing data ")
                                + QString::number( (*m_nbUpdate2)[0] )
                                + tr( " actions/second." ) ;

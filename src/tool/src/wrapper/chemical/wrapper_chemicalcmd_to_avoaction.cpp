@@ -208,7 +208,8 @@ namespace Avogadro
       { // Select only 1 object.
 
         // Just one rumble.
-        InputDevice::RumbleSettings rumble( true, true, false, false, 10 ) ;
+        InputDevice::RumbleSettings rumble( false, false, 10 ) ;
+        rumble.setStart( true ) ;
         rumble.setDistance( 0 ) ;
         InputDevice::WmDeviceData_to wmDevDataTo ;
         wmDevDataTo.setRumble( rumble ) ;
@@ -254,7 +255,7 @@ namespace Avogadro
           Bond *oldBond=m_moleculeManip->getRotationAxeBond() ;
           
           // Check if identical with the new.
-          if( oldBond == bond )
+          if( oldBond!=NULL && oldBond==bond )
           { // Disable it.
           
               m_moleculeManip->resetRotationAxe() ;
@@ -485,8 +486,9 @@ namespace Avogadro
               Eigen::Vector3d dist = *(a->pos()) - *(an->pos()) ;
               double act = dist.norm() ;
 
-              InputDevice::RumbleSettings rumble(true, true, false, true ) ;
-              rumble.setDistance( act ) ;
+              InputDevice::RumbleSettings rumble( false, true ) ;
+              rumble.setStart( true ) ;
+              rumble.setDistance( act, WMRUMBLE_MIN_DISTANCE, WMRUMBLE_MAX_DISTANCE ) ;
               InputDevice::WmDeviceData_to wmDevDataTo ;
               wmDevDataTo.setRumble( rumble ) ;
               m_wmDev->setDeviceDataTo( wmDevDataTo ) ;
@@ -505,7 +507,8 @@ namespace Avogadro
         QList<Primitive*> pList=m_widget->selectedPrimitives().subList(Primitive::AtomType) ;
         m_moleculeManip->moveAtomEnd( pList ) ;
 
-        InputDevice::RumbleSettings rumble(true, false, false, false ) ;
+        InputDevice::RumbleSettings rumble( false, false ) ;
+        rumble.setStart( false ) ;
         rumble.setDistance( 0 ) ;
         InputDevice::WmDeviceData_to wmDevDataTo ;
         wmDevDataTo.setRumble( rumble ) ;
@@ -621,8 +624,9 @@ namespace Avogadro
               double act=dist.norm() ;
 
               // Activate rumble.
-              InputDevice::RumbleSettings rumble(true, true, false, true ) ;
-              rumble.setDistance( act ) ;
+              InputDevice::RumbleSettings rumble( false, true ) ;
+              rumble.setStart( true ) ;
+              rumble.setDistance( act, WMRUMBLE_MIN_DISTANCE, WMRUMBLE_MAX_DISTANCE ) ;
               InputDevice::WmDeviceData_to wmDevDataTo ;
               wmDevDataTo.setRumble( rumble ) ;
               m_wmDev->setDeviceDataTo( wmDevDataTo ) ;
@@ -739,7 +743,8 @@ namespace Avogadro
             Atom* a=NULL ;
             Eigen::Vector3d addAtomPos ;
 
-            InputDevice::RumbleSettings rumble(true, false, false, false ) ;
+            InputDevice::RumbleSettings rumble( false, false ) ;
+            rumble.setStart( false ) ;
             rumble.setDistance( 0 ) ;
             InputDevice::WmDeviceData_to wmDevDataTo ;
             wmDevDataTo.setRumble( rumble ) ;
@@ -887,7 +892,8 @@ namespace Avogadro
 
           if( addSmth )
           {
-            InputDevice::RumbleSettings rumble(true, true, false, false, 10 ) ;
+            InputDevice::RumbleSettings rumble( false, false, 10 ) ;
+            rumble.setStart( true ) ;
             rumble.setDistance( 0 ) ;
             InputDevice::WmDeviceData_to wmDevDataTo ;
             wmDevDataTo.setRumble( rumble ) ;

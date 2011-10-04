@@ -165,9 +165,10 @@
 
 
 #define TIME_TRYLOCK 5 // µs
-#define WMRUMBLE_TIME_SLEEP 2 // ms
-#define WMRUMBLE_MAX_TIME 60000// ms
+#define WMRUMBLE_MAX_TIME 5000// ms
 #define WMRUMBLE_MIN_TIME 80 // 50 // ms CAUTION : do not enter less, else the Wiimote sinks under Bluetooth connection, and PC blocks because mutex is always activate.
+#define WMRUMBLE_TIME_SLEEP WMRUMBLE_MIN_TIME //2 // ms
+        // Be careful => the rumble time is a multiple of given value!
 
 // Use for set gradual => [0;100]
 // 0 => disable rumble
@@ -179,6 +180,9 @@
 #define WMRUMBLE_MIN_DURATION_TREMOR WMRUMBLE_MIN_TIME // 150 // 30
 #define WMRUMBLE_MAX_DURATION_POSE 1000 // 2000 // ((fr) "prendre un pose")
 #define WMRUMBLE_MIN_DURATION_POSE WMRUMBLE_MIN_TIME // 150 //
+#define WMRUMBLE_MAX_DISTANCE 6
+#define WMRUMBLE_MIN_DISTANCE 1
+
 
 
 ///**********************************************************

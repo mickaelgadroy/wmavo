@@ -483,7 +483,6 @@ namespace Avogadro
                            this, SLOT(setSleepThreadNow(int)) ) ;
       if( !isConnect )
         mytoolbox::dbgMsg( "Problem connection signal : m_settingsWidget->getCheckboxVibration().stateChanged() -> wmTool.setWmVibrationNow() !!" ) ;
-        
     }
   }
 
