@@ -34,7 +34,10 @@
 #include "wiwo_sem.h"
 #include "qthread_ex.h"
 #include "wiiusecpp.h"
+
 #include <QTime>
+#include <QReadWriteLock>
+#include <QSemaphore>
 
 #if defined WIN32 || defined _WIN32
   #include "wiiusecpp.h"
@@ -154,7 +157,9 @@ namespace InputDevice
       * @{ */
     QThread_ex m_deviceThread ;
     QMutex m_mutex ; // Secure Poll() with rumble feature.
-    bool m_isRunning ; // If the thread is working.
+    QSemaphore m_semThreadFinish ; // Secure the end of runPoll().
+    QReadWriteLock m_mutexIsRunning ;
+    volatile bool m_isRunning ; // If the thread is working.
     QAtomicInt m_threadFinished ; // If the thread is out of treatment loop.
     bool m_hasSleepThread ; 
       //< If the thread sleeps (less CPU use, but can lag) or yields (more CPU use, but no lag).

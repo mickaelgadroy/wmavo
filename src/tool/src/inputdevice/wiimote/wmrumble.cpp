@@ -34,10 +34,34 @@ namespace InputDevice
   const int WmRumble::m_gapBetweenStepPose=m_gapBetweenMinMaxPose/100 ;
 
 
-  RumbleSettings::RumbleSettings( bool enable, bool go, bool continu, bool loop, int gradual )
+  RumbleSettings::RumbleSettings()
   {
-    m_enable = enable ;
-    m_start = go ;
+    m_enable = true ; m_updateEnable = false ;
+    m_start = false ;
+    m_continu = false ;
+    m_loop = false ;
+    m_gradual = -1 ;
+    m_step = -1 ;
+    m_stepMin = 0 ;
+    m_stepMax = 0 ;
+  }
+
+  RumbleSettings::RumbleSettings( bool enable )
+  {
+    m_enable = enable ; m_updateEnable = true ;
+    m_start = false ;
+    m_continu = false ;
+    m_loop = false ;
+    m_gradual = -1 ;
+    m_step = -1 ;
+    m_stepMin = 0 ;
+    m_stepMax = 0 ;
+  }
+
+  RumbleSettings::RumbleSettings( bool continu, bool loop, int gradual )
+  {
+    m_enable = true ; m_updateEnable = false ;
+    m_start = false ;
     m_continu = continu ;
     m_loop = loop ;
     m_gradual = gradual ;
@@ -53,6 +77,7 @@ namespace InputDevice
   void RumbleSettings::setEnable( bool e )
   {
     m_enable = e ;
+    m_updateEnable = true ;
   }
 
   void RumbleSettings::setStart( bool s )
@@ -77,57 +102,106 @@ namespace InputDevice
     m_gradual = g ;
   }
 
-  bool RumbleSettings::getEnable() const
+  /**
+    * Return if the rumble feature is enable or not.
+    * @param isEnable_out Get the "enable" value.
+    * @return TRUE if the value has changed, else FALSE.
+    */
+  bool RumbleSettings::getEnable( bool &isEnable_out )
   {
-    return m_enable ;
+    bool b=m_updateEnable ;
+    m_updateEnable = false ;
+    isEnable_out = m_enable ;
+    return b ;
   }
 
+  /**
+    * Return if the rumble has started.
+    * @return TRUE if the rumble has started, else FALSE.
+    */
   bool RumbleSettings::getStart() const
   {
     return m_start ;
   }
 
+  /**
+    * Return if the rumble is in "continue mode" => no sequence, juste rumble non stop.
+    * @return TRUE if the rumble is continue, else FALSE.
+    */
   bool RumbleSettings::getContinue() const
   {
     return m_continu ;
   }
 
+  /**
+    * Return if the rumble is in "loop mode" => sequence of rumble.
+    * @return TRUE if the rumble is continue, else FALSE.
+    */
   bool RumbleSettings::getLoop() const 
   {
     return m_loop ;
   }
 
+  /**
+    * Return the value of the rumble sequence in "loop mode".
+    * @return An int value between 1 and 100.
+    */
   int RumbleSettings::getGradual() const
   {
     return m_gradual ;
   }
 
+  /**
+    * Return the Angstrom value of the distance save.
+    * @return the Angstrom value.
+    */
   double RumbleSettings::getDistanceCurrent() const
   {
     return m_step ;
   }
 
+  /**
+    * Return the min Angstrom value of the distance save.
+    * @return The min Angstrom value.
+    */
   double RumbleSettings::getDistanceMin() const
   {
     return m_stepMin ;
   }
 
+  /**
+    * Return the max Angstrom value of the distance save.
+    * @return The max Angstrom value.
+    */
   double RumbleSettings::getDistanceMax() const
   {
     return m_stepMax ;
   }
 
-
   void RumbleSettings::setDistance( double current )
   {
-    m_step = current ;
+    m_step = (current < 0.0 ? 0.0 : current ) ;
   }
 
   void RumbleSettings::setDistance( double min, double max )
   {
-    m_stepMin = min ;
-    m_stepMax = max ;
+    m_stepMin = (min < 0.0 ? 0.0 : min ) ;
+    m_stepMax = (max < 0.0 ? 0.0 : max ) ;
+
+    if( m_stepMin > m_stepMax )
+    {
+      double a=m_stepMin ;
+      m_stepMin = m_stepMax ;
+      m_stepMax = a ;
+    }
   }
+
+  void RumbleSettings::setDistance( double current, double min, double max )
+  {
+    setDistance( current ) ;
+    setDistance( min, max ) ;
+  }
+
 
 
   WmRumble::WmRumble( WmDevice *parent,
@@ -475,9 +549,10 @@ namespace InputDevice
     }
   }
 
-  void WmRumble::setSettings( const RumbleSettings& settings ) 
+  void WmRumble::setSettings( RumbleSettings& settings ) 
   {
-    bool enable=settings.getEnable() ;
+    bool enable=false ;
+    bool hasEnable=settings.getEnable(enable) ;
     bool go=settings.getStart() ;
     bool continu=settings.getContinue() ;
     bool loop=settings.getLoop() ;
@@ -486,7 +561,7 @@ namespace InputDevice
     double distMax=settings.getDistanceMax() ;
     double distMin=settings.getDistanceMin() ;
 
-    if( enable != getRumbleEnabled() )
+    if( hasEnable==true && enable!=getRumbleEnabled() )
       setRumbleEnabled( enable ) ;
 
     if( enable )
@@ -494,7 +569,7 @@ namespace InputDevice
       if( continu ) 
         setStartInContinue( go ) ;
       else if( loop && dist>=0 )
-        adjustRumble1( go, dist, distMax, distMin ) ;
+        adjustRumble1( go, dist, distMin, distMax ) ;
       else if( loop ) 
         setStartInLoop( go, grad ) ;
       else if( !loop && !continu )
@@ -608,7 +683,8 @@ namespace InputDevice
               while( m_rumbleEnabled && !m_quit && k<l )
               {
                 k += WMRUMBLE_TIME_SLEEP ;
-                this->msleep(WMRUMBLE_TIME_SLEEP) ;
+                this->msleep(WMRUMBLE_TIME_SLEEP) ; 
+                // Be careful => the rumble time is a multiple of WMRUMBLE_TIME_SLEEP!
                 l = m_durationTremor ;
               }
 
@@ -626,6 +702,7 @@ namespace InputDevice
               {
                 k += WMRUMBLE_TIME_SLEEP ;
                 this->msleep(WMRUMBLE_TIME_SLEEP) ;
+                // Be careful => the rumble time is a multiple of WMRUMBLE_TIME_SLEEP!
                 l = m_betweenTremor ;
               }
 

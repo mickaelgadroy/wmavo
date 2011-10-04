@@ -137,6 +137,8 @@ namespace Avogadro
             double distCamZoom ) ;
     void transformWrapperActionToInitiateCamera
           ( int state, const Eigen::Vector3d& pointRef ) ;
+    
+    void transformWrapperActionToSaturateAtoms( int state ) ;
 
     void transformWrapperActionToUseContextMenu( int &state, const QPoint &posCursor ) ;
     // @}
@@ -195,6 +197,7 @@ namespace Avogadro
       * @{ */
     bool m_isRenderRect ;
     QPoint m_rectP1, m_rectP2 ;
+    bool m_needAnUpdateMore ;
     // @}
 
     /**

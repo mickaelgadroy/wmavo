@@ -36,7 +36,10 @@ namespace Avogadro
     : m_molecule(molecule), m_isMoveAtom(false), m_errorMsgGetFragment(),
       m_addHydrogens(WMEX_ADJUST_HYDROGEN), 
       m_atomicNumberCurrent(WMEX_CREATEDATOMDEFAULT), 
-      m_barycenterRefMolecule(m_vect3d0), m_sumOfWeights(0), m_atomsBarycenter(m_vect3d0)
+      m_barycenterRefMolecule(m_vect3d0), m_sumOfWeights(0), m_atomsBarycenter(m_vect3d0),
+
+      m_rotationAxe(m_vect3d0), m_rotationAxeBond(NULL), m_rotationAxePoint(m_vect3d0),
+      m_spanTreeNodeFirst(NULL)
   {
     m_transf3d0.matrix().setIdentity() ;
   }
@@ -1333,6 +1336,7 @@ namespace Avogadro
     {
       bool emptyMol=(m_molecule->numAtoms() == 0) ;
       Atom *startAtom=NULL, *endAtom=NULL ;
+      unsigned long startAtomIndex=0, endAtomIndex=0 ;
       int nbAtomInFrag=fragment->numAtoms() ;
 
       // Add fragment in the molecule.
@@ -1365,6 +1369,7 @@ namespace Avogadro
           }
         }
 
+        startAtomIndex = startAtom->index() ;
         removeHydrogen_p( startAtom ) ;
 
 
@@ -1399,10 +1404,12 @@ namespace Avogadro
           // else
             // Stay like that. Else, active a message error where there is not.
         }
+        
+        endAtomIndex = endAtom->index() ;
 
 
         if( (startAtom==NULL || endAtom==NULL) //  If something to do
-            || (startAtom->index() == endAtom->index()) // If bug ...
+            || (startAtomIndex == endAtomIndex ) // If bug ...
           )
         {
           mytoolbox::dbgMsg( " BUG : The connection between the fragment and the molecule are eguals !!" ) ;
@@ -1444,6 +1451,15 @@ namespace Avogadro
           if( atom->index()>=endAtom->index() && i++<nbAtomInFrag )
             addedPrim->append( atom ) ;
         }
+        
+        // Init the rotation axe before turn around.
+        Bond *b=m_molecule->bond(startAtomIndex, endAtomIndex) ;
+        Atom *a1=m_molecule->atom( startAtomIndex ) ;
+        Atom *a2=m_molecule->atom( endAtomIndex ) ;
+        if( a1!=NULL || a2!=NULL || b!=NULL )
+          setRotationAxe( const_cast<Eigen::Vector3d*>(a1->pos()), 
+                          const_cast<Eigen::Vector3d*>(a2->pos()), 
+                          b ) ;
       }
     }
 
@@ -1627,6 +1643,15 @@ namespace Avogadro
         (*addedPrim) = matchedAtoms ;
       }
       */
+      
+      // Init the rotation axe before turn around.
+      Bond *b=m_molecule->bond( startAtomIndex, endAtomIndex ) ;
+      Atom *a1=m_molecule->atom( endAtomIndex ) ;
+      Atom *a2=m_molecule->atom( startAtomIndex ) ;
+      if( a1!=NULL || a2!=NULL || b!=NULL )
+          setRotationAxe( const_cast<Eigen::Vector3d*>(a1->pos()), 
+                          const_cast<Eigen::Vector3d*>(a2->pos()), 
+                          b ) ;
     }
 
     return addedPrim ;
@@ -2822,6 +2847,198 @@ namespace Avogadro
   void MoleculeManipulation::invertHasAddHydrogen()
   {
     m_addHydrogens = !m_addHydrogens ;
+  }
+ 
+  
+  /**
+   * Set m_rotationAxe.
+   * @param p1Ref 1st point to calcul a vector AND the "centre of the rotation".
+   * @param p2 2nd point to calcul a vector.
+   * @param axeRot If !NULL, the bond will be used to have a visual information.
+   */
+  void MoleculeManipulation::setRotationAxe( Eigen::Vector3d *p1Ref, Eigen::Vector3d *p2, Bond* axeRot )
+  {
+      m_rotationAxeBond = axeRot ;
+      
+      if( p1Ref==NULL || p2==NULL )
+      {
+          m_rotationAxe = m_vect3d0 ;
+          m_rotationAxePoint = m_vect3d0 ;
+      }
+      else
+      {
+          Eigen::Vector3d axeRot=(*p1Ref)-(*p2) ;
+          double sum=axeRot[0]*axeRot[0] + axeRot[1]*axeRot[1] + axeRot[2]*axeRot[2] ;
+          axeRot /= sqrt( sum ) ;
+          m_rotationAxe = axeRot ;
+          m_rotationAxePoint = (*p1Ref) ;
+      }
+  }
+  
+  /**
+   * Set m_rotationAxe. But not defined what is the atom used to define the referentiel point.
+   * @param axeRot Bond used to define a rotation axe.
+   */
+  void MoleculeManipulation::setRotationAxe( Bond* axeRot )
+  {
+      if( axeRot == NULL )
+      {
+          resetRotationAxe() ;
+          return ;
+      }
+
+      Atom *a1=axeRot->beginAtom() ;
+      Atom *a2=axeRot->endAtom() ;
+
+      if( a1==NULL || a2==NULL )
+      {
+          resetRotationAxe() ;
+          return ;
+      }
+
+      Eigen::Vector3d *p1=const_cast<Eigen::Vector3d*>(a1->pos()) ;
+      Eigen::Vector3d *p2=const_cast<Eigen::Vector3d*>(a2->pos()) ;
+
+      if( p1==NULL || p2==NULL )   
+      {
+          resetRotationAxe() ;
+          return ;
+      }
+      
+      setRotationAxe( p1, p2, axeRot ) ;
+  }
+  
+  
+  /**
+   * Set m_rotationAxe to zero.
+   */
+  void MoleculeManipulation::resetRotationAxe()
+  {
+      m_rotationAxe = m_vect3d0 ;
+      m_rotationAxeBond = NULL ;
+      m_rotationAxePoint = m_vect3d0 ;
+  }
+  
+  /**
+   * Get the rotation axe vector.
+   * @return Eigen::Vector object not nul if rotation axe exists.
+   */
+  Eigen::Vector3d MoleculeManipulation::getRotationAxe()
+  {
+      return m_rotationAxe ;
+  }
+
+
+  /**
+   * Get the bond used for the rotation axe.
+   * @return Bond* if existing bond ; else NULL.
+   */
+  Bond* MoleculeManipulation::getRotationAxeBond()
+  {
+      return m_rotationAxeBond ;
+  }
+  
+  /**
+   * Get one point on the rotation axe.
+   * @return Eigen::Vector object not nul if rotation axe exists.
+   */
+  Eigen::Vector3d MoleculeManipulation::getRotationAxePoint()
+  {
+      return m_rotationAxePoint ;
+  }
+  
+      
+  /**
+   * Select all atoms which bond with the atom.
+   * CAUTION: Do not forget to delete after use!!!
+   * 
+   * @param primList The selected atoms used to get all bonded atom.
+   * @return A list of bonded atoms.
+   */
+  PrimitiveList* MoleculeManipulation::getAllBondedAtom( const PrimitiveList &primList )
+  {
+    PrimitiveList *primListOut=NULL ;
+    
+    // Is it already visited ?
+    if( m_molecule!=NULL && primList.size()>0 ) 
+    { // No visited.
+      
+      Atom *a=NULL ;
+      QList<Atom*> atomList ;      
+      primListOut = new PrimitiveList() ;
+      int sizeFinal=0 ;
+
+      foreach( Primitive *p, primList )
+      {
+        if( p!=NULL && p->type()==Primitive::AtomType )
+        {
+          a = static_cast<Atom*>(p) ;
+          
+          if( !(atomList.contains(a)) )
+          {
+            m_spanTreeNodeFirst = new SpanningTreeNode( NULL, a ) ;
+            getAllBondedAtom_p( m_spanTreeNodeFirst, atomList ) ;
+          }
+        }
+      }
+      
+      sizeFinal = atomList.size() ;
+      if( sizeFinal > 0 )
+      {
+        for( int i=0 ; i<sizeFinal ; i++ )
+          (*primListOut).append(atomList.at(i)) ;
+      }
+    }
+    // else if visited
+      // Nothing to do.
+    
+    
+    return primListOut ;
+  }
+  
+  /**
+   * Select all atoms which bond with the atom (recurive method).
+   * @param atomFirst The atom used to get all bonded atom.
+   */
+  void MoleculeManipulation::getAllBondedAtom_p( SpanningTreeNode *aNode, QList<Atom*> &atomList )
+  {
+    if( aNode!=NULL && aNode->atom!=NULL )
+    {
+      // Get the list of the visited atom.
+      Atom *atom=aNode->atom ; // Get the current atom.
+      
+      if( !atomList.contains(atom) )
+      { // Not visited.
+                
+        // The current atom is visited.
+        atomList.append( atom ) ;
+        //aNode->isVisited = true ;
+
+        // Check the sons.
+        Atom *atomTmp=NULL ;
+        const QList<unsigned long> &neighbors=atom->neighbors() ;
+
+        foreach( unsigned long nai, neighbors )
+        {
+          atomTmp = m_molecule->atomById( nai ) ;
+
+          if( atomTmp == NULL )
+          {
+            #if __WMDEBUG_MOLMANIP
+            mytoolbox::dbgMsg( "Bug in MoleculeManipulation::selectAllBondedAtom(Atom*) : NULL-object non expected." ) ;
+            #endif
+            continue ;
+          }
+
+          if( !atomList.contains(atomTmp) )
+          { // Not visited.
+
+            SpanningTreeNode *sonNode=new SpanningTreeNode(aNode, atomTmp) ;          
+            getAllBondedAtom_p( sonNode, atomList ) ;
+          }
+        } 
+      }
+    }
   }
 
 }

@@ -140,17 +140,30 @@ namespace Avogadro
     const Eigen::Vector3d& getBarycenterMolecule() ;
     void recalculateBarycenter() ;
     // @}
+    
+    /** 
+     * @name For the other referentiel
+     * @{ */
+    void setRotationAxe( Bond* axeRot ) ; //< Set m_rotationAxe.
+    void setRotationAxe( Eigen::Vector3d *p1Ref, Eigen::Vector3d *p2, Bond* axeRot ) ; 
+        //< Set m_rotationAxe.
+    void resetRotationAxe() ; //< Put m_rotationAxe to zero.
+    Eigen::Vector3d getRotationAxe() ;
+    Bond* getRotationAxeBond() ;
+    Eigen::Vector3d getRotationAxePoint() ; //< A point on the rotation axe.
+    // @}
 
     /** 
       * @name Getter/Setter/Tester.
       * @{ */
     int getAtomicNumberCurrent() ;
     Molecule* getFragment( const QString &fragmentAbsPath ) ;
+    PrimitiveList* getAllBondedAtom( const PrimitiveList &primList ) ;
     bool hasAddedHydrogen() ;
     // @}
 
     /** 
-      * @name Various
+      * @name Miscellanious.
       * @{ */
     Atom* calculateNearestAtom( const Eigen::Vector3d *posAtom, const Atom *atomNotUse=NULL ) ;
     void optimizeGeometry() ;
@@ -173,8 +186,31 @@ namespace Avogadro
     #endif
 
 
-    // Private methods.
+    // Private methods and structure.
     private :
+      
+      struct SpanningTreeNode
+      {
+        Atom *atom ;
+        bool isVisited ;
+        SpanningTreeNode *father ;
+        QList<SpanningTreeNode*> sons ;
+        
+        SpanningTreeNode()
+        {
+          atom = NULL ;
+          father = NULL ;
+          isVisited = false ;
+          
+        };
+        
+        SpanningTreeNode( SpanningTreeNode* aFather, Atom* anAtom )
+        {
+          atom = anAtom ;
+          father = aFather ;
+          isVisited = false ;
+        }; 
+      };
 
        /**
         * @name Tools for all "basics" manipulations.
@@ -235,6 +271,12 @@ namespace Avogadro
       void updateBarycenter( const Eigen::Vector3d& atomPos, bool addOrDel, bool testIfNeedToRecalculateBarycenter=true ) ;
       void resetBarycenter_p() ;
        // @}
+      
+      /** 
+      * @name Miscellanious.
+      * @{ */
+      void getAllBondedAtom_p( SpanningTreeNode *spanTreeNode, QList<Atom*> &atomList ) ;
+      // @}
 
 
     // Private attributs.
@@ -252,6 +294,21 @@ namespace Avogadro
       Eigen::Vector3d m_barycenterRefMolecule ;
       int m_sumOfWeights ;
       Eigen::Vector3d m_atomsBarycenter ;
+      // @}
+      
+      /**
+       * @name Some other referentiel
+       * Stock some referentiel like axe of rotation (according to a bond) ...
+       * @{ */
+      Eigen::Vector3d m_rotationAxe ; //< (0;0;0) = no defined axe.
+      Bond *m_rotationAxeBond ; //< Just for information (and manage selection)
+      Eigen::Vector3d m_rotationAxePoint ; //< A point on the rotation axe.
+      // @}
+      
+      /**
+       * @name Select all bonded atoms.
+       * @{ */
+      SpanningTreeNode *m_spanTreeNodeFirst ;
       // @}
 
       /**

@@ -64,6 +64,9 @@ namespace Avogadro
   {
     // Delete by Avogadro: see settingsWidgetDestroyed() method.
     //delete m_settingsWidget ;
+    #if __WMDEBUG_WMTOOL
+    mytoolbox::dbgMsg( "WmTool::~WmTool()" ) ;
+    #endif
 
     // Desallocate in 1st (using m_chemWrap and m_wm)
     if( m_wrapperChemToAvo != NULL )
@@ -115,6 +118,10 @@ namespace Avogadro
       delete( m_nbUpdatePaint ) ;
       m_nbUpdatePaint = NULL ;
     }
+    
+    #if __WMDEBUG_WMTOOL
+    mytoolbox::dbgMsg( "WmTool::~WmTool() End" ) ;
+    #endif
   }
 
 
@@ -286,7 +293,7 @@ namespace Avogadro
         delete m_wm ;
         m_wm = NULL ;
       }
-
+      
       m_wm = new InputDevice::WmDevice() ;
       m_chemWrap = new WITD::ChemicalWrap( m_wm ) ;
       m_wrapperChemToAvo = new WrapperChemicalCmdToAvoAction( m_widget, m_chemWrap, m_wm ) ;
@@ -476,7 +483,6 @@ namespace Avogadro
                            this, SLOT(setSleepThreadNow(int)) ) ;
       if( !isConnect )
         mytoolbox::dbgMsg( "Problem connection signal : m_settingsWidget->getCheckboxVibration().stateChanged() -> wmTool.setWmVibrationNow() !!" ) ;
-        
     }
   }
 

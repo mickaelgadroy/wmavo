@@ -183,6 +183,7 @@ namespace InputDevice
   WmDevice::WmDevice()
     : Device(),
       m_cirBufferFrom(NULL), m_cirBufferTo(NULL),
+      m_semThreadFinish(1),
       m_isRunning(false), m_hasSleepThread(PLUGIN_WM_SLEEPTHREAD_ONOFF),
       m_nbActionRealized(0),
       m_wii(NULL), m_wm(NULL), m_nc(NULL),
@@ -234,12 +235,20 @@ namespace InputDevice
     }
 
     deleteWii() ;
+    
+    #if __WMDEBUG_CHEMWRAPPER
+    mytoolbox::dbgMsg( "WmDevice::~WmDevice(): End" ) ;
+    #endif
   }
 
   void WmDevice::deleteWii()
   {
-    if( m_wii != NULL )
-    { delete m_wii ; m_wii = NULL ; }
+    if( m_wm!=NULL && m_wm->isConnected() )
+    { 
+      m_wm->Disconnect() ; // Close Bluetooth connection.
+      m_wm->Disconnected() ; // Clean up the wiimote structure.
+      delete m_wii ; m_wii = NULL ; 
+    }
 
     m_wm = NULL ;
     m_nc = NULL ;
@@ -422,12 +431,15 @@ namespace InputDevice
     }
     else
     {
+      m_semThreadFinish.acquire(1) ;
+      
       bool hasUpdateFrom=false ;
       bool hasUpdateTo=false ;
+      bool run=true ; // = m_isRunning.
       m_isRunning = true ;
 
       // Update local data.
-      while( m_isRunning && m_hasWm )
+      while( run && m_hasWm )
       {
         // Count nb action by second (used with breakpoint).
         m_t2Update = m_time.elapsed() ;
@@ -498,14 +510,19 @@ namespace InputDevice
         else
           m_deviceThread.yieldCurrentThread() ;
           // With m_deviceThread.setPriority( QThread::LowPriority ) ;
+        
+        m_mutexIsRunning.lockForRead() ;
+        run = m_isRunning ;
+        m_mutexIsRunning.unlock() ;
       }
 
       m_threadFinished.fetchAndStoreRelaxed(1) ;
-      stopPoll() ;
       
       #if __WMDEBUG_CHEMWRAPPER || __WMDEBUG_WMDEVICE
       mytoolbox::dbgMsg( "WmDevice::runPoll() m_threadFinished 1" ) ;
       #endif
+
+      m_semThreadFinish.release(1) ;
     }
   }
 
@@ -514,13 +531,15 @@ namespace InputDevice
     if( m_isRunning )
     {
       // Stop the working thread.
+      m_mutexIsRunning.lockForWrite() ;
       m_isRunning = false ;
-      while( m_threadFinished == 0 ) ;
+      m_mutexIsRunning.unlock() ;
+     
+      m_semThreadFinish.acquire(1) ;
+      while( m_threadFinished == 0 ) ; 
+      // "while" and "QAtomic" becomes useless since the semaphore (m_semThreadFinish).
+      m_semThreadFinish.release(1) ;
       
-      #if __WMDEBUG_CHEMWRAPPER || __WMDEBUG_WMDEVICE
-      mytoolbox::dbgMsg( "WmDevice::stopPoll() passed" ) ;
-      #endif
-
       WmDeviceData_from *dataFrom=NULL ;
       WmDeviceData_to *dataTo=NULL ;
 
@@ -533,7 +552,7 @@ namespace InputDevice
           dataFrom = NULL ;
         }
       }
-
+      
       while( !m_cirBufferTo->isEmpty() )
       {
         m_cirBufferTo->popFront(dataTo) ;
@@ -543,10 +562,12 @@ namespace InputDevice
           dataTo = NULL ;
         }
       }
+      
     }
 
     // Stop the event loop thread (run() method).
     m_deviceThread.quit() ;
+    m_deviceThread.wait() ;
   }
 
   bool WmDevice::updateDataFrom()
