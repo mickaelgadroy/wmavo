@@ -359,6 +359,9 @@ namespace Avogadro
             }
           }
 
+          // Initiate the visual of the action.
+          m_changeAddHAct->setChecked( m_moleculeManip->hasAddedHydrogen() ) ;
+                  
           // Rename/Disable useless menu.
           if( /*hasAddHydrogen &&*/ nbSelectedAtom==1 && selectH )
           { // Substitute Hydrogen By Fragment.
