@@ -16,9 +16,10 @@ if( "${LINK_LIBS}" STREQUAL "avogadro" )
 # - add the project in : [avogadro_path]/libavogadro/src/extensions/[here_wmavo_directory]
 # - add "add_subdirectory( wmavo/src/en )" in : [avogadro_path]/libavogadro/src/extensions/CMakeLists.txt
 
-  #set( PLUGIN_LABEL engines )
-  #set( PLUGIN_TARGET engines )
-  #set( PLUGIN_TYPE engine )
+  #set( PLUGIN_LABEL engines )       # Initiate by Avogadro. 
+  #set( PLUGIN_TARGET engines )      # Initiate by Avogadro.
+  #set( PLUGIN_TYPE engine )         # Initiate by Avogadro.
+  #set( CMAKE_BUILD_TYPE "Release" ) # Initiate by Avogadro.
   
   # The Meta-Object Compiler, moc, is the program that handles Qt's C++ extensions.
   set( in_MOC_SRC src/wmengine.cpp )
@@ -40,6 +41,7 @@ else()
 
   project( ${PLUGIN_NAME} )
   cmake_minimum_required(VERSION 2.6)
+  set( CMAKE_BUILD_TYPE "Debug" ) # Initiate by Me. Release or Debug
 
   # Avogadro needs.
   if( NOT EXISTS "${Avogadro_DIR}" )

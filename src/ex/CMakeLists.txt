@@ -9,11 +9,8 @@ set( PLUGIN_NAME wmextension )
 set( wmavoconst_include_dir ../ ) # .h (constants & revision & others)
 #set( wmtool_include_dir ../tool/src ) # .h (wmtool plugin)
 
-if( WIN32 )
-# Windows.
-else()
-# Unix ...
-  set( OpenBabel2_include_DIR "/usr/include/openbabel-2.0/" )
+if( NOT WIN32 )
+  set( OpenBabel2_include_DIR "/usr/include/openbabel-2.0/" )  
 endif()
 
 
@@ -49,6 +46,7 @@ else()
 
   project( ${PLUGIN_NAME} )
   cmake_minimum_required(VERSION 2.6)
+  set( CMAKE_BUILD_TYPE "Debug" ) # Initiate by Me. Release or Debug
 
   # Avogadro needs.
  

@@ -38,29 +38,8 @@ else() # Unknown.
   message( STATUS "Impossible to detect if your compiler is 32 or 64 bits, CMAKE_SIZEOF_VOID_P=" ${CMAKE_SIZEOF_VOID_P} )
 endif()
 
-if( WIN32 )
-# Windows.
-  # wiiuse/wiiusecpp libraries.
-  if( "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
-    set( wiiuse_lib_dir "${wiiuse_dir}/lib_win32/debug" )
-  else()
-    set( wiiuse_lib_dir "${wiiuse_dir}/lib_win32" )
-  endif()
-
-else() 
-# Unix ...
-  set( wiiuse_libdir /usr/lib ) # ".lib"
-  
+if( NOT WIN32 )
   set( OpenBabel2_include_DIR "/usr/include/openbabel-2.0/" )
-  
-  # None, Release, Debug ...
-  # Windows : Debug and Release : ok
-  # Linux : Release : ok, Debug : some librairies (like wiiuse) are not compiled for.
-
-endif()
-
-if( NOT EXISTS "${wiiuse_lib_dir}" )
-  message( FATAL_ERROR "No directory ${wiiuse_lib_dir} for wiiuse library (in extra/wiiuse_wiiusecpp)." )
 endif()
 
 
@@ -73,9 +52,34 @@ if( "${LINK_LIBS}" STREQUAL "avogadro" )
 #   - add "add_subdirectory( wmavo/src/tool )"
 #   - add "add_subdirectory( wmavo/src/ex )"
 
-  #set( PLUGIN_LABEL tools )
-  #set( PLUGIN_TARGET tools )
-  #set( PLUGIN_TYPE tool )
+  #set( PLUGIN_LABEL tools )        # Initiate by Avogadro.
+  #set( PLUGIN_TARGET tools )       # Initiate by Avogadro.
+  #set( PLUGIN_TYPE tool )          # Initiate by Avogadro.
+  #set( CMAKE_BUILD_TYPE "Debug" )  # Initiate by Avogadro.
+  
+  
+  if( WIN32 )
+  # Windows.
+
+    # wiiuse/wiiusecpp libraries.
+    if( "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
+      set( wiiuse_lib_dir "${wiiuse_dir}/lib_win32/debug" )
+    else()
+      set( wiiuse_lib_dir "${wiiuse_dir}/lib_win32" )
+    endif()
+  else() 
+  # Unix ...
+  
+    set( wiiuse_libdir /usr/lib ) # ".lib"
+    # None, Release, Debug ...
+    # Windows : Debug and Release : ok
+    # Linux : Release : ok, Debug : some librairies (like wiiuse) are not compiled for.
+  endif()
+
+  if( NOT EXISTS "${wiiuse_lib_dir}" )
+    message( FATAL_ERROR "No directory ${wiiuse_lib_dir} for wiiuse library (in extra/wiiuse_wiiusecpp)." )
+  endif()
+
   
   # The Meta-Object Compiler, moc, is the program that handles Qt's C++ extensions.
   # http://qtnode.net/wiki/Qt4_with_cmake
@@ -150,6 +154,29 @@ else()
 
   project( ${PLUGIN_NAME} )
   cmake_minimum_required(VERSION 2.6)
+  set( CMAKE_BUILD_TYPE "Debug" ) # Initiate by Me. Release or Debug
+  
+  if( WIN32 )
+  # Windows.
+
+    # wiiuse/wiiusecpp libraries.
+    if( "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
+      set( wiiuse_lib_dir "${wiiuse_dir}/lib_win32/debug" )
+    else()
+      set( wiiuse_lib_dir "${wiiuse_dir}/lib_win32" )
+    endif()
+  else() 
+  # Unix ...
+  
+    set( wiiuse_libdir /usr/lib ) # ".lib"
+    # None, Release, Debug ...
+    # Windows : Debug and Release : ok
+    # Linux : Release : ok, Debug : some librairies (like wiiuse) are not compiled for.
+  endif()
+
+  if( NOT EXISTS "${wiiuse_lib_dir}" )
+    message( FATAL_ERROR "No directory ${wiiuse_lib_dir} for wiiuse library (in extra/wiiuse_wiiusecpp)." )
+  endif()
 
   # Avogadro needs.
   if( NOT EXISTS "${Avogadro_DIR}" )
