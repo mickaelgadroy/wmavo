@@ -80,7 +80,7 @@ void SettingsWidget::createSettingsWidget()
     m_checkBoxActivateVibration = new QCheckBox( "ON/OFF" ) ;
     m_checkBoxActivateVibration->setChecked(PLUGIN_WM_VIBRATION_ONOFF) ;
 
-    QLabel *lblSleepThread = new QLabel(tr("Less CPU use (but can lag):")) ;
+    QLabel *lblSleepThread = new QLabel(tr("Less CPU used (but can lag):")) ;
     m_checkBoxActivateSleepThread = new QCheckBox( "ON/OFF" ) ;
     m_checkBoxActivateSleepThread->setChecked(PLUGIN_WM_SLEEPTHREAD_ONOFF) ;
     

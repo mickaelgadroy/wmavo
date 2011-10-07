@@ -107,7 +107,7 @@ namespace Avogadro
     m_removeAllHAct->setStatusTip( tr("Remove all Hydrogen atoms in the molecule") ) ;
     
     m_selectAllBondedAtomAct = new QAction( tr("Select all bonded atoms"), this ) ;
-    m_selectAllBondedAtomAct = new QAction( tr("Select all bonded atoms of selected atoms"), this ) ;
+    m_selectAllBondedAtomAct = new QAction( tr("Select all bonded atoms of selected atom"), this ) ;
   }
 
     /**
