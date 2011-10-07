@@ -70,7 +70,7 @@ if( "${LINK_LIBS}" STREQUAL "avogadro" )
   else() 
   # Unix ...
   
-    set( wiiuse_libdir /usr/lib ) # ".lib"
+    set( wiiuse_lib_dir /usr/lib ) # ".lib"
     # None, Release, Debug ...
     # Windows : Debug and Release : ok
     # Linux : Release : ok, Debug : some librairies (like wiiuse) are not compiled for.
@@ -168,7 +168,7 @@ else()
   else() 
   # Unix ...
   
-    set( wiiuse_libdir /usr/lib ) # ".lib"
+    set( wiiuse_lib_dir /usr/lib ) # ".lib"
     # None, Release, Debug ...
     # Windows : Debug and Release : ok
     # Linux : Release : ok, Debug : some librairies (like wiiuse) are not compiled for.
