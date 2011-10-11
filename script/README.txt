@@ -16,13 +16,13 @@ An easy way to do it:
     
   $ cd script/
   
-  $ sudo bash 1_dependency.sh
   # => You must have root rigths.
+  $ sudo bash 1_dependency.sh
   # It contains all information about dependencies you must install (apt-get ...).
   # It compiles wiiuse/wiiusecpp librairies to interpret the Wiimote communication.
   # And it copies some cml files.
   
+  # => You must have user rigths (NOT root).
   $ bash 2_compile_install.sh
-  # => User rights are enough.
-  # After the previous etap, you can compile the plugins
-  # which automatically copy in the Avogadro plugin directory.
+  # After the previous etap, the plugins are compiled and
+  # automatically copied in the Avogadro plugin directory.
