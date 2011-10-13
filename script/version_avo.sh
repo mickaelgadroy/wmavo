@@ -1,3 +1,4 @@
+#!/bin/bash
 
 # Mickael Gadroy, University of Reims Champagne-Ardenne (Fr)
 # Project managers: Eric Henon and Michael Krajecki
@@ -58,3 +59,4 @@ else
 fi
 
 exit 0
+
