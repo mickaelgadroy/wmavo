@@ -646,18 +646,18 @@ void DrawSimpleObject::drawTestAllMethod()
     //QPainter *myQPainter=dynamic_cast<QPainter*>(painter) ;
 
     // 3.1, Display, but in black ... Be carefull of the background color.
-    glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
-    glPushMatrix() ;
-    glColor3f( 1.0, 1.0, 1.0 ) ;
-    QPainter myQPainter ;
-    myQPainter.begin(m_widget) ;
-    msg = "Qt::QPainter : DrawText() 3.1" ;
-    myQPainter.drawText( QPoint(150,70), msg ) ;
-    msg = "Qt::QPainter : DrawText() 3.2" ;
-    myQPainter.drawText( 150, 80, 150, 150, Qt::AlignLeft, msg ) ;
-    myQPainter.end() ;
-    glPopMatrix() ;
-    glPopAttrib() ;
+    //glPushAttrib( GL_ALL_ATTRIB_BITS ) ;
+    //glPushMatrix() ;
+    //glColor3f( 1.0, 1.0, 1.0 ) ;
+    //QPainter myQPainter ;
+    //myQPainter.begin(m_widget) ;
+    //msg = "Qt::QPainter : DrawText() 3.1" ;
+    //myQPainter.drawText( QPoint(150,70), msg ) ;
+    //msg = "Qt::QPainter : DrawText() 3.2" ;
+    //myQPainter.drawText( 150, 80, 150, 150, Qt::AlignLeft, msg ) ;
+    //myQPainter.end() ;
+    //glPopMatrix() ;
+    //glPopAttrib() ;
 
     // 3.2 No tested ... I do not understand when use it to "gain" performance.
     //QStaticText test ;

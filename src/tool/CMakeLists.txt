@@ -154,10 +154,11 @@ else()
 
   project( ${PLUGIN_NAME} )
   cmake_minimum_required(VERSION 2.6)
-  set( CMAKE_BUILD_TYPE "Debug" ) # Initiate by Me. Release or Debug
   
   if( WIN32 )
   # Windows.
+  
+    set( CMAKE_BUILD_TYPE "Debug" ) # Initiate by Me. Release or Debug
 
     # wiiuse/wiiusecpp libraries.
     if( "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
