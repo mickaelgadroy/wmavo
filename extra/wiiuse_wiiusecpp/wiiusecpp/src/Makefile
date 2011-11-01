@@ -36,7 +36,7 @@ OBJ_DIR = $(OBJ_PREFIX)-$(shell $(CC) -v 2>&1|grep ^Target:|cut -d' ' -f2)
 # Linking flags
 #
 #LDFLAGS = -shared -L../../wiiuse/src/$(OBJ_DIR)/ -lwiiuse
-LDFLAGS = -shared -lwiiuse
+LDFLAGS = -shared -lm -lbluetooth -lwiiuse
 
 #
 # Target binaries (always created as BIN)
@@ -75,7 +75,7 @@ install:
 	@cp -v wiiusecpp*.h /usr/include
 
 $(BIN): mkdir $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $(BIN)
+	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(BIN)
 
 $(OBJ_DIR)/%.o: %.cpp
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@

@@ -81,7 +81,7 @@ install:
 	@cp -v wiiuse.h /usr/include
 
 $(BIN): mkdir $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $(BIN)
+	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(BIN)
 
 $(OBJ_DIR)/%.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@

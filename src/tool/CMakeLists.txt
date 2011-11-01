@@ -307,6 +307,7 @@ else()
 
   ## BELOW, NO CHANGE ! 
   # (Except to add a target_link_libraries.)
+   
 
   ## Génération des fichiers nécessaire pour la compilation 
   ## et éditions de liens avec Qt, Avogadro & Co.

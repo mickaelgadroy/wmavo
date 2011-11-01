@@ -31,7 +31,7 @@ OBJ_DIR = $(OBJ_PREFIX)-$(shell $(CC) -v 2>&1|grep ^Target:|cut -d' ' -f2)
 #
 # Linking flags
 #
-LDFLAGS = -L../src/$(OBJ_DIR) -lm -lwiiuse
+LDFLAGS = -L../src/$(OBJ_DIR) -lm -lbluetooth -lwiiuse
 
 #
 # Target binaries (always created as BIN)
@@ -69,7 +69,7 @@ install:
 
 
 $(BIN): mkdir $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $(BIN)
+	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(BIN)
 
 $(OBJ_DIR)/%.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
