@@ -137,9 +137,24 @@ sudo cp -npR $dir_mycml/* $dir_avocml
 # -n : do not overwrite
 
 if [ $? -ne 0 ] ; then
-  echo "error: Copy of fragments has known a problem."
-  echo "error: Instalation aborted."
-  exit 1
+
+  echo "warning: Copy of fragments ..."
+  
+  # Invert the path ...
+  if [[ $version_avo_major -le 0 ]] || [[ $version_avo_major -le 1  && $version_avo_patch -le 2 ]] ; then
+    dir_avocml="/usr/local/share/avogadro/fragments/"
+  else
+    dir_avocml="/usr/share/avogadro/fragments/"
+  fi
+  
+  # Try again ...
+  sudo cp -npR $dir_mycml/* $dir_avocml
+  
+  if [ $? -ne 0 ] ; then
+    echo "error: Copy of fragments has known a problem :"
+    echo "error: Instalation aborted."
+    exit 1
+  fi
 fi
 
 echo "info: Process finished. SUCCESS!"

@@ -207,6 +207,40 @@ namespace Avogadro
       if( WMAVO_IS2(wmavoAction,WMAVO_SELECT) )
       { // Select only 1 object.
 
+        /*
+        { // Test to add a real mouse click
+          // - Code occurs crash.
+          // - It can't access to the menu pull-down.
+          
+          QPoint p=QCursor::pos() ;
+          //QCoreApplication *app=QCoreApplication::instance() ;
+          //QWidget *widget=app->widgetAt( p ) ;
+          
+          QWidget *widget=QApplication::widgetAt( p ) ;
+          //QWidget *widget=QApplication::activeWindow() ;
+          
+          
+          if( widget!=NULL )
+          { 
+            mytoolbox::dbgMsg( widget->accessibleName() ) ;
+            QPoint p2=widget->mapFromGlobal(p) ;
+            QEvent *me1 = new QMouseEvent( QEvent::MouseButtonPress, p2, 
+                                           Qt::LeftButton, Qt::NoButton, Qt::NoModifier ) ;
+            QEvent *me3 = new QMouseEvent( QEvent::MouseButtonRelease, p2, 
+                                           Qt::LeftButton, Qt::NoButton, Qt::NoModifier ) ;
+      
+            QApplication::postEvent( widget, me1 ) ;
+            QApplication::postEvent( widget, me3 ) ;
+          }
+          else
+          {
+            mytoolbox::dbgMsg( "nada" ) ;
+          }
+        }
+        */
+
+
+
         // Just one rumble.
         InputDevice::RumbleSettings rumble( false, false, 10 ) ;
         rumble.setStart( true ) ;
@@ -887,8 +921,9 @@ namespace Avogadro
             }
 
             mol->lock()->unlock() ;
-            mol->update() ;
           }
+          
+          mol->update() ;
 
           if( addSmth )
           {
@@ -1247,7 +1282,8 @@ namespace Avogadro
     if( WMAVO_IS2(wmavoAction,WMAVO_DELETE)
         || WMAVO_IS2(wmavoAction,WMAVO_DELETEALL)
         /*|| WMAVO_IS2(wmavoAction,WMAVO_CREATE)*/
-        // Put in the transformWrapperActionToCreateAtomBond() method to gain update.
+        // Put in the transformWrapperActionToCreateAtomBond() method to 
+        // gain update during multiple creation.
       )
     {
       //mytoolbox::dbgMsg( "WrapperChemicalCmdToAvoAction::updateForAvoActions1" ;
@@ -1333,6 +1369,11 @@ namespace Avogadro
         }
 
         QApplication::sendEvent( m_widget->m_current, m_me2 ) ;
+        
+        // Test, but be carefull, you must allocate the event each time
+        // it put in a queue, and delete the object after use.
+        //QApplication::postEvent( app, me1 ) ;
+        //QApplication::postEvent( app, me3 ) ;
         
 
         // Install something else.

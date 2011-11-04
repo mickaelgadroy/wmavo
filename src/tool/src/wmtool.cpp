@@ -234,8 +234,8 @@ namespace Avogadro
       }
 
       // Drawing ...
-      m_drawObject->drawCenter() ;
-      m_drawObject->drawBarycenter() ;
+      //m_drawObject->drawCenter() ;
+      //m_drawObject->drawBarycenter() ;
       
       if( m_updateActionDisplay == 1 )
       {
@@ -483,6 +483,12 @@ namespace Avogadro
                            this, SLOT(setSleepThreadNow(int)) ) ;
       if( !isConnect )
         mytoolbox::dbgMsg( "Problem connection signal : m_settingsWidget->getCheckboxVibration().stateChanged() -> wmTool.setWmVibrationNow() !!" ) ;
+      
+      isConnect = connect( mm, SIGNAL(invertedHasAddHydrogen(bool)),
+                           this, SLOT(setWmLEDNowForAdjustHydrogen(bool)) ) ;
+      if( !isConnect )
+        mytoolbox::dbgMsg( "Problem connection signal : MoleculeManipulation.invertedHasAddHydrogen() -> wmTool.setWmLEDNowForAdjustHydrogen() !!" ) ;
+
     }
   }
 

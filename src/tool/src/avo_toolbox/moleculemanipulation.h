@@ -91,6 +91,9 @@ namespace Avogadro
     void setHasAddedHydrogen( bool withH ) ;
     void invertHasAddHydrogen() ;
     // @}
+    
+  signals :
+  void invertedHasAddHydrogen( bool enable ) ;
    
 
   public :

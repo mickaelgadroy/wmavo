@@ -96,6 +96,8 @@ namespace Avogadro
       void letToSubstituteAtomByFragment( QString fragmentAbsPath ) ;
           ///< For "substitute atom by fragment" feature (Context menu)
       void beginToSelectAllBondedAtom() ;
+      void removeAllHydrogens() ;
+      void addAllHydrogens() ;
       // @}
 
       /**

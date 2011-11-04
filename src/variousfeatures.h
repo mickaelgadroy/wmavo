@@ -126,6 +126,17 @@ namespace mytoolbox
     fflush(stdout);
   }
 
+  
+  inline void dbgMsg( int msg )
+  {
+    #ifdef WIN32
+    printf( "%d\n", msg ) ;
+    #else
+    qDebug() << msg ;
+    #endif
+    
+    fflush(stdout);
+  }
 
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -140,9 +151,9 @@ namespace mytoolbox
     AllocConsole();
 
 
-    // si une console est rattachée au processus, alors il existe des fichiers
+    // si une console est rattachï¿½e au processus, alors il existe des fichiers
     // virtuel CONIN$ et CONOUT$ qui permettent respectivement de lire
-    // et d'écrire depuis / dans cette console (voir la doc de CreateFile).
+    // et d'ï¿½crire depuis / dans cette console (voir la doc de CreateFile).
 
     #if _MSC_VER >= 1400 // VC++ 8
     {

@@ -2847,6 +2847,7 @@ namespace Avogadro
   void MoleculeManipulation::invertHasAddHydrogen()
   {
     m_addHydrogens = !m_addHydrogens ;
+    emit invertedHasAddHydrogen( m_addHydrogens ) ;
   }
  
   

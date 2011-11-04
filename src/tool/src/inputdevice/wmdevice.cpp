@@ -374,7 +374,7 @@ namespace InputDevice
       m_hasWm = true ;
       m_wm = wm ;
 
-      m_wm->SetLEDs( CWiimote::LED_1 ) ; // Light LED 1.
+      m_wm->SetLEDs( CWiimote::LED_1 | (WMEX_ADJUST_HYDROGEN?CWiimote::LED_4:0x0)) ; // Light LED 1.
       m_wm->IR.SetMode( CIR::ON ) ; // Activate IR.
       m_wm->IR.SetSensitivity(WMAVO_IRSENSITIVITY) ;
       m_wm->SetMotionSensingMode(CWiimote::ON) ;
@@ -398,7 +398,7 @@ namespace InputDevice
 
       // Activate the advanced rumble feature.
       m_rumble = new WmRumble(this) ;
-      m_rumble->setRumbleEnabled( true ) ;
+      m_rumble->setRumbleEnabled( PLUGIN_WM_VIBRATION_ONOFF ) ;
 
       // Connect (== Get) the nunchuk.
       connectNc() ;
@@ -706,9 +706,10 @@ namespace InputDevice
 
       if( data != NULL )
       {
-        RumbleSettings rumble ;
         bool hasSleepThread=false ;
         bool hasUpdated=false ;
+        RumbleSettings rumble ;
+        int led=0 ;
 
         hasUpdated = data->getRumble(rumble) ;
         if( hasUpdated )
@@ -717,6 +718,18 @@ namespace InputDevice
         hasUpdated = data->getHasSleepThread( hasSleepThread ) ;
         if( hasUpdated )
           m_hasSleepThread = hasSleepThread ;
+
+        hasUpdated = data->getLED( led ) ;
+        if( hasUpdated )
+        {
+          int a=0 ;
+          if( led & 0x1 ) a = CWiimote::LED_1 ;
+          if( led & 0x2 ) a |= CWiimote::LED_2 ;
+          if( led & 0x4 ) a |= CWiimote::LED_3 ;
+          if( led & 0x8 ) a |= CWiimote::LED_4 ;
+          
+          m_wm->SetLEDs( a ) ;
+        }
 
         delete data ;
         r = true ;

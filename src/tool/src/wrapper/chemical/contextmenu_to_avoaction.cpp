@@ -210,21 +210,21 @@ namespace Avogadro
     isConnect=connect( m_changeAddHAct, SIGNAL(triggered()), m_moleculeManip, SLOT(invertHasAddHydrogen()) ) ;
     if( !isConnect )
     {
-      mytoolbox::dbgMsg( "Problem connection signal : m_changeAddHAct.triggered() -> ContextMenuToAvoAction.invertHasAddHydrogen() !!" ) ;
+      mytoolbox::dbgMsg( "Problem connection signal : m_changeAddHAct.triggered() -> m_moleculeManip.invertHasAddHydrogen() !!" ) ;
       ok = false ;
     }
 
-    isConnect=connect( m_addAllHAct, SIGNAL(triggered()), m_moleculeManip, SLOT(addHydrogens()) ) ;
+    isConnect=connect( m_addAllHAct, SIGNAL(triggered()), this, SLOT(addAllHydrogens()) ) ;
     if( !isConnect )
     {
-      mytoolbox::dbgMsg( "Problem connection signal : m_addAllHAct.triggered() -> m_moleculeManip.addHydrogens() !!" ) ;
+      mytoolbox::dbgMsg( "Problem connection signal : m_addAllHAct.triggered() -> ContextMenuToAvoAction.addAllHydrogens() !!" ) ;
       ok = false ;
     }
 
-    isConnect=connect( m_removeAllHAct, SIGNAL(triggered()), m_moleculeManip, SLOT(removeHydrogens()) ) ;
+    isConnect=connect( m_removeAllHAct, SIGNAL(triggered()), this, SLOT(removeAllHydrogens()) ) ;
     if( !isConnect )
     {
-      mytoolbox::dbgMsg( "Problem connection signal : m_removeAllHAct.triggered() -> m_moleculeManip.removeHydrogens() !!" ) ;
+      mytoolbox::dbgMsg( "Problem connection signal : m_removeAllHAct.triggered() -> ContextMenuToAvoAction.removeAllHydrogens() !!" ) ;
       ok = false ;
     }
     
@@ -295,6 +295,28 @@ namespace Avogadro
       m_chemWrap->setWrapperDataTo( chemDataTo ) ;
       WMAVO_SETOFF2( state, WMAVO_MENU_ACTIVE ) ;
     }
+  }
+  
+  
+  /**
+    * Call the method to remove all Hydrogen.
+    */
+  void ContextMenuToAvoAction::removeAllHydrogens()
+  {
+    m_moleculeManip->removeHydrogens() ;
+    // Update() method is called, because it is not called in wmActions().
+    m_widget->update() ;
+  }
+  
+  
+  /**
+    * Call the method to add all Hydrogen.
+    */
+  void ContextMenuToAvoAction::addAllHydrogens()
+  {
+    m_moleculeManip->addHydrogens() ;
+    // Update() method is called, because it is not called in wmActions().
+    m_widget->update() ;
   }
 
 
@@ -831,6 +853,9 @@ namespace Avogadro
     {
       m_widget->setSelected( *selectedPrim2, true ) ;
       delete selectedPrim2 ;
+      
+      // Update() method is called, because it is not called in wmActions().
+      m_widget->update() ;
     }
   }
 

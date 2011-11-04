@@ -164,6 +164,25 @@ namespace Avogadro
         m_wm->setDeviceDataTo( wmDataTo ) ;
       }
     } ;
+    
+    inline void setWmLEDNowForAdjustHydrogen( bool enable )
+    {
+        char a=0x1 ; // Light the 1st LED.
+        
+        if( enable ) a |= 0x8 ; // Light the 4th LED.
+        
+        setWmLEDNow( a ) ;
+    }
+    
+    inline void setWmLEDNow( int led )
+    {
+      if( m_wm != NULL )
+      {
+        InputDevice::WmDeviceData_to wmDataTo ;
+        wmDataTo.setLED( led ) ;
+        m_wm->setDeviceDataTo( wmDataTo ) ;
+      }
+    } ;
 
     inline void setSleepThreadNow( int enable )
     {
